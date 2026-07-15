@@ -78,19 +78,24 @@ results.innerHTML="";
 return;
 }
 
-const {data,error}=await supabase
-.from("medicines")
+const const { data, error } = await supabase
+  .from("medicines")
 .select("*")
 .or(`brand_name.ilike.%${value}%,generic_name.ilike.%${value}%`);
 
 results.innerHTML="";
 
-if(error){
-results.innerHTML="<p>Error loading medicines.</p>";
-return;
+if (error) {
+    console.error(error);
+    results.innerHTML = `
+      <p style="color:red;">
+        ${error.message}
+      </p>
+    `;
+    return;
 }
 
-if(data.length===0){
+if (!data || data.length === 0) {
 results.innerHTML="<p>No medicine found.</p>";
 return;
 }
