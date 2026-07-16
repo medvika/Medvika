@@ -65,9 +65,15 @@ placeholder="Search Medicine..."
 
 <script>
 
+if (!window.supabase) {
+  document.getElementById("results").innerHTML =
+    "<p style='color:red'>Supabase library failed to load.</p>";
+  throw new Error("Supabase library not loaded");
+}
+
 const supabase = window.supabase.createClient(
-'https://etevzodzxhsdwidtrmw.supabase.co',
-'sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw'
+  "https://etevzodzxhsdwidtrmw.supabase.co",
+  "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GE0w"
 );
 
 const search=document.getElementById("search");
