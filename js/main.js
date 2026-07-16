@@ -1,9 +1,14 @@
 function searchMedicine() {
-    let medicine = document.getElementById("medicineSearch").value;
 
-    if (medicine === "") {
-        alert("Please enter medicine name");
+    let medicine = document.getElementById("medicineSearch").value;
+    let result = document.getElementById("searchResult");
+
+    if (medicine.trim() === "") {
+        result.innerHTML = "Please enter medicine name.";
     } else {
-        alert("Searching for: " + medicine);
+        result.innerHTML = 
+        "Search request received for: <b>" + medicine + "</b><br>" +
+        "Medicine database will be available soon.";
     }
+
 }
