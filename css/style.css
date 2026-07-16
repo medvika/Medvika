@@ -402,14 +402,25 @@ height:55px;
 .footer {
     padding: 40px 20px;
     text-align: center;
-    background: #f5f5f5;
+    background: #0b3d2e;
+    color: white;
 }
 
-.footer-links {
-    margin: 20px 0;
+.footer h3 {
+    color: white;
+}
+
+.footer p {
+    color: white;
 }
 
 .footer-links a {
-    margin: 0 10px;
+    color: white;
     text-decoration: none;
+    margin: 0 10px;
 }
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
