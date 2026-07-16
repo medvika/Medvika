@@ -29,3 +29,20 @@ function sendQuote(event){
     window.open(whatsappURL, "_blank");
 
 }
+function sendConsultation(event){
+
+    event.preventDefault();
+
+    let message =
+    "New Medvika Consultation Request\n\n" +
+    "Name: " + document.querySelector("#consultationForm input:nth-child(1)").value + "\n" +
+    "Mobile: " + document.querySelector("#consultationForm input:nth-child(2)").value + "\n" +
+    "Date: " + document.querySelector("#consultationForm input:nth-child(3)").value;
+
+    let whatsappURL =
+    "https://wa.me/918979841035?text=" +
+    encodeURIComponent(message);
+
+    window.open(whatsappURL, "_blank");
+
+}
