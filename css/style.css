@@ -363,3 +363,21 @@ height:55px;
     z-index: 999;
 
 }
+.services-section {
+    padding: 50px 20px;
+    text-align: center;
+}
+
+.services-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.service-card {
+    padding: 25px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
