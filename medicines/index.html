@@ -1,140 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Medicine Search | Medvika</title>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-<script src="https://unpkg.com/@supabase/supabase-js@2">
-<script>
-window.addEventListener("load", () => {
-  alert("JavaScript loaded");
-});
-</script>
-<style>
-body{
-    font-family:Arial,sans-serif;
-    background:#f5f5f5;
-    margin:0;
-    padding:20px;
-}
-
-.container{
-    max-width:800px;
-    margin:auto;
-}
-
-h1{
-    text-align:center;
-}
-
-input{
-    width:100%;
-    padding:15px;
-    font-size:18px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    margin-top:20px;
-}
-
-.card{
-    background:#fff;
-    padding:15px;
-    margin-top:15px;
-    border-radius:10px;
-    box-shadow:0 2px 6px rgba(0,0,0,.1);
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h1>💊 Medicine Search</h1>
-
-<input
-type="text"
-id="search"
-placeholder="Search Medicine..."
->
-
-<div id="results"></div>
-
-</div>
-
-<script>
-
-if (!window.supabase) {
-  document.getElementById("results").innerHTML =
-    "<p style='color:red'>Supabase library failed to load.</p>";
-  throw new Error("Supabase library not loaded");
-}
-
-const supabase = window.supabase.createClient(
+const supabase = createClient(
   "https://etevzodzxhsdwidtrmw.supabase.co",
-  "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GE0w"
+  "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw"
 );
 
-const search=document.getElementById("search");
-const results=document.getElementById("results");
+const search = document.getElementById("search");
+const results = document.getElementById("results");
 
-search.addEventListener("input",async()=>{
-
-const value=search.value;
-
-if(value.length<2){
-results.innerHTML="";
-return;
+function renderMessage(message, color = "red") {
+  results.innerHTML = `<p style="color:${color};padding:10px">${message}</p>`;
 }
 
-const const { data, error } = await supabase
-  .from("medicines")
-.select("*")
-.or(`brand_name.ilike.%${value}%,generic_name.ilike.%${value}%`);
+search.addEventListener("input", async () => {
+  const value = search.value.trim();
 
-results.innerHTML="";
-
-if (error) {
-    console.error(error);
-    results.innerHTML = `
-      <p style="color:red;">
-        ${error.message}
-      </p>
-    `;
+  if (value.length < 2) {
+    results.innerHTML = "";
     return;
-}
+  }
 
-if (!data || data.length === 0) {
-results.innerHTML="<p>No medicine found.</p>";
-return;
-}
+  renderMessage("Searching...", "blue");
 
-data.forEach(item=>{
+  try {
+    const { data, error } = await supabase
+      .from("medicines")
+      .select("*")
+      .or(`brand_name.ilike.%${value}%,generic_name.ilike.%${value}%`)
+      .limit(10);
 
-results.innerHTML+=`
+    if (error) {
+      console.error(error);
+      renderMessage(error.message);
+      return;
+    }
 
-<div class="card">
+    if (!data || data.length === 0) {
+      renderMessage("No medicine found", "orange");
+      return;
+    }
 
-<h2>${item.brand_name}</h2>
+    results.innerHTML = "";
 
-<p><strong>Generic:</strong> ${item.generic_name}</p>
+    data.forEach((item) => {
+      results.innerHTML += `
+        <div class="card">
+          <h2>${item.brand_name || ""}</h2>
+          <p><b>Generic:</b> ${item.generic_name || "-"}</p>
+          <p><b>Strength:</b> ${item.strength || "-"}</p>
+          <p><b>Manufacturer:</b> ${item.manufacturer || "-"}</p>
+          <p><b>MRP:</b> ₹${item.mrp || "-"}</p>
+        </div>
+      `;
+    });
 
-<p><strong>Strength:</strong> ${item.strength}</p>
-
-<p><strong>Manufacturer:</strong> ${item.manufacturer}</p>
-
-<p><strong>MRP:</strong> ₹${item.mrp}</p>
-
-</div>
-
-`;
-
+  } catch (err) {
+    console.error(err);
+    renderMessage(err.message);
+  }
 });
-
-});
-
 </script>
-
-</body>
-</html>
