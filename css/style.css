@@ -423,4 +423,8 @@ height:55px;
 .footer-links a:hover {
     text-decoration: underline;
 }
-
+.logo img {
+    width: 140px;
+    height: auto;
+    display: block;
+}
