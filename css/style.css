@@ -637,3 +637,26 @@ body{
     margin:0 auto 30px;
     line-height:1.8;
 }
+.hero-buttons{
+    display:flex;
+    gap:15px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:35px;
+}
+
+.secondary-btn{
+    background:#ffffff;
+    color:#0b7d6e;
+    border:2px solid #0b7d6e;
+    padding:14px 28px;
+    border-radius:30px;
+    font-weight:600;
+    text-decoration:none;
+    transition:.3s;
+}
+
+.secondary-btn:hover{
+    background:#0b7d6e;
+    color:#fff;
+}
