@@ -557,3 +557,21 @@ body{
     transform:translateY(-6px);
     box-shadow:0 12px 30px rgba(0,0,0,0.12);
 }
+.service-page{
+    padding:120px 20px 80px;
+    text-align:center;
+    background:#f8fbfc;
+}
+
+.service-page h1{
+    font-size:42px;
+    margin-bottom:20px;
+}
+
+.service-subtitle{
+    max-width:750px;
+    margin:0 auto 35px;
+    font-size:18px;
+    line-height:1.8;
+    color:#555;
+}
