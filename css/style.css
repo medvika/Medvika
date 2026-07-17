@@ -108,10 +108,28 @@ background:linear-gradient(135deg,#effaf8,#eef6ff);
 }
 
 .hero-content{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:60px;
-align-items:center;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:60px;
+}
+
+.hero-left{
+    flex:1;
+}
+
+.hero-right{
+    flex:1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.hero-image{
+    width:100%;
+    max-width:650px;
+    height:auto;
+    object-fit:contain;
 }
 
 .hero-tag{
