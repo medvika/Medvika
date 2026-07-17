@@ -565,20 +565,6 @@ body{
 .toc a:hover{
     text-decoration:underline;
 }
-/* Clickable Service Cards */
-
-.service-card{
-    display:block;
-    text-decoration:none;
-    color:inherit;
-    cursor:pointer;
-    transition:0.3s ease;
-}
-
-.service-card:hover{
-    transform:translateY(-6px);
-    box-shadow:0 12px 30px rgba(0,0,0,0.12);
-}
 .service-page{
     padding:120px 20px 80px;
     text-align:center;
@@ -718,4 +704,17 @@ body{
     margin-top:30px;
 }
 
+}
+.learn-more{
+    display:inline-block;
+    margin-top:18px;
+    color:#0b7d6e;
+    font-weight:600;
+    text-decoration:none;
+    transition:.3s;
+}
+
+.learn-more:hover{
+    color:#075c52;
+    transform:translateX(5px);
 }
