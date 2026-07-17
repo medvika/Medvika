@@ -718,3 +718,11 @@ body{
     color:#075c52;
     transform:translateX(5px);
 }
+.hero{
+    padding-bottom:70px;
+}
+
+.hero-buttons{
+    margin-top:35px;
+    margin-bottom:20px;
+}
