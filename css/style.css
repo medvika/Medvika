@@ -60,9 +60,12 @@ padding:10px 0;
 }
 
 .logo img{
-    height:100px;
-    width:auto;
-    display:block;
+    width:140px;
+    height:auto;
+}
+
+.header{
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
 }
 @media (max-width:768px){
     .logo img{
