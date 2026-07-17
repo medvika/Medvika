@@ -469,3 +469,44 @@ body{
     padding:25px;
     border-radius:10px;
 }
+/* BLOG ARTICLE */
+
+.blog-section{
+    padding:60px 0;
+}
+
+.blog-section h1{
+    margin-bottom:20px;
+}
+
+.blog-section h2{
+    margin-top:35px;
+}
+
+.blog-section p{
+    line-height:1.8;
+}
+
+.info-box{
+    margin:30px 0;
+    padding:25px;
+    text-align:center;
+    font-weight:600;
+    border-radius:10px;
+    background:#f1f5f9;
+}
+
+
+.article-cta{
+    margin-top:40px;
+    padding:30px;
+    text-align:center;
+    border-radius:10px;
+}
+
+.article-cta a{
+    display:inline-block;
+    padding:12px 25px;
+    border-radius:25px;
+    text-decoration:none;
+}
