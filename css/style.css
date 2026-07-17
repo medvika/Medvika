@@ -510,3 +510,11 @@ body{
     border-radius:25px;
     text-decoration:none;
 }
+.blog-featured-image{
+    width:100%;
+    max-width:1000px;
+    display:block;
+    margin:25px auto;
+    border-radius:12px;
+    box-shadow:0 8px 25px rgba(0,0,0,.12);
+}
