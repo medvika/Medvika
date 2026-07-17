@@ -456,3 +456,16 @@ body{
 .faq-item p{
     line-height:1.7;
 }
+.article-header{
+    margin-bottom:30px;
+}
+
+.article-header p{
+    color:#666;
+}
+
+.article-cta{
+    margin-top:40px;
+    padding:25px;
+    border-radius:10px;
+}
