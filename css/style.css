@@ -437,3 +437,22 @@ height:55px;
 body{
     padding-top:100px;
 }
+/* FAQ */
+
+.faq-section{
+    padding:60px 0;
+    background:#f8f9fa;
+}
+
+.faq-item{
+    margin-bottom:25px;
+}
+
+.faq-item h3{
+    font-size:20px;
+    margin-bottom:10px;
+}
+
+.faq-item p{
+    line-height:1.7;
+}
