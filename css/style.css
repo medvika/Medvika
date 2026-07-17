@@ -620,3 +620,20 @@ body{
 .faq-item h3{
     margin-bottom:10px;
 }
+.cta-section{
+    padding:80px 20px;
+    text-align:center;
+    background:#0b7d6e;
+    color:#fff;
+}
+
+.cta-section h2{
+    color:#fff;
+    margin-bottom:20px;
+}
+
+.cta-section p{
+    max-width:700px;
+    margin:0 auto 30px;
+    line-height:1.8;
+}
