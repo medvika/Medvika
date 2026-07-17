@@ -8,4 +8,16 @@
 <priority>1.0</priority>
 </url>
 
+<url>
+<loc>https://medvika.co.in/pages/privacy-policy.html</loc>
+<lastmod>2026-07-17</lastmod>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>https://medvika.co.in/pages/terms.html</loc>
+<lastmod>2026-07-17</lastmod>
+<priority>0.5</priority>
+</url>
+
 </urlset>
