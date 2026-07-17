@@ -575,3 +575,32 @@ body{
     line-height:1.8;
     color:#555;
 }
+/* Service Page Sections */
+
+.services-detail,
+.process-section,
+.why-medvika{
+    padding:80px 20px;
+}
+
+.process-section{
+    background:#f8fbfc;
+}
+
+.why-medvika{
+    background:#ffffff;
+}
+
+.services-detail h2,
+.process-section h2,
+.why-medvika h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.services-detail > .container > p{
+    text-align:center;
+    max-width:750px;
+    margin:0 auto 40px;
+    color:#666;
+}
