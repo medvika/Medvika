@@ -434,3 +434,6 @@ height:55px;
     height: auto;
     display: block;
 }
+body{
+    padding-top:100px;
+}
