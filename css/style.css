@@ -518,3 +518,28 @@ body{
     border-radius:12px;
     box-shadow:0 8px 25px rgba(0,0,0,.12);
 }
+.toc{
+    background:#f8f9fa;
+    border-left:5px solid #0a7a5a;
+    padding:20px;
+    margin:30px 0;
+    border-radius:8px;
+}
+
+.toc ul{
+    margin:10px 0 0 20px;
+}
+
+.toc li{
+    margin:8px 0;
+}
+
+.toc a{
+    text-decoration:none;
+    color:#0a7a5a;
+    font-weight:500;
+}
+
+.toc a:hover{
+    text-decoration:underline;
+}
