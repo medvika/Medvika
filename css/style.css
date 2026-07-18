@@ -1549,3 +1549,63 @@ flex-wrap:wrap;
 .fa-whatsapp{
     font-size:22px !important;
 }
+/* ===================================
+   LEGAL PAGES
+=================================== */
+
+.legal-page {
+    padding: 140px 0 80px;
+    background: #f8fafc;
+}
+
+.legal-container {
+    max-width: 900px;
+    padding: 42px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.legal-container h1 {
+    margin-bottom: 12px;
+    color: #0f172a;
+    font-size: 42px;
+}
+
+.legal-container h2 {
+    margin-top: 34px;
+    margin-bottom: 12px;
+    color: #0f172a;
+    font-size: 24px;
+}
+
+.legal-container p {
+    margin-bottom: 16px;
+    color: #475569;
+    line-height: 1.8;
+}
+
+.legal-container a {
+    color: #0f766e;
+}
+
+@media (max-width: 768px) {
+
+    .legal-page {
+        padding: 115px 0 55px;
+    }
+
+    .legal-container {
+        width: 92%;
+        padding: 26px 20px;
+    }
+
+    .legal-container h1 {
+        font-size: 32px;
+    }
+
+    .legal-container h2 {
+        font-size: 22px;
+    }
+}
