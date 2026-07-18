@@ -65,3 +65,20 @@ function toggleMenu() {
     );
 }
 
+document.querySelectorAll(".faq-question").forEach(function (question) {
+    question.addEventListener("click", function () {
+        const faqItem = question.closest(".faq-item");
+        const faqAnswer = faqItem.querySelector(".faq-answer");
+        const isOpen = faqItem.classList.contains("active");
+
+        document.querySelectorAll(".faq-item.active").forEach(function (item) {
+            item.classList.remove("active");
+            item.querySelector(".faq-answer").style.maxHeight = null;
+        });
+
+        if (!isOpen) {
+            faqItem.classList.add("active");
+            faqAnswer.style.maxHeight = faqAnswer.scrollHeight + "px";
+        }
+    });
+});
