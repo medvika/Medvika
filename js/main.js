@@ -46,3 +46,59 @@ function sendConsultation(event){
     window.open(whatsappURL, "_blank");
 
 }
+document.addEventListener("DOMContentLoaded", function () {
+    const menuToggle = document.getElementById("menuToggle");
+    const navbar = document.getElementById("mainNavigation");
+    const navLinks = navbar
+        ? navbar.querySelectorAll("a")
+        : [];
+
+    if (!menuToggle || !navbar) {
+        return;
+    }
+
+    function closeMenu() {
+        menuToggle.classList.remove("active");
+        navbar.classList.remove("active");
+        menuToggle.setAttribute("aria-expanded", "false");
+        menuToggle.setAttribute(
+            "aria-label",
+            "Open navigation menu"
+        );
+    }
+
+    menuToggle.addEventListener("click", function () {
+        const menuIsOpen = navbar.classList.toggle("active");
+
+        menuToggle.classList.toggle("active", menuIsOpen);
+        menuToggle.setAttribute(
+            "aria-expanded",
+            String(menuIsOpen)
+        );
+        menuToggle.setAttribute(
+            "aria-label",
+            menuIsOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+        );
+    });
+
+    navLinks.forEach(function (link) {
+        link.addEventListener("click", closeMenu);
+    });
+
+    document.addEventListener("click", function (event) {
+        if (
+            !navbar.contains(event.target) &&
+            !menuToggle.contains(event.target)
+        ) {
+            closeMenu();
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (window.innerWidth > 768) {
+            closeMenu();
+        }
+    });
+});
