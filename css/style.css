@@ -886,3 +886,352 @@ body{
         transform: translateY(-8px) rotate(-45deg);
     }
 }
+/* ===================================
+   FINAL MOBILE RESPONSIVE OPTIMIZATION
+=================================== */
+
+@media (max-width: 768px) {
+
+    html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 90px;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    section {
+        padding: 55px 0;
+    }
+
+    section h2 {
+        font-size: 28px;
+        line-height: 1.25;
+        margin-bottom: 16px;
+    }
+
+    section p {
+        font-size: 16px;
+        line-height: 1.7;
+    }
+
+    /* HERO SECTION */
+
+    .hero {
+        min-height: auto;
+        padding: 55px 0 45px;
+    }
+
+    .hero-container,
+    .hero-content {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        gap: 30px;
+    }
+
+    .hero-left,
+    .hero-right {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .hero-left h1 {
+        font-size: 35px;
+        line-height: 1.18;
+        margin-bottom: 18px;
+    }
+
+    .hero-left p {
+        font-size: 16px;
+        line-height: 1.7;
+        margin-bottom: 24px;
+    }
+
+    .hero-tag,
+    .hero-badge {
+        display: inline-block;
+        font-size: 14px;
+        margin-bottom: 14px;
+    }
+
+    .hero-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .hero-buttons a,
+    .hero-buttons button {
+        width: 100%;
+        min-height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .hero-right img,
+    .hero-image {
+        display: block;
+        width: 100%;
+        max-width: 420px;
+        height: auto;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+
+    /* CHOOSE MEDVIKA AND ABOUT CARDS */
+
+    .features-grid,
+    .why-grid,
+    .about-points,
+    .services-container,
+    .services-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .feature-card,
+    .why-card,
+    .about-card,
+    .service-card {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+        padding: 24px 20px;
+    }
+
+    .feature-card h3,
+    .why-card h3,
+    .about-card h3,
+    .service-card h3 {
+        font-size: 21px;
+        line-height: 1.35;
+    }
+
+    /* ABOUT SECTION */
+
+    .about-container,
+    .about-content {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .about-text,
+    .about-image {
+        width: 100%;
+    }
+
+    /* SERVICES */
+
+    .services {
+        padding-top: 55px;
+        padding-bottom: 55px;
+    }
+
+    .service-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .service-card p {
+        flex-grow: 1;
+    }
+
+    .learn-more {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 0;
+    }
+
+    .services-cta,
+    .service-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        margin-top: 25px;
+    }
+
+    .services-cta a,
+    .service-buttons a {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* MEDICINE SEARCH */
+
+    .medicine-search,
+    .search-box {
+        width: 100%;
+        padding: 25px 18px;
+    }
+
+    .medicine-search form,
+    .search-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .medicine-search input,
+    .search-form input,
+    .medicine-search button,
+    .search-form button {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    /* FORMS */
+
+    .contact-container,
+    .quote-container,
+    .consultation-container,
+    .forms-container {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .contact-form,
+    .quote-form,
+    .consultation-form,
+    form {
+        width: 100%;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        max-width: 100%;
+        min-height: 48px;
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+
+    textarea {
+        min-height: 120px;
+    }
+
+    form button,
+    .submit-btn {
+        width: 100%;
+        min-height: 50px;
+    }
+
+    /* FAQ */
+
+    .faq-container,
+    .faq-list {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .faq-item {
+        padding: 20px 18px;
+        margin-bottom: 14px;
+    }
+
+    .faq-item h3,
+    .faq-question {
+        font-size: 18px;
+        line-height: 1.4;
+    }
+
+    /* FOOTER */
+
+    .footer {
+        padding: 45px 0 25px;
+    }
+
+    .footer-container,
+    .footer-content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+        text-align: center;
+    }
+
+    .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px 18px;
+    }
+
+    .footer-bottom {
+        margin-top: 25px;
+        padding-top: 20px;
+        text-align: center;
+    }
+
+    /* GENERAL BUTTONS */
+
+    .btn,
+    .primary-btn,
+    .secondary-btn,
+    .quote-btn,
+    .consultation-btn {
+        min-height: 48px;
+        padding: 13px 20px;
+    }
+
+    /* WHATSAPP FLOATING BUTTON */
+
+    .whatsapp-btn,
+    .floating-whatsapp {
+        right: 15px;
+        bottom: 15px;
+    }
+}
+
+/* SMALL MOBILE DEVICES */
+
+@media (max-width: 480px) {
+
+    .container {
+        width: 92%;
+    }
+
+    section {
+        padding: 45px 0;
+    }
+
+    .hero {
+        padding-top: 45px;
+    }
+
+    .hero-left h1 {
+        font-size: 31px;
+    }
+
+    section h2 {
+        font-size: 26px;
+    }
+
+    .feature-card,
+    .why-card,
+    .about-card,
+    .service-card,
+    .faq-item {
+        padding: 21px 17px;
+    }
+
+    .logo img {
+        width: 115px;
+    }
+}
