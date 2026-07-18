@@ -73,107 +73,130 @@ placeholder="Search medicine by Brand or Generic Name">
 <div id="results"></div>
 
 </div>
-
 <script type="module">
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SUPABASE_URL="https://etevzodzxhsdwidtrmw.supabase.co";
+const SUPABASE_URL =
+  "https://etevzodzxhsdwidtrmwv.supabase.co";
 
-const SUPABASE_KEY="sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+const SUPABASE_KEY =
+  "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
 
-const supabase=createClient(SUPABASE_URL,SUPABASE_KEY);
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
-const search=document.getElementById("search");
+const search = document.getElementById("search");
+const results = document.getElementById("results");
 
-const results=document.getElementById("results");
-
-function showLoading(){
-results.innerHTML='<div class="loading">Searching...</div>';
+function showLoading() {
+  results.innerHTML =
+    '<div class="loading">Searching...</div>';
 }
 
-function showError(msg){
-results.innerHTML=`<div class="error">${msg}</div>`;
+function showError(message) {
+  results.innerHTML =
+    `<div class="error">${message}</div>`;
 }
 
-function showEmpty(){
-results.innerHTML='<div class="empty">No medicines found.</div>';
+function showEmpty() {
+  results.innerHTML =
+    '<div class="empty">No medicines found.</div>';
 }
 
-search.addEventListener("input",async()=>{
-
-const value=search.value.trim();
-
-if(value.length<2){
-results.innerHTML="";
-return;
+function escapeHtml(value) {
+  const element = document.createElement("div");
+  element.textContent = value ?? "";
+  return element.innerHTML;
 }
 
-showLoading();
+search.addEventListener("input", async () => {
+  const value = search.value.trim();
 
-try{
+  if (value.length < 2) {
+    results.innerHTML = "";
+    return;
+  }
 
-const {data,error}=await supabase
-.from("medicines")
-.select("*")
-.or(`brand_name.ilike.%${value}%,generic_name.ilike.%${value}%`)
-.limit(20);
+  showLoading();
 
-if(error){
+  try {
+    const { data, error } = await supabase
+      .from("medicines")
+      .select(`
+        id,
+        brand_name,
+        generic_name,
+        composition,
+        strength,
+        dosage_form,
+        mrp
+      `)
+      .eq("is_active", true)
+      .eq("is_verified", true)
+      .or(
+        `brand_name.ilike.%${value}%,generic_name.ilike.%${value}%,composition.ilike.%${value}%`
+      )
+      .order("brand_name")
+      .limit(20);
 
-console.error(error);
+    if (error) {
+      console.error(error);
+      showError(error.message);
+      return;
+    }
 
-showError(error.message);
+    if (!data || data.length === 0) {
+      showEmpty();
+      return;
+    }
 
-return;
+    results.innerHTML = data
+      .map((item) => {
+        const price =
+          item.mrp !== null
+            ? `₹${Number(item.mrp).toFixed(2)}`
+            : "Not available";
 
-}
+        return `
+          <div class="card">
+            <h2>${escapeHtml(item.brand_name)}</h2>
 
-if(!data || data.length===0){
+            <p>
+              <b>Generic:</b>
+              ${escapeHtml(item.generic_name || "-")}
+            </p>
 
-showEmpty();
+            <p>
+              <b>Composition:</b>
+              ${escapeHtml(item.composition || "-")}
+            </p>
 
-return;
+            <p>
+              <b>Strength:</b>
+              ${escapeHtml(item.strength || "-")}
+            </p>
 
-}
+            <p>
+              <b>Dosage form:</b>
+              ${escapeHtml(item.dosage_form || "-")}
+            </p>
 
-results.innerHTML="";
-
-data.forEach(item=>{
-
-results.innerHTML+=`
-
-<div class="card">
-
-<h2>${item.brand_name ?? ""}</h2>
-
-<p><b>Generic:</b> ${item.generic_name ?? "-"}</p>
-
-<p><b>Strength:</b> ${item.strength ?? "-"}</p>
-
-<p><b>Manufacturer:</b> ${item.manufacturer ?? "-"}</p>
-
-<p><b>MRP:</b> ₹${item.mrp ?? "-"}</p>
-
-</div>
-
-`;
-
+            <p>
+              <b>MRP:</b>
+              ${price}
+            </p>
+          </div>
+        `;
+      })
+      .join("");
+  } catch (error) {
+    console.error(error);
+    showError("Medicine search is temporarily unavailable.");
+  }
 });
+</script>
 
-}
-
-catch(err){
-
-console.error(err);
-
-showError(err.message);
-
-}
-
-});
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/medicine-search.js"></script>
 </body>
 </html>
