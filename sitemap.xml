@@ -2,27 +2,60 @@
 
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-<url>
-<loc>https://medvika.co.in/</loc>
-<lastmod>2026-07-17</lastmod>
-<priority>1.0</priority>
-</url>
+    <url>
+        <loc>https://medvika.co.in/</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
 
-<url>
-<loc>https://medvika.co.in/pages/privacy-policy.html</loc>
-<lastmod>2026-07-17</lastmod>
-<priority>0.5</priority>
-</url>
+    <url>
+        <loc>https://medvika.co.in/services/pharmacy-setup.html</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
 
-<url>
-<loc>https://medvika.co.in/pages/terms.html</loc>
-<lastmod>2026-07-17</lastmod>
-<priority>0.5</priority>
-</url>
+    <url>
+        <loc>https://medvika.co.in/services/pharmacy-audit.html</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://medvika.co.in/services/business-growth.html</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://medvika.co.in/services/healthcare-consultation.html</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://medvika.co.in/blog/</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://medvika.co.in/pages/privacy-policy.html</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <url>
+        <loc>https://medvika.co.in/pages/terms.html</loc>
+        <lastmod>2026-07-18</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
 
 </urlset>
-<url>
-<loc>https://medvika.co.in/blog.html</loc>
-<lastmod>2026-07-17</lastmod>
-<priority>0.8</priority>
-</url>
