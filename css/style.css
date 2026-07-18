@@ -1507,3 +1507,39 @@ flex-wrap:wrap;
         padding: 0 18px 18px;
     }
 }
+.footer-social{
+display:flex;
+gap:14px;
+margin-top:18px;
+}
+
+.footer-social a{
+width:44px;
+height:44px;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#1e293b;
+color:#fff;
+border-radius:50%;
+font-size:18px;
+transition:.3s;
+text-decoration:none;
+}
+
+.footer-social a:hover{
+background:#22c55e;
+transform:translateY(-3px);
+}
+
+.footer-column i{
+margin-right:8px;
+}
+
+@media(max-width:768px){
+
+.footer-social{
+justify-content:center;
+}
+
+}
