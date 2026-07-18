@@ -46,17 +46,22 @@ function sendConsultation(event){
     window.open(whatsappURL, "_blank");
 
 }
-document.addEventListener("DOMContentLoaded", function () {
+function toggleMenu() {
     const menuToggle = document.getElementById("menuToggle");
-const mainNavigation = document.getElementById("mainNavigation");
+    const mainNavigation = document.getElementById("mainNavigation");
 
-if (menuToggle && mainNavigation) {
-    menuToggle.onclick = function () {
-        mainNavigation.classList.toggle("active");
-        menuToggle.classList.toggle("active");
+    if (!menuToggle || !mainNavigation) {
+        return;
+    }
 
-        const isOpen = mainNavigation.classList.contains("active");
-        menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    };
+    mainNavigation.classList.toggle("active");
+    menuToggle.classList.toggle("active");
+
+    const isOpen = mainNavigation.classList.contains("active");
+
+    menuToggle.setAttribute(
+        "aria-expanded",
+        isOpen ? "true" : "false"
+    );
 }
-});
+
