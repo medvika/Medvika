@@ -1,36 +1,139 @@
+const SUPABASE_URL = "https://etevzodzxhsdwidtrmwv.supabase.co";
+const SUPABASE_KEY =
+  "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
 
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("medicineSearchForm");
-    const type = document.getElementById("medicineSearchType");
-    const input = document.getElementById("medicineSearchInput");
-    const title = document.getElementById("medicineResultTitle");
-    const text = document.getElementById("medicineResultText");
-    const whatsapp = document.getElementById("medicineWhatsAppLink");
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
-    if (!form || !type || !input || !title || !text || !whatsapp) return;
+const searchInput = document.getElementById("medicineSearchInput");
+const searchButton = document.getElementById("medicineSearchButton");
+const resultsContainer = document.getElementById("medicineSearchResults");
 
-    form.addEventListener("submit", function (event) {
-        event.preventDefault();
+async function searchMedicines() {
+  const searchTerm = searchInput.value.trim();
 
-        const searchTerm = input.value.trim();
-        const searchType = type.value;
+  if (searchTerm.length < 2) {
+    resultsContainer.innerHTML =
+      "<p>Please enter at least 2 characters.</p>";
+    return;
+  }
 
-        if (!searchTerm) {
-            input.focus();
-            return;
-        }
+  resultsContainer.innerHTML = "<p>Searching medicines...</p>";
+  searchButton.disabled = true;
 
-        title.textContent = 'Request received for "' + searchTerm + '"';
-        text.textContent =
-            "The full medicine database is being expanded. You can send this search " +
-            "request to Medvika for assistance.";
+  try {
+    const { data, error } = await supabaseClient
+      .from("medicines")
+      .select(`
+        id,
+        brand_name,
+        generic_name,
+        composition,
+        strength,
+        dosage_form,
+        prescription_status,
+        mrp,
+        slug
+      `)
+      .eq("is_active", true)
+      .eq("is_verified", true)
+      .or(
+        `brand_name.ilike.%${searchTerm}%,generic_name.ilike.%${searchTerm}%,composition.ilike.%${searchTerm}%`
+      )
+      .order("brand_name")
+      .limit(20);
 
-        const message =
-            "Hello Medvika, I need medicine information.%0A%0A" +
-            "Search type: " + encodeURIComponent(searchType) + "%0A" +
-            "Search term: " + encodeURIComponent(searchTerm);
+    if (error) {
+      throw error;
+    }
 
-        whatsapp.href = "https://wa.me/918979841035?text=" + message;
-        whatsapp.focus();
-    });
+    displayMedicineResults(data);
+  } catch (error) {
+    console.error("Medicine search error:", error);
+
+    resultsContainer.innerHTML = `
+      <p>
+        Medicine search is temporarily unavailable.
+        Please try again shortly.
+      </p>
+    `;
+  } finally {
+    searchButton.disabled = false;
+  }
+}
+
+function displayMedicineResults(medicines) {
+  if (!medicines || medicines.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="medicine-no-results">
+        <h3>No medicine found</h3>
+        <p>Try searching by brand name, generic name or composition.</p>
+      </div>
+    `;
+    return;
+  }
+
+  resultsContainer.innerHTML = medicines
+    .map((medicine) => {
+      const price =
+        medicine.mrp !== null
+          ? `₹${Number(medicine.mrp).toFixed(2)}`
+          : "Price not available";
+
+      return `
+        <article class="medicine-result-card">
+          <h3>${escapeHtml(medicine.brand_name)}</h3>
+
+          <p>
+            <strong>Generic:</strong>
+            ${escapeHtml(medicine.generic_name)}
+          </p>
+
+          <p>
+            <strong>Composition:</strong>
+            ${escapeHtml(medicine.composition)}
+          </p>
+
+          ${
+            medicine.strength
+              ? `<p><strong>Strength:</strong> ${escapeHtml(
+                  medicine.strength
+                )}</p>`
+              : ""
+          }
+
+          ${
+            medicine.dosage_form
+              ? `<p><strong>Form:</strong> ${escapeHtml(
+                  medicine.dosage_form
+                )}</p>`
+              : ""
+          }
+
+          <p>
+            <strong>Status:</strong>
+            ${escapeHtml(medicine.prescription_status || "Not specified")}
+          </p>
+
+          <p><strong>MRP:</strong> ${price}</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function escapeHtml(value) {
+  const element = document.createElement("div");
+  element.textContent = value ?? "";
+  return element.innerHTML;
+}
+
+searchButton.addEventListener("click", searchMedicines);
+
+searchInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    searchMedicines();
+  }
 });
