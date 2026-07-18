@@ -1554,7 +1554,7 @@ flex-wrap:wrap;
 =================================== */
 
 .legal-page {
-    padding: 140px 0 80px;
+    padding: 180px 0 80px;
     background: #f8fafc;
 }
 
@@ -1645,4 +1645,27 @@ background:#25D366;
 body{
 padding-bottom:65px;
 }
+}
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+main,
+.legal-page,
+.service-page,
+.blog-page {
+    margin-top: 110px;
+}
+
+@media (max-width:768px) {
+    main,
+    .legal-page,
+    .service-page,
+    .blog-page {
+        margin-top: 140px;
+    }
 }
