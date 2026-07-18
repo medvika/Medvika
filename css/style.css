@@ -750,3 +750,13 @@ body{
         padding-top: 60px;
     }
 }
+@media (max-width: 768px) {
+    .service-hero {
+        padding-top: 35px;
+    }
+
+    .service-hero .section-tag {
+        display: block;
+        margin-bottom: 12px;
+    }
+}
