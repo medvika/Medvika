@@ -58,3 +58,5 @@ if (menuToggle && mainNavigation) {
         const isOpen = mainNavigation.classList.contains("active");
         menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
     };
+}
+});
