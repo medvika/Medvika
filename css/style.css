@@ -726,3 +726,27 @@ body{
     margin-top:35px;
     margin-bottom:20px;
 }
+@media (max-width: 768px) {
+
+    header {
+        position: relative;
+    }
+
+    .header-container {
+        padding: 15px 20px;
+    }
+
+    nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .quote-btn {
+        margin-top: 10px;
+    }
+
+    .service-hero {
+        padding-top: 60px;
+    }
+}
