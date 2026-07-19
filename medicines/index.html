@@ -592,8 +592,8 @@
             <h1>Find Medicine Information Easily</h1>
 
             <p class="hero-description">
-                Search verified medicine records by brand name, generic name,
-                composition or dosage form.
+                Search medicine records by brand name, generic name,
+composition, manufacturer or category.
             </p>
 
         </div>
@@ -892,93 +892,71 @@
     }
 
     async function searchMedicines() {
-        const rawValue = searchInput.value;
-        const value = sanitiseSearchTerm(rawValue);
+    const rawValue = searchInput.value;
+    const value = sanitiseSearchTerm(rawValue);
 
-        clearSearch.style.display =
-            rawValue.length > 0 ? "grid" : "none";
+    clearSearch.style.display =
+        rawValue.length > 0 ? "grid" : "none";
 
-        whatsappLink.href =
-            "https://wa.me/918979841035?text=" +
-            encodeURIComponent(
-                `Hello Medvika, I need information about: ${value}`
-            );
+    whatsappLink.href =
+        "https://wa.me/918979841035?text=" +
+        encodeURIComponent(
+            `Hello Medvika, I need information about: ${value}`
+        );
 
-        if (value.length < 2) {
-            showInitialState();
+    if (value.length < 2) {
+        showInitialState();
+        return;
+    }
+
+    const requestId = ++latestRequest;
+
+    showLoading();
+
+    try {
+        const { data, error } = await supabase.rpc(
+            "search_medicines",
+            {
+                search_term: value,
+                result_limit: 30,
+                result_offset: 0
+            }
+        );
+
+        if (requestId !== latestRequest) {
             return;
         }
 
-        const requestId = ++latestRequest;
-        showLoading();
-
-        try {
-            let query = supabase
-                .from("medicines")
-                .select(`
-                    id,
-                    brand_name,
-                    generic_name,
-                    composition,
-                    strength,
-                    dosage_form,
-                    pack_size,
-                    mrp,
-                    is_verified
-                `)
-                .eq("is_active", true)
-                .eq("is_verified", true);
-
-            const selectedType = searchType.value;
-
-            if (selectedType === "all") {
-                query = query.or(
-                    [
-                        `brand_name.ilike.%${value}%`,
-                        `generic_name.ilike.%${value}%`,
-                        `composition.ilike.%${value}%`,
-                        `dosage_form.ilike.%${value}%`
-                    ].join(",")
-                );
-            } else {
-                query = query.ilike(
-                    selectedType,
-                    `%${value}%`
-                );
-            }
-
-            const { data, error } = await query
-                .order("brand_name", {
-                    ascending: true
-                })
-                .limit(30);
-
-            if (requestId !== latestRequest) {
-                return;
-            }
-
-            if (error) {
-                console.error("Supabase search error:", error);
-                showError(
-                    "The medicine search could not be completed. Please try again."
-                );
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                showEmpty(value);
-                return;
-            }
-
-            renderResults(data);
-
-        } catch (error) {
-            console.error("Medicine search error:", error);
+        if (error) {
+            console.error(
+                "Supabase medicine search error:",
+                error
+            );
 
             showError(
-                "Medicine search is temporarily unavailable."
+                "The medicine search could not be completed. Please try again."
             );
+
+            return;
         }
+
+        if (!data || data.length === 0) {
+            showEmpty(value);
+            return;
+        }
+
+        renderResults(data);
+
+    } catch (error) {
+        console.error(
+            "Medicine search error:",
+            error
+        );
+
+        showError(
+            "Medicine search is temporarily unavailable."
+        );
+    }
     }
 
     function scheduleSearch() {
@@ -999,11 +977,6 @@
     searchInput.addEventListener(
         "input",
         scheduleSearch
-    );
-
-    searchType.addEventListener(
-        "change",
-        searchMedicines
     );
 
     clearSearch.addEventListener("click", () => {
