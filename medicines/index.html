@@ -810,86 +810,99 @@ composition, manufacturer or category.
         return `₹${price.toFixed(2)}`;
     }
 
-    function renderResults(data) {
-        const count = data.length;
+   function renderResults(data) {
+    const count = data.length;
 
-        resultCount.textContent =
-            `${count} medicine${count === 1 ? "" : "s"} found`;
+    resultCount.textContent =
+        `${count} medicine${count === 1 ? "" : "s"} found`;
 
-        results.innerHTML = `
-            <div class="results-grid">
-                ${data.map((item) => `
-                    <article class="medicine-card">
+    results.innerHTML = `
+        <div class="results-grid">
+            ${data.map((item) => `
+                <article class="medicine-card">
 
-                        <div class="medicine-card-top">
-                            <h3 class="medicine-name">
-                                ${escapeHtml(item.brand_name || "Unnamed medicine")}
-                            </h3>
+                    <div class="medicine-card-top">
+                        <h3 class="medicine-name">
+                            ${escapeHtml(item.brand_name || "Unnamed medicine")}
+                        </h3>
 
+                        ${item.is_verified ? `
                             <span class="verified-badge">
                                 <i class="fa-solid fa-circle-check"></i>
                                 Verified
                             </span>
+                        ` : ""}
+                    </div>
+
+                    <p class="generic-name">
+                        ${escapeHtml(
+                            item.generic_name ||
+                            "Generic name not available"
+                        )}
+                    </p>
+
+                    <div class="medicine-details">
+
+                        <div class="detail full">
+                            <span>Composition</span>
+                            <strong>
+                                ${escapeHtml(
+                                    item.composition || "Not available"
+                                )}
+                            </strong>
                         </div>
 
-                        <p class="generic-name">
-                            ${escapeHtml(
-                                item.generic_name ||
-                                "Generic name not available"
-                            )}
-                        </p>
-
-                        <div class="medicine-details">
-
-                            <div class="detail full">
-                                <span>Composition</span>
-                                <strong>
-                                    ${escapeHtml(
-                                        item.composition || "Not available"
-                                    )}
-                                </strong>
-                            </div>
-
-                            <div class="detail">
-                                <span>Strength</span>
-                                <strong>
-                                    ${escapeHtml(
-                                        item.strength || "Not available"
-                                    )}
-                                </strong>
-                            </div>
-
-                            <div class="detail">
-                                <span>Dosage form</span>
-                                <strong>
-                                    ${escapeHtml(
-                                        item.dosage_form || "Not available"
-                                    )}
-                                </strong>
-                            </div>
-
-                            <div class="detail">
-                                <span>Pack size</span>
-                                <strong>
-                                    ${escapeHtml(
-                                        item.pack_size || "Not available"
-                                    )}
-                                </strong>
-                            </div>
-
-                            <div class="detail">
-                                <span>MRP</span>
-                                <strong class="price">
-                                    ${formatPrice(item.mrp)}
-                                </strong>
-                            </div>
-
+                        <div class="detail">
+                            <span>Strength</span>
+                            <strong>
+                                ${escapeHtml(
+                                    item.strength || "Not available"
+                                )}
+                            </strong>
                         </div>
-                    </article>
-                `).join("")}
-            </div>
-        `;
-    }
+
+                        <div class="detail">
+                            <span>Dosage form</span>
+                            <strong>
+                                ${escapeHtml(
+                                    item.dosage_form || "Not available"
+                                )}
+                            </strong>
+                        </div>
+
+                        <div class="detail">
+                            <span>Pack size</span>
+                            <strong>
+                                ${escapeHtml(
+                                    item.pack_size || "Not available"
+                                )}
+                            </strong>
+                        </div>
+
+                        <div class="detail">
+                            <span>MRP</span>
+                            <strong class="price">
+                                ${formatPrice(item.mrp)}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    ${item.slug ? `
+                        <a
+                            href="details.html?slug=${encodeURIComponent(item.slug)}"
+                            class="view-details-btn"
+                        >
+                            View Medicine Details
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    ` : ""}
+
+                </article>
+            `).join("")}
+        </div>
+    `;
+   }
 
     async function searchMedicines() {
     const rawValue = searchInput.value;
