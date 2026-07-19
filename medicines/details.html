@@ -485,6 +485,12 @@
 
     const medicineContent =
         document.getElementById("medicineContent");
+   
+    const relatedSection =
+    document.getElementById("relatedSection");
+
+const relatedMedicines =
+    document.getElementById("relatedMedicines");
 
     function escapeHtml(value) {
         const element = document.createElement("div");
@@ -520,6 +526,7 @@
         `;
     }
 
+   
     async function loadMedicine() {
         const params = new URLSearchParams(window.location.search);
         const slug = params.get("slug");
