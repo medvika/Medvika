@@ -522,41 +522,23 @@
         </div>
 
         <div class="medicine-search-card reveal-item">
-            <form id="medicineSearchForm">
-                <label for="medicineSearchType">Search by</label>
-                <select id="medicineSearchType" required>
-                    <option value="Medicine name">Medicine or brand name</option>
-                    <option value="Generic name">Generic name</option>
-                    <option value="Manufacturer">Manufacturer</option>
-                </select>
-
-                <label for="medicineSearchInput">Enter search term</label>
-                <div class="medicine-search-box">
-                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                    <input
-                        id="medicineSearchInput"
-                        type="search"
-                        placeholder="Example: Paracetamol"
-                        autocomplete="off"
-                        required
-                    >
-                </div>
-
-                <button type="submit" class="medicine-search-button">
-                    Search Medicine
-                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                </button>
-            </form>
+            <div class="medicine-search-home-action">
+    <a href="/medicine/" class="medicine-search-button">
+        Open Medicine Search
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+    </a>
+            </div>
 
             <div class="medicine-search-result" id="medicineSearchResult" aria-live="polite">
                 <div class="medicine-result-icon">
                     <i class="fa-solid fa-prescription-bottle-medical" aria-hidden="true"></i>
                 </div>
                 <div>
-                    <strong id="medicineResultTitle">Enter a medicine to begin</strong>
-                    <p id="medicineResultText">
-                        Search requests can be sent directly to the Medvika team.
-                    </p>
+                   <strong>Search the Medvika medicine database</strong>
+<p>
+    Open the dedicated medicine search page to search by brand,
+    generic name or composition.
+</p>
                     <a
                         id="medicineWhatsAppLink"
                         href="https://wa.me/918979841035"
