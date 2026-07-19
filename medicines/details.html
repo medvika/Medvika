@@ -526,40 +526,14 @@ const relatedMedicines =
         `;
     }
 
-    async function loadRelatedMedicines(currentMedicine) {
+   async function loadRelatedMedicines(currentMedicine) {
     relatedSection.hidden = true;
     relatedMedicines.innerHTML = "";
 
     const genericName =
         currentMedicine.generic_name?.trim() || "";
 
-    const composition =
-        currentMedicine.composition?.trim() || "";
-
-    const therapeuticClass =
-        currentMedicine.therapeutic_class?.trim() || "";
-
-    const conditions = [];
-
-    if (genericName) {
-        conditions.push(
-            `generic_name.ilike.${genericName}`
-        );
-    }
-
-    if (composition) {
-        conditions.push(
-            `composition.ilike.${composition}`
-        );
-    }
-
-    if (therapeuticClass) {
-        conditions.push(
-            `therapeutic_class.ilike.${therapeuticClass}`
-        );
-    }
-
-    if (conditions.length === 0) {
+    if (!genericName) {
         return;
     }
 
@@ -576,15 +550,12 @@ const relatedMedicines =
             is_verified
         `)
         .eq("is_active", true)
+        .ilike("generic_name", genericName)
         .neq("slug", currentMedicine.slug)
-        .or(conditions.join(","))
         .limit(6);
 
     if (error) {
-        console.error(
-            "Related medicines error:",
-            error
-        );
+        console.error("Related medicines error:", error);
         return;
     }
 
@@ -592,90 +563,62 @@ const relatedMedicines =
         return;
     }
 
-    const uniqueMedicines = Array.from(
-        new Map(
-            data
-                .filter(item => item.slug)
-                .map(item => [item.slug, item])
-        ).values()
-    );
+    relatedMedicines.innerHTML = data.map(item => `
+        <article class="related-card">
 
-    if (uniqueMedicines.length === 0) {
-        return;
-    }
+            <h3>
+                ${escapeHtml(
+                    item.brand_name || "Unnamed medicine"
+                )}
+            </h3>
 
-    relatedMedicines.innerHTML =
-        uniqueMedicines.map(item => `
-            <article class="related-card">
+            <p class="related-generic">
+                ${escapeHtml(
+                    item.generic_name ||
+                    "Generic name not available"
+                )}
+            </p>
 
-                <div class="medicine-card-top">
-                    <h3>
-                        ${escapeHtml(
-                            item.brand_name ||
-                            "Unnamed medicine"
-                        )}
-                    </h3>
-
-                    ${item.is_verified ? `
-                        <span class="verified-badge">
-                            <i class="fa-solid fa-circle-check"></i>
-                            Verified
-                        </span>
-                    ` : ""}
-                </div>
-
-                <p class="related-generic">
+            <div class="related-meta">
+                <div>
+                    <strong>Composition:</strong>
                     ${escapeHtml(
-                        item.generic_name ||
-                        "Generic name not available"
+                        item.composition ||
+                        "Not available"
                     )}
-                </p>
-
-                <div class="related-meta">
-
-                    <div>
-                        <strong>Composition:</strong>
-                        ${escapeHtml(
-                            item.composition ||
-                            "Not available"
-                        )}
-                    </div>
-
-                    <div>
-                        <strong>Strength:</strong>
-                        ${escapeHtml(
-                            item.strength ||
-                            "Not available"
-                        )}
-                    </div>
-
-                    <div>
-                        <strong>Form:</strong>
-                        ${escapeHtml(
-                            item.dosage_form ||
-                            "Not available"
-                        )}
-                    </div>
-
                 </div>
 
-                <a
-                    class="related-link"
-                    href="details.html?slug=${encodeURIComponent(
-                        item.slug
-                    )}"
-                >
-                    View Details
-                    <i class="fa-solid fa-arrow-right"></i>
-                </a>
+                <div>
+                    <strong>Strength:</strong>
+                    ${escapeHtml(
+                        item.strength ||
+                        "Not available"
+                    )}
+                </div>
 
-            </article>
-        `).join("");
+                <div>
+                    <strong>Form:</strong>
+                    ${escapeHtml(
+                        item.dosage_form ||
+                        "Not available"
+                    )}
+                </div>
+            </div>
+
+            <a
+                class="related-link"
+                href="details.html?slug=${encodeURIComponent(item.slug)}"
+            >
+                View Details
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+        </article>
+    `).join("");
 
     relatedSection.hidden = false;
-                            }
-   
-    async function loadMedicine() {
+   }
+       async function loadMedicine() {
         const params = new URLSearchParams(window.location.search);
         const slug = params.get("slug");
 
