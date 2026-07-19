@@ -1,201 +1,1019 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Medicine Search | Medvika</title>
+    <meta charset="UTF-8">
 
-<style>
-body{
-    font-family:Arial,sans-serif;
-    margin:0;
-    background:#f5f5f5;
-}
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-.container{
-    max-width:900px;
-    margin:auto;
-    padding:20px;
-}
+    <meta
+        name="description"
+        content="Search medicine information by brand name, generic name or composition using Medvika Healthcare Solutions."
+    >
 
-h1{
-    text-align:center;
-    color:#0d6efd;
-}
+    <title>Medicine Search | Medvika Healthcare Solutions</title>
 
-#search{
-    width:100%;
-    padding:16px;
-    border-radius:10px;
-    border:1px solid #ccc;
-    font-size:18px;
-    box-sizing:border-box;
-}
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
-.card{
-    background:white;
-    margin-top:15px;
-    padding:15px;
-    border-radius:10px;
-    box-shadow:0 2px 6px rgba(0,0,0,.15);
-}
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
 
-.loading{
-    text-align:center;
-    color:#0d6efd;
-    margin-top:20px;
-}
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-.error{
-    color:red;
-    text-align:center;
-    margin-top:20px;
-}
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
 
-.empty{
-    color:#666;
-    text-align:center;
-    margin-top:20px;
-}
-</style>
+    <style>
+        :root {
+            --primary: #0866c6;
+            --primary-dark: #064c95;
+            --secondary: #0f9f78;
+            --background: #f4f8fc;
+            --surface: #ffffff;
+            --text: #172033;
+            --muted: #667085;
+            --border: #dbe4ef;
+            --danger: #c62828;
+            --warning-bg: #fff8e6;
+            --shadow: 0 12px 35px rgba(15, 35, 65, 0.09);
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", Arial, sans-serif;
+            color: var(--text);
+            background: var(--background);
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+        }
+
+        .header-inner {
+            width: min(1180px, calc(100% - 32px));
+            min-height: 76px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand img {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+        }
+
+        .brand-text strong {
+            display: block;
+            color: var(--primary-dark);
+            font-size: 17px;
+        }
+
+        .brand-text span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px 18px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: white;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .hero {
+            padding: 70px 0 38px;
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(8, 102, 198, 0.16),
+                    transparent 38%
+                ),
+                linear-gradient(180deg, #ffffff, var(--background));
+        }
+
+        .container {
+            width: min(1100px, calc(100% - 32px));
+            margin: auto;
+        }
+
+        .hero-content {
+            max-width: 780px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            margin-bottom: 14px;
+            border-radius: 999px;
+            background: rgba(8, 102, 198, 0.1);
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(34px, 6vw, 58px);
+            line-height: 1.08;
+            color: #10213a;
+        }
+
+        .hero-description {
+            max-width: 690px;
+            margin: 20px auto 0;
+            color: var(--muted);
+            font-size: 17px;
+        }
+
+        .search-panel {
+            position: relative;
+            z-index: 5;
+            width: min(960px, calc(100% - 32px));
+            margin: 10px auto 0;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 210px minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #344054;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .field select,
+        .search-input-wrap {
+            width: 100%;
+            min-height: 54px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: white;
+        }
+
+        .field select {
+            padding: 0 14px;
+            color: var(--text);
+            outline: none;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input-wrap > i {
+            position: absolute;
+            left: 17px;
+            color: var(--muted);
+        }
+
+        #search {
+            width: 100%;
+            min-height: 52px;
+            padding: 0 50px 0 46px;
+            border: 0;
+            border-radius: 13px;
+            outline: none;
+            color: var(--text);
+            background: transparent;
+        }
+
+        #clearSearch {
+            position: absolute;
+            right: 9px;
+            width: 36px;
+            height: 36px;
+            display: none;
+            place-items: center;
+            border: 0;
+            border-radius: 50%;
+            background: #edf2f7;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .search-button {
+            min-height: 54px;
+            padding: 0 23px;
+            border: 0;
+            border-radius: 13px;
+            background: linear-gradient(
+                135deg,
+                var(--primary),
+                var(--primary-dark)
+            );
+            color: white;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(8, 102, 198, 0.23);
+        }
+
+        .search-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .search-help {
+            margin: 14px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .main-content {
+            padding: 36px 0 70px;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+
+        .results-header h2 {
+            margin: 0;
+            font-size: 23px;
+        }
+
+        #resultCount {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .state-card {
+            padding: 35px 20px;
+            border: 1px dashed #c8d4e3;
+            border-radius: var(--radius);
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .state-card i {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--primary);
+            font-size: 34px;
+        }
+
+        .loading-spinner {
+            width: 35px;
+            height: 35px;
+            margin: 0 auto 14px;
+            border: 4px solid #dfe9f4;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .medicine-card {
+            position: relative;
+            overflow: hidden;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
+        }
+
+        .medicine-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 5px;
+            background: linear-gradient(
+                180deg,
+                var(--primary),
+                var(--secondary)
+            );
+        }
+
+        .medicine-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .medicine-name {
+            margin: 0;
+            color: #10213a;
+            font-size: 21px;
+            line-height: 1.25;
+        }
+
+        .verified-badge {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #e8f8f2;
+            color: #087b5d;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .generic-name {
+            margin: 7px 0 17px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .medicine-details {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .detail {
+            padding: 11px 12px;
+            border-radius: 11px;
+            background: #f7f9fc;
+        }
+
+        .detail.full {
+            grid-column: 1 / -1;
+        }
+
+        .detail span {
+            display: block;
+            margin-bottom: 3px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .detail strong {
+            display: block;
+            color: #27364e;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .price {
+            color: var(--secondary) !important;
+        }
+
+        .assistance-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-top: 28px;
+            padding: 22px;
+            border-radius: var(--radius);
+            background: #10213a;
+            color: white;
+        }
+
+        .assistance-card h3 {
+            margin: 0 0 5px;
+        }
+
+        .assistance-card p {
+            margin: 0;
+            color: #ccd6e4;
+        }
+
+        .whatsapp-link {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 17px;
+            border-radius: 11px;
+            background: #25d366;
+            color: white;
+            font-weight: 800;
+        }
+
+        .disclaimer {
+            margin-top: 28px;
+            padding: 18px;
+            border: 1px solid #f1dfaa;
+            border-radius: 14px;
+            background: var(--warning-bg);
+            color: #745b17;
+            font-size: 13px;
+        }
+
+        footer {
+            padding: 25px 16px;
+            border-top: 1px solid var(--border);
+            background: white;
+            color: var(--muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-button {
+                width: 100%;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .header-inner {
+                min-height: 68px;
+            }
+
+            .brand img {
+                width: 45px;
+                height: 45px;
+            }
+
+            .brand-text span {
+                display: none;
+            }
+
+            .home-link span {
+                display: none;
+            }
+
+            .hero {
+                padding-top: 50px;
+            }
+
+            .search-panel {
+                padding: 17px;
+            }
+
+            .medicine-details {
+                grid-template-columns: 1fr;
+            }
+
+            .detail.full {
+                grid-column: auto;
+            }
+
+            .assistance-card {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="container">
+<header class="site-header">
+    <div class="header-inner">
 
-<h1>💊 Medicine Search</h1>
+        <a href="/" class="brand">
+            <img src="../logo.png" alt="Medvika Healthcare Solutions logo">
 
-<input
-id="search"
-placeholder="Search medicine by Brand or Generic Name">
+            <div class="brand-text">
+                <strong>Medvika Healthcare</strong>
+                <span>Healthcare & Pharmacy Consulting</span>
+            </div>
+        </a>
 
-<div id="results"></div>
+        <a href="/" class="home-link">
+            <i class="fa-solid fa-house"></i>
+            <span>Back to Home</span>
+        </a>
 
-</div>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+
+            <span class="eyebrow">
+                <i class="fa-solid fa-capsules"></i>
+                Medicine Information
+            </span>
+
+            <h1>Find Medicine Information Easily</h1>
+
+            <p class="hero-description">
+                Search verified medicine records by brand name, generic name,
+                composition or dosage form.
+            </p>
+
+        </div>
+    </div>
+</section>
+
+<section class="search-panel">
+
+    <form id="searchForm" class="search-grid">
+
+        <div class="field">
+            <label for="searchType">Search by</label>
+
+            <select id="searchType">
+                <option value="all">All fields</option>
+                <option value="brand_name">Brand name</option>
+                <option value="generic_name">Generic name</option>
+                <option value="composition">Composition</option>
+                <option value="dosage_form">Dosage form</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="search">Medicine name or composition</label>
+
+            <div class="search-input-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Example: Dolo, Paracetamol or Tablet"
+                    autocomplete="off"
+                    enterkeyhint="search"
+                >
+
+                <button
+                    id="clearSearch"
+                    type="button"
+                    aria-label="Clear search"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="search-button">
+            Search
+        </button>
+
+    </form>
+
+    <p class="search-help">
+        Enter at least two characters. Results appear automatically as you type.
+    </p>
+
+</section>
+
+<main class="main-content">
+    <div class="container">
+
+        <div class="results-header">
+            <h2>Search Results</h2>
+            <span id="resultCount"></span>
+        </div>
+
+        <div id="results">
+            <div class="state-card">
+                <i class="fa-solid fa-prescription-bottle-medical"></i>
+                Enter a medicine name, generic name or composition to begin.
+            </div>
+        </div>
+
+        <div class="assistance-card">
+            <div>
+                <h3>Couldn’t find the medicine?</h3>
+                <p>Send your medicine request to the Medvika team.</p>
+            </div>
+
+            <a
+                id="whatsappLink"
+                class="whatsapp-link"
+                href="https://wa.me/918979841035"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <i class="fa-brands fa-whatsapp"></i>
+                Ask on WhatsApp
+            </a>
+        </div>
+
+        <div class="disclaimer">
+            <strong>Important:</strong>
+            This search provides general medicine information only.
+            It does not replace medical advice, diagnosis or treatment.
+            Always consult a registered medical practitioner or pharmacist
+            before using any medicine.
+        </div>
+
+    </div>
+</main>
+
+<footer>
+    © 2026 Medvika Healthcare Solutions. All rights reserved.
+</footer>
+
 <script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    import {
+        createClient
+    } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SUPABASE_URL =
-  "https://etevzodzxhsdwidtrmwv.supabase.co";
+    const SUPABASE_URL =
+        "https://etevzodzxhsdwidtrmwv.supabase.co";
 
-const SUPABASE_KEY =
-  "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+    const SUPABASE_KEY =
+        "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
 
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+    const supabase = createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
 
-const search = document.getElementById("search");
-const results = document.getElementById("results");
+    const searchForm =
+        document.getElementById("searchForm");
 
-function showLoading() {
-  results.innerHTML =
-    '<div class="loading">Searching...</div>';
-}
+    const searchInput =
+        document.getElementById("search");
 
-function showError(message) {
-  results.innerHTML =
-    `<div class="error">${message}</div>`;
-}
+    const searchType =
+        document.getElementById("searchType");
 
-function showEmpty() {
-  results.innerHTML =
-    '<div class="empty">No medicines found.</div>';
-}
+    const clearSearch =
+        document.getElementById("clearSearch");
 
-function escapeHtml(value) {
-  const element = document.createElement("div");
-  element.textContent = value ?? "";
-  return element.innerHTML;
-}
+    const results =
+        document.getElementById("results");
 
-search.addEventListener("input", async () => {
-  const value = search.value.trim();
+    const resultCount =
+        document.getElementById("resultCount");
 
-  if (value.length < 2) {
-    results.innerHTML = "";
-    return;
-  }
+    const whatsappLink =
+        document.getElementById("whatsappLink");
 
-  showLoading();
+    let debounceTimer;
+    let latestRequest = 0;
 
-  try {
-    const { data, error } = await supabase
-      .from("medicines")
-      .select(`
-        id,
-        brand_name,
-        generic_name,
-        composition,
-        strength,
-        dosage_form,
-        mrp
-      `)
-      .eq("is_active", true)
-      .eq("is_verified", true)
-      .or(
-        `brand_name.ilike.%${value}%,generic_name.ilike.%${value}%,composition.ilike.%${value}%`
-      )
-      .order("brand_name")
-      .limit(20);
-
-    if (error) {
-      console.error(error);
-      showError(error.message);
-      return;
+    function escapeHtml(value) {
+        const element = document.createElement("div");
+        element.textContent = value ?? "";
+        return element.innerHTML;
     }
 
-    if (!data || data.length === 0) {
-      showEmpty();
-      return;
+    function sanitiseSearchTerm(value) {
+        return value
+            .replace(/[(),]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
     }
 
-    results.innerHTML = data
-      .map((item) => {
-        const price =
-          item.mrp !== null
-            ? `₹${Number(item.mrp).toFixed(2)}`
-            : "Not available";
+    function showInitialState() {
+        resultCount.textContent = "";
 
-        return `
-          <div class="card">
-            <h2>${escapeHtml(item.brand_name)}</h2>
-
-            <p>
-              <b>Generic:</b>
-              ${escapeHtml(item.generic_name || "-")}
-            </p>
-
-            <p>
-              <b>Composition:</b>
-              ${escapeHtml(item.composition || "-")}
-            </p>
-
-            <p>
-              <b>Strength:</b>
-              ${escapeHtml(item.strength || "-")}
-            </p>
-
-            <p>
-              <b>Dosage form:</b>
-              ${escapeHtml(item.dosage_form || "-")}
-            </p>
-
-            <p>
-              <b>MRP:</b>
-              ${price}
-            </p>
-          </div>
+        results.innerHTML = `
+            <div class="state-card">
+                <i class="fa-solid fa-prescription-bottle-medical"></i>
+                Enter a medicine name, generic name or composition to begin.
+            </div>
         `;
-      })
-      .join("");
-  } catch (error) {
-    console.error(error);
-    showError("Medicine search is temporarily unavailable.");
-  }
-});
+    }
+
+    function showLoading() {
+        resultCount.textContent = "";
+
+        results.innerHTML = `
+            <div class="state-card">
+                <div class="loading-spinner"></div>
+                Searching the medicine database...
+            </div>
+        `;
+    }
+
+    function showError(message) {
+        resultCount.textContent = "";
+
+        results.innerHTML = `
+            <div class="state-card">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                ${escapeHtml(message)}
+            </div>
+        `;
+    }
+
+    function showEmpty(value) {
+        resultCount.textContent = "0 medicines found";
+
+        results.innerHTML = `
+            <div class="state-card">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                No verified medicine was found for
+                <strong>${escapeHtml(value)}</strong>.
+            </div>
+        `;
+    }
+
+    function formatPrice(value) {
+        const price = Number(value);
+
+        if (
+            value === null ||
+            value === undefined ||
+            Number.isNaN(price)
+        ) {
+            return "Not available";
+        }
+
+        return `₹${price.toFixed(2)}`;
+    }
+
+    function renderResults(data) {
+        const count = data.length;
+
+        resultCount.textContent =
+            `${count} medicine${count === 1 ? "" : "s"} found`;
+
+        results.innerHTML = `
+            <div class="results-grid">
+                ${data.map((item) => `
+                    <article class="medicine-card">
+
+                        <div class="medicine-card-top">
+                            <h3 class="medicine-name">
+                                ${escapeHtml(item.brand_name || "Unnamed medicine")}
+                            </h3>
+
+                            <span class="verified-badge">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Verified
+                            </span>
+                        </div>
+
+                        <p class="generic-name">
+                            ${escapeHtml(
+                                item.generic_name ||
+                                "Generic name not available"
+                            )}
+                        </p>
+
+                        <div class="medicine-details">
+
+                            <div class="detail full">
+                                <span>Composition</span>
+                                <strong>
+                                    ${escapeHtml(
+                                        item.composition || "Not available"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="detail">
+                                <span>Strength</span>
+                                <strong>
+                                    ${escapeHtml(
+                                        item.strength || "Not available"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="detail">
+                                <span>Dosage form</span>
+                                <strong>
+                                    ${escapeHtml(
+                                        item.dosage_form || "Not available"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="detail">
+                                <span>Pack size</span>
+                                <strong>
+                                    ${escapeHtml(
+                                        item.pack_size || "Not available"
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div class="detail">
+                                <span>MRP</span>
+                                <strong class="price">
+                                    ${formatPrice(item.mrp)}
+                                </strong>
+                            </div>
+
+                        </div>
+                    </article>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    async function searchMedicines() {
+        const rawValue = searchInput.value;
+        const value = sanitiseSearchTerm(rawValue);
+
+        clearSearch.style.display =
+            rawValue.length > 0 ? "grid" : "none";
+
+        whatsappLink.href =
+            "https://wa.me/918979841035?text=" +
+            encodeURIComponent(
+                `Hello Medvika, I need information about: ${value}`
+            );
+
+        if (value.length < 2) {
+            showInitialState();
+            return;
+        }
+
+        const requestId = ++latestRequest;
+        showLoading();
+
+        try {
+            let query = supabase
+                .from("medicines")
+                .select(`
+                    id,
+                    brand_name,
+                    generic_name,
+                    composition,
+                    strength,
+                    dosage_form,
+                    pack_size,
+                    mrp,
+                    is_verified
+                `)
+                .eq("is_active", true)
+                .eq("is_verified", true);
+
+            const selectedType = searchType.value;
+
+            if (selectedType === "all") {
+                query = query.or(
+                    [
+                        `brand_name.ilike.%${value}%`,
+                        `generic_name.ilike.%${value}%`,
+                        `composition.ilike.%${value}%`,
+                        `dosage_form.ilike.%${value}%`
+                    ].join(",")
+                );
+            } else {
+                query = query.ilike(
+                    selectedType,
+                    `%${value}%`
+                );
+            }
+
+            const { data, error } = await query
+                .order("brand_name", {
+                    ascending: true
+                })
+                .limit(30);
+
+            if (requestId !== latestRequest) {
+                return;
+            }
+
+            if (error) {
+                console.error("Supabase search error:", error);
+                showError(
+                    "The medicine search could not be completed. Please try again."
+                );
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                showEmpty(value);
+                return;
+            }
+
+            renderResults(data);
+
+        } catch (error) {
+            console.error("Medicine search error:", error);
+
+            showError(
+                "Medicine search is temporarily unavailable."
+            );
+        }
+    }
+
+    function scheduleSearch() {
+        clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(
+            searchMedicines,
+            350
+        );
+    }
+
+    searchForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearTimeout(debounceTimer);
+        searchMedicines();
+    });
+
+    searchInput.addEventListener(
+        "input",
+        scheduleSearch
+    );
+
+    searchType.addEventListener(
+        "change",
+        searchMedicines
+    );
+
+    clearSearch.addEventListener("click", () => {
+        searchInput.value = "";
+        clearSearch.style.display = "none";
+        searchInput.focus();
+        showInitialState();
+    });
 </script>
 
 </body>
