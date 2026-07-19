@@ -899,3 +899,16 @@ main {
         width: 100%;
     }
 }
+.newsletter-success {
+    color: #c9f4ed;
+}
+
+.newsletter-error {
+    color: #ffd2d2;
+}
+
+.category-filter[aria-pressed="true"] {
+    border-color: var(--blog-primary);
+    color: var(--blog-white);
+    background: var(--blog-primary);
+}
