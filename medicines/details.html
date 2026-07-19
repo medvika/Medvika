@@ -526,6 +526,154 @@ const relatedMedicines =
         `;
     }
 
+    async function loadRelatedMedicines(currentMedicine) {
+    relatedSection.hidden = true;
+    relatedMedicines.innerHTML = "";
+
+    const genericName =
+        currentMedicine.generic_name?.trim() || "";
+
+    const composition =
+        currentMedicine.composition?.trim() || "";
+
+    const therapeuticClass =
+        currentMedicine.therapeutic_class?.trim() || "";
+
+    const conditions = [];
+
+    if (genericName) {
+        conditions.push(
+            `generic_name.ilike.${genericName}`
+        );
+    }
+
+    if (composition) {
+        conditions.push(
+            `composition.ilike.${composition}`
+        );
+    }
+
+    if (therapeuticClass) {
+        conditions.push(
+            `therapeutic_class.ilike.${therapeuticClass}`
+        );
+    }
+
+    if (conditions.length === 0) {
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from("medicines")
+        .select(`
+            brand_name,
+            slug,
+            generic_name,
+            composition,
+            strength,
+            dosage_form,
+            therapeutic_class,
+            is_verified
+        `)
+        .eq("is_active", true)
+        .neq("slug", currentMedicine.slug)
+        .or(conditions.join(","))
+        .limit(6);
+
+    if (error) {
+        console.error(
+            "Related medicines error:",
+            error
+        );
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        return;
+    }
+
+    const uniqueMedicines = Array.from(
+        new Map(
+            data
+                .filter(item => item.slug)
+                .map(item => [item.slug, item])
+        ).values()
+    );
+
+    if (uniqueMedicines.length === 0) {
+        return;
+    }
+
+    relatedMedicines.innerHTML =
+        uniqueMedicines.map(item => `
+            <article class="related-card">
+
+                <div class="medicine-card-top">
+                    <h3>
+                        ${escapeHtml(
+                            item.brand_name ||
+                            "Unnamed medicine"
+                        )}
+                    </h3>
+
+                    ${item.is_verified ? `
+                        <span class="verified-badge">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Verified
+                        </span>
+                    ` : ""}
+                </div>
+
+                <p class="related-generic">
+                    ${escapeHtml(
+                        item.generic_name ||
+                        "Generic name not available"
+                    )}
+                </p>
+
+                <div class="related-meta">
+
+                    <div>
+                        <strong>Composition:</strong>
+                        ${escapeHtml(
+                            item.composition ||
+                            "Not available"
+                        )}
+                    </div>
+
+                    <div>
+                        <strong>Strength:</strong>
+                        ${escapeHtml(
+                            item.strength ||
+                            "Not available"
+                        )}
+                    </div>
+
+                    <div>
+                        <strong>Form:</strong>
+                        ${escapeHtml(
+                            item.dosage_form ||
+                            "Not available"
+                        )}
+                    </div>
+
+                </div>
+
+                <a
+                    class="related-link"
+                    href="details.html?slug=${encodeURIComponent(
+                        item.slug
+                    )}"
+                >
+                    View Details
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </article>
+        `).join("");
+
+    relatedSection.hidden = false;
+                            }
    
     async function loadMedicine() {
         const params = new URLSearchParams(window.location.search);
@@ -566,7 +714,7 @@ const relatedMedicines =
             `${data.brand_name} | Medvika Medicine Information`;
 
         medicineContent.innerHTML = `
-            <article class="medicine-header">
+         <article class="medicine-header">
 
                 <div class="medicine-top">
                     <div>
@@ -752,6 +900,7 @@ const relatedMedicines =
                 )}
             </div>
         `;
+       await loadRelatedMedicines(data);
     }
 
     loadMedicine();
