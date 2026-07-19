@@ -186,3 +186,36 @@ document.addEventListener("DOMContentLoaded", () => {
     updateReadingProgress();
     updateActiveTocLink();
 });
+/* Blog article mobile navigation */
+
+const articleMenuToggle = document.getElementById("articleMenuToggle");
+const articleNavigation = document.getElementById("articleNavigation");
+
+if (articleMenuToggle && articleNavigation) {
+
+    articleMenuToggle.addEventListener("click", function () {
+
+        const menuIsOpen = articleNavigation.classList.toggle("active");
+
+        articleMenuToggle.classList.toggle("active", menuIsOpen);
+
+        articleMenuToggle.setAttribute(
+            "aria-expanded",
+            menuIsOpen ? "true" : "false"
+        );
+
+    });
+
+    articleNavigation.querySelectorAll("a").forEach(function (link) {
+
+        link.addEventListener("click", function () {
+
+            articleNavigation.classList.remove("active");
+            articleMenuToggle.classList.remove("active");
+            articleMenuToggle.setAttribute("aria-expanded", "false");
+
+        });
+
+    });
+
+}
