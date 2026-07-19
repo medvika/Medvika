@@ -1063,3 +1063,24 @@
     }
 
 }
+@media (max-width: 768px) {
+
+    .article-header-container {
+        width: calc(100% - 28px);
+        min-height: 72px;
+    }
+
+    .article-header-logo img {
+        height: 48px;
+        max-width: 205px;
+    }
+
+    .article-navigation {
+        display: none;
+    }
+
+    .article-menu-toggle {
+        display: block;
+    }
+
+}
