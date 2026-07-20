@@ -219,3 +219,22 @@ if (articleMenuToggle && articleNavigation) {
     });
 
 }
+const pageURL = encodeURIComponent(window.location.href);
+const pageTitle = encodeURIComponent(document.title);
+
+document.getElementById("share-whatsapp").href =
+`https://wa.me/?text=${pageTitle}%20${pageURL}`;
+
+document.getElementById("share-facebook").href =
+`https://www.facebook.com/sharer/sharer.php?u=${pageURL}`;
+
+document.getElementById("share-linkedin").href =
+`https://www.linkedin.com/sharing/share-offsite/?url=${pageURL}`;
+
+document.getElementById("copy-link").addEventListener("click", async () => {
+
+    await navigator.clipboard.writeText(window.location.href);
+
+    alert("Article link copied!");
+
+});
