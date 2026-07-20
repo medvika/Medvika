@@ -931,6 +931,45 @@ const genericAlternatives =
     </div>
 
 </section> 
+<section class="related-section">
+
+    <div class="related-heading">
+        <span class="section-label">
+            FAQs
+        </span>
+
+        <h2>Frequently Asked Questions</h2>
+    </div>
+
+    <div class="detail-card">
+        <h3>What is ${displayValue(data.brand_name)} used for?</h3>
+        <p>
+            ${displayValue(data.uses || "Please consult your doctor or pharmacist.")}
+        </p>
+    </div>
+
+    <div class="detail-card">
+        <h3>Can I take ${displayValue(data.brand_name)} without a prescription?</h3>
+        <p>
+            ${displayValue(data.prescription_status)}
+        </p>
+    </div>
+
+    <div class="detail-card">
+        <h3>What should I do if I miss a dose?</h3>
+        <p>
+            ${displayValue(data.missed_dose_information)}
+        </p>
+    </div>
+
+    <div class="detail-card">
+        <h3>Can I drink alcohol while taking this medicine?</h3>
+        <p>
+            ${displayValue(data.alcohol_warning)}
+        </p>
+    </div>
+
+</section>
             <div class="disclaimer">
                 <strong>Medical disclaimer:</strong>
                 ${displayValue(
