@@ -492,6 +492,11 @@
 const relatedMedicines =
     document.getElementById("relatedMedicines");
 
+    const genericSection =
+    document.getElementById("genericSection");
+
+const genericAlternatives =
+    document.getElementById("genericAlternatives");
     function escapeHtml(value) {
         const element = document.createElement("div");
         element.textContent = value ?? "";
@@ -834,7 +839,26 @@ const relatedMedicines =
 
     <div class="related-grid" id="relatedMedicines"></div>
 </section>
-            
+           <section class="related-section" id="genericSection" hidden>
+
+    <div class="related-heading">
+        <span class="section-label">
+            Save More
+        </span>
+
+        <h2>Generic Alternatives</h2>
+
+        <p>
+            Other brands containing the same generic medicine.
+        </p>
+    </div>
+
+    <div
+        class="related-grid"
+        id="genericAlternatives">
+    </div>
+
+</section> 
             <div class="disclaimer">
                 <strong>Medical disclaimer:</strong>
                 ${displayValue(
