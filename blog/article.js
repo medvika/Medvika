@@ -238,3 +238,26 @@ document.getElementById("copy-link").addEventListener("click", async () => {
     alert("Article link copied!");
 
 });
+const feedbackButtons = document.querySelectorAll(".feedback-btn");
+const feedbackMessage = document.querySelector(".feedback-message");
+
+feedbackButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+
+        feedbackButtons.forEach((item) => {
+            item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        const feedback = button.dataset.feedback;
+
+        if (feedback === "yes") {
+            feedbackMessage.textContent =
+                "Thank you! We’re glad you found the article helpful.";
+        } else {
+            feedbackMessage.textContent =
+                "Thank you for your feedback. We’ll keep improving our guides.";
+        }
+    });
+});
