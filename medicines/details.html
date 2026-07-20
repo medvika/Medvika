@@ -425,6 +425,86 @@
         grid-template-columns: 1fr;
     }
 } 
+        /* ===========================
+   Medicine Safety Overview
+=========================== */
+
+.safety-overview{
+    margin:50px 0;
+}
+
+.safety-heading{
+    text-align:center;
+    margin-bottom:32px;
+}
+
+.safety-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:20px;
+}
+
+.safety-card{
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+    padding:22px;
+    background:#fff;
+    border-radius:16px;
+    border:1px solid #e7eef5;
+    box-shadow:0 10px 25px rgba(0,0,0,.05);
+    transition:.3s;
+}
+
+.safety-card:hover{
+    transform:translateY(-4px);
+}
+
+.safety-card i{
+    width:52px;
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#e8f6f2;
+    color:#0b7a5c;
+    font-size:22px;
+    flex-shrink:0;
+}
+
+.safety-card h3{
+    margin:0 0 8px;
+    font-size:18px;
+}
+
+.safety-card p{
+    margin:0;
+    color:#555;
+    line-height:1.6;
+}
+
+.safety-note{
+    margin-top:28px;
+    padding:18px;
+    background:#fff9e8;
+    border-left:5px solid #f5b400;
+    border-radius:10px;
+    line-height:1.7;
+    font-size:.95rem;
+}
+
+@media(max-width:768px){
+
+.safety-grid{
+    grid-template-columns:1fr;
+}
+
+.safety-card{
+    padding:18px;
+}
+
+}
     </style>
 </head>
 
