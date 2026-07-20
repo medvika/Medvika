@@ -623,7 +623,79 @@ const genericAlternatives =
 
     relatedSection.hidden = false;
    }
-       async function loadMedicine() {
+      async function loadGenericAlternatives(currentMedicine) {
+
+    genericSection.hidden = true;
+    genericAlternatives.innerHTML = "";
+
+    const genericName =
+        currentMedicine.generic_name?.trim() || "";
+
+    if (!genericName) return;
+
+    const { data, error } = await supabase
+        .from("medicines")
+        .select(`
+            brand_name,
+            slug,
+            generic_name,
+            strength,
+            dosage_form,
+            manufacturer,
+            is_verified
+        `)
+        .eq("is_active", true)
+        .ilike("generic_name", genericName)
+        .neq("slug", currentMedicine.slug)
+        .order("brand_name");
+
+    if (error) {
+        console.error("Generic alternatives:", error);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        return;
+    }
+
+    genericAlternatives.innerHTML = data.map(item => `
+        <article class="related-card">
+
+            <h3>${escapeHtml(item.brand_name)}</h3>
+
+            <p class="related-generic">
+                ${escapeHtml(item.generic_name)}
+            </p>
+
+            <div class="related-meta">
+                <div>
+                    <strong>Strength:</strong>
+                    ${escapeHtml(item.strength || "N/A")}
+                </div>
+
+                <div>
+                    <strong>Form:</strong>
+                    ${escapeHtml(item.dosage_form || "N/A")}
+                </div>
+
+                <div>
+                    <strong>Manufacturer:</strong>
+                    ${escapeHtml(item.manufacturer || "N/A")}
+                </div>
+            </div>
+
+            <a
+                class="related-link"
+                href="details.html?slug=${encodeURIComponent(item.slug)}">
+                View Details
+            </a>
+
+        </article>
+    `).join("");
+
+    genericSection.hidden = false;
+      } 
+    async function loadMedicine() {
         const params = new URLSearchParams(window.location.search);
         const slug = params.get("slug");
 
@@ -868,6 +940,7 @@ const genericAlternatives =
             </div>
         `;
        await loadRelatedMedicines(data);
+        await loadGenericAlternatives(data);
     }
 
     loadMedicine();
