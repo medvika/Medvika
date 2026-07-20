@@ -912,3 +912,28 @@ main {
     color: var(--blog-white);
     background: var(--blog-primary);
 }
+/* Featured article image — show full banner */
+
+.featured-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+    overflow: hidden;
+}
+
+.featured-card-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 430px;
+    padding: 0;
+    background: #f7fbfb;
+    overflow: hidden;
+}
+
+.featured-card-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
