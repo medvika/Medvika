@@ -805,6 +805,104 @@ const genericAlternatives =
 
                 </div>
             </article>
+            <section class="safety-overview">
+
+    <div class="safety-heading">
+        <span class="section-label">Safety Information</span>
+        <h2>Medicine Safety Overview</h2>
+        <p>
+            Review the available safety information before using this medicine.
+        </p>
+    </div>
+
+    <div class="safety-grid">
+
+        <article class="safety-card">
+            <i class="fa-solid fa-person-pregnant"></i>
+            <div>
+                <h3>Pregnancy</h3>
+                <p>
+                    ${displayValue(
+                        data.pregnancy_information ||
+                        "Information not available. Consult your doctor."
+                    )}
+                </p>
+            </div>
+        </article>
+
+        <article class="safety-card">
+            <i class="fa-solid fa-baby"></i>
+            <div>
+                <h3>Breastfeeding</h3>
+                <p>
+                    ${displayValue(
+                        data.breastfeeding_information ||
+                        "Information not available. Consult your doctor."
+                    )}
+                </p>
+            </div>
+        </article>
+
+        <article class="safety-card">
+            <i class="fa-solid fa-wine-glass"></i>
+            <div>
+                <h3>Alcohol</h3>
+                <p>
+                    ${displayValue(
+                        data.alcohol_warning ||
+                        "Information not available. Consult your doctor."
+                    )}
+                </p>
+            </div>
+        </article>
+
+        <article class="safety-card">
+            <i class="fa-solid fa-car"></i>
+            <div>
+                <h3>Driving</h3>
+                <p>
+                    ${displayValue(
+                        data.driving_warning ||
+                        "Information not available. Consult your doctor."
+                    )}
+                </p>
+            </div>
+        </article>
+
+        <article class="safety-card">
+            <i class="fa-solid fa-kidneys"></i>
+            <div>
+                <h3>Kidney</h3>
+                <p>
+                    ${displayValue(
+                        data.kidney_warning ||
+                        "Information not available. Consult your doctor."
+                    )}
+                </p>
+            </div>
+        </article>
+
+        <article class="safety-card">
+            <i class="fa-solid fa-notes-medical"></i>
+            <div>
+                <h3>Liver</h3>
+                <p>
+                    ${displayValue(
+                        data.liver_warning ||
+                        "Information not available. Consult your doctor."
+                    )}
+                </p>
+            </div>
+        </article>
+
+    </div>
+
+    <p class="safety-note">
+        Safety information may vary depending on the patient, dose and medical
+        condition. Always consult a registered medical practitioner or pharmacist.
+    </p>
+
+</section>
 
             <div class="details-grid">
 
