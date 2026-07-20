@@ -1133,3 +1133,18 @@
 }
 background: linear-gradient(135deg,#eef9f8,#ffffff);
 padding:80px 0 60px;
+.article-hero{
+    padding:110px 0 70px;
+}
+.article-category{
+    background:#078f86;
+    color:#fff;
+    padding:8px 18px;
+    border-radius:999px;
+    display:inline-block;
+    font-size:13px;
+    font-weight:700;
+}
+.article-hero-content{
+    max-width:1000px;
+}
