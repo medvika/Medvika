@@ -1497,3 +1497,122 @@ padding:80px 0 60px;
         gap: 12px;
     }
 }
+/* ==============================
+   Author / Publisher Box
+============================== */
+
+.article-author-box {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 34px;
+    align-items: center;
+    margin: 34px 0 64px;
+    padding: 38px;
+    border: 1px solid #d8e8e7;
+    border-radius: 22px;
+    background: #ffffff;
+    box-shadow: 0 14px 36px rgba(18, 55, 71, 0.08);
+}
+
+.article-author-box-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    padding: 18px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #eef9f8, #ffffff);
+}
+
+.article-author-box-logo img {
+    width: 100%;
+    max-width: 120px;
+    height: auto;
+    object-fit: contain;
+}
+
+.article-author-box-label {
+    display: inline-block;
+    margin-bottom: 8px;
+    color: #078f86;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.article-author-box h2 {
+    margin: 0 0 14px;
+    color: #17394a;
+    font-size: 29px;
+    line-height: 1.25;
+}
+
+.article-author-box p {
+    max-width: 760px;
+    margin: 0;
+    color: #566f79;
+    font-size: 15px;
+    line-height: 1.75;
+}
+
+.article-author-services {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 20px;
+}
+
+.article-author-services span {
+    padding: 8px 12px;
+    border: 1px solid #cfe4e2;
+    border-radius: 999px;
+    background: #f2faf9;
+    color: #176f6a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.article-author-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 23px;
+    padding: 13px 21px;
+    border-radius: 10px;
+    background: #078f86;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.article-author-cta:hover {
+    transform: translateY(-2px);
+    background: #066f68;
+}
+
+@media (max-width: 700px) {
+
+    .article-author-box {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 26px 20px;
+        text-align: center;
+    }
+
+    .article-author-box-logo {
+        width: 130px;
+        min-height: 120px;
+        margin: 0 auto;
+    }
+
+    .article-author-services {
+        justify-content: center;
+    }
+
+    .article-author-box h2 {
+        font-size: 25px;
+    }
+}
