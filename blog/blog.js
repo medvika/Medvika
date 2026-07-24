@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-   const SUPABASE_URL = "etevzodzxhsdwidtrmwv";
+   const SUPABASE_URL = "https://etevzodzxhsdwidtrmwv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
 
 const newsletterSupabase =
