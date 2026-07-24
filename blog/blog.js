@@ -79,22 +79,54 @@ const newsletterSupabase =
         });
     });
 
-    /* =========================================
-       NEWSLETTER FORM
-       Temporary front-end confirmation only
-    ========================================= */
+  /* =========================================
+NEWSLETTER FORM
+Stores subscribers in Supabase
+========================================= */
 
-    if (newsletterForm && newsletterEmail && newsletterMessage) {
-        newsletterForm.addEventListener("submit", (event) => {
-            event.preventDefault();
+if (newsletterForm && newsletterEmail && newsletterMessage) {
+    newsletterForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-            const email = newsletterEmail.value.trim();
+        const email = newsletterEmail.value.trim().toLowerCase();
+        const submitButton =
+            newsletterForm.querySelector('button[type="submit"]');
 
-            if (!isValidEmail(email)) {
-                showNewsletterMessage(
-                    "Please enter a valid email address.",
-                    "error"
-                );
+        if (!isValidEmail(email)) {
+            showNewsletterMessage(
+                "Please enter a valid email address.",
+                "error"
+            );
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Subscribing...";
+
+        try {
+            const { error } = await newsletterSupabase
+                .from("newsletter_subscribers")
+                .insert({
+                    email: email,
+                    status: "active",
+                    source: "medvika_blog"
+                });
+
+            if (error) {
+                if (error.code === "23505") {
+                    showNewsletterMessage(
+                        "This email is already subscribed to Medvika updates.",
+                        "success"
+                    );
+                } else {
+                    console.error("Newsletter error:", error);
+
+                    showNewsletterMessage(
+                        "Subscription could not be completed. Please try again.",
+                        "error"
+                    );
+                }
+
                 return;
             }
 
@@ -104,29 +136,21 @@ const newsletterSupabase =
             );
 
             newsletterForm.reset();
-        });
-    }
 
-    function isValidEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
+        } catch (error) {
+            console.error("Newsletter request failed:", error);
 
-    function showNewsletterMessage(message, type) {
-        if (!newsletterMessage) return;
+            showNewsletterMessage(
+                "Unable to connect. Please check your internet and try again.",
+                "error"
+            );
 
-        newsletterMessage.textContent = message;
-        newsletterMessage.classList.remove(
-            "newsletter-success",
-            "newsletter-error"
-        );
-
-        if (type === "success") {
-            newsletterMessage.classList.add("newsletter-success");
-        } else {
-            newsletterMessage.classList.add("newsletter-error");
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = "Subscribe";
         }
-    }
-
+    });
+}
     /* =========================================
        MOBILE MENU FALLBACK
        Runs only if main.js does not handle it
