@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
+   const SUPABASE_URL = "etevzodzxhsdwidtrmwv";
+const SUPABASE_ANON_KEY = "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+
+const newsletterSupabase =
+    window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const searchInput = document.getElementById("blogSearch");
     const categoryButtons = document.querySelectorAll(".category-filter");
     const articleCards = document.querySelectorAll(".blog-article-card");
