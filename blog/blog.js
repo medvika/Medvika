@@ -1,9 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
-   const SUPABASE_URL = "https://etevzodzxhsdwidtrmwv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+   const SUPABASE_URL =
+    "https://etevzodzxhsdwidtrmwv.supabase.co";
 
-const newsletterSupabase =
-    window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_ANON_KEY =
+    "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+
+let newsletterSupabase = null;
+
+if (window.supabase) {
+    newsletterSupabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+} else {
+    console.error("Supabase library has not loaded.");
+}
     const searchInput = document.getElementById("blogSearch");
     const categoryButtons = document.querySelectorAll(".category-filter");
     const articleCards = document.querySelectorAll(".blog-article-card");
@@ -78,6 +89,20 @@ const newsletterSupabase =
             filterArticles();
         });
     });
+   function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function showNewsletterMessage(message, type) {
+    if (!newsletterMessage) {
+        return;
+    }
+
+    newsletterMessage.textContent = message;
+
+    newsletterMessage.className =
+        `newsletter-message newsletter-message--${type}`;
+}
 
   /* =========================================
 NEWSLETTER FORM
@@ -87,6 +112,13 @@ Stores subscribers in Supabase
 if (newsletterForm && newsletterEmail && newsletterMessage) {
     newsletterForm.addEventListener("submit", async (event) => {
         event.preventDefault();
+       if (!newsletterSupabase) {
+    showNewsletterMessage(
+        "Subscription service is temporarily unavailable. Please refresh and try again.",
+        "error"
+    );
+    return;
+       }
 
         const email = newsletterEmail.value.trim().toLowerCase();
         const submitButton =
