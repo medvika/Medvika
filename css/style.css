@@ -2738,4 +2738,18 @@ body {
         padding: 24px 20px;
     }
 }
+@media (max-width: 768px) {
+  .company-profile-cta > div {
+    grid-template-columns: 1fr !important;
+    padding: 22px !important;
+  }
+
+  .company-profile-cta h2 {
+    font-size: 30px !important;
+  }
+
+  .company-profile-cta img {
+    order: -1;
+  }
+}
 
