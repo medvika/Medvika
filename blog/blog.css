@@ -994,3 +994,126 @@ main {
         object-fit: cover;
     }
 }
+/* =========================================
+   BLOG GRID MOBILE FIX
+   ========================================= */
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.blog-main,
+.blog-section,
+.blog-library,
+.blog-grid,
+.articles-grid,
+.latest-articles-grid {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Desktop */
+.blog-grid,
+.articles-grid,
+.latest-articles-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 28px !important;
+    align-items: start !important;
+}
+
+/* Every article must stay inside its own column */
+.blog-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.blog-card-image {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+.blog-card-image img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16 / 9;
+    object-fit: cover !important;
+}
+
+.blog-card-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.blog-card h3,
+.blog-card p,
+.blog-card a {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+/* Tablet */
+@media (max-width: 950px) {
+    .blog-grid,
+    .articles-grid,
+    .latest-articles-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 650px) {
+
+    .blog-grid,
+    .articles-grid,
+    .latest-articles-grid {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 22px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .blog-card {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .blog-card-image img {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 16 / 9;
+        object-fit: cover !important;
+    }
+
+    .blog-card-content {
+        padding: 20px !important;
+    }
+
+    .blog-card h3 {
+        font-size: 1.35rem !important;
+        line-height: 1.35 !important;
+    }
+
+    .blog-card-meta {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px 14px !important;
+    }
+}
