@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pharmacy Profit Calculator India | Medvika Healthcare Solutions</title>
+
+    <meta
+        name="description"
+        content="Use Medvika's free pharmacy profit calculator to estimate gross profit, operating expenses, net profit, profit margin and break-even sales."
+    >
+
+    <link
+        rel="canonical"
+        href="https://medvika.co.in/tools/pharmacy-profit-calculator.html"
+    >
+
+    <meta property="og:title" content="Free Pharmacy Profit Calculator | Medvika">
+    <meta
+        property="og:description"
+        content="Estimate your pharmacy's monthly profit, profit margin and break-even sales."
+    >
+    <meta
+        property="og:url"
+        content="https://medvika.co.in/tools/pharmacy-profit-calculator.html"
+    >
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="../logo.png">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #143d59;
+            --secondary: #16a085;
+            --secondary-dark: #11806c;
+            --background: #f5f9fb;
+            --white: #ffffff;
+            --text: #253746;
+            --muted: #657786;
+            --border: #dce6ec;
+            --danger: #b42318;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .site-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            width: min(1120px, 92%);
+            margin: auto;
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .logo img {
+            width: 150px;
+            height: auto;
+            display: block;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 18px;
+            border: 1px solid var(--secondary);
+            border-radius: 9px;
+            color: var(--secondary-dark);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .hero {
+            padding: 72px 20px 45px;
+            text-align: center;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(20, 61, 89, 0.98),
+                    rgba(22, 160, 133, 0.92)
+                );
+            color: var(--white);
+        }
+
+        .hero-content {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            line-height: 1.15;
+            margin-bottom: 18px;
+        }
+
+        .hero p {
+            max-width: 720px;
+            margin: auto;
+            font-size: 1.05rem;
+            opacity: 0.95;
+        }
+
+        .calculator-section {
+            padding: 55px 20px 80px;
+        }
+
+        .calculator-container {
+            width: min(1120px, 100%);
+            margin: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+            gap: 30px;
+            align-items: start;
+        }
+
+        .calculator-card,
+        .results-card,
+        .info-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 12px 34px rgba(20, 61, 89, 0.08);
+        }
+
+        .calculator-card {
+            padding: 32px;
+        }
+
+        .calculator-card h2,
+        .results-card h2 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .intro-text {
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .field-help {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .currency-symbol,
+        .percent-symbol {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .currency-symbol {
+            left: 15px;
+        }
+
+        .percent-symbol {
+            right: 15px;
+        }
+
+        input {
+            width: 100%;
+            min-height: 50px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            color: var(--text);
+            outline: none;
+            transition: 0.2s ease;
+        }
+
+        .currency-input {
+            padding-left: 35px;
+        }
+
+        .percentage-input {
+            padding-right: 38px;
+        }
+
+        input:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(22, 160, 133, 0.12);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 26px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .calculate-btn {
+            flex: 1;
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary-dark);
+        }
+
+        .reset-btn {
+            background: #eef4f6;
+            color: var(--primary);
+        }
+
+        .results-column {
+            display: grid;
+            gap: 24px;
+        }
+
+        .results-card {
+            overflow: hidden;
+        }
+
+        .results-heading {
+            padding: 27px 28px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-grid {
+            padding: 24px 28px 30px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .result-box {
+            background: #f7fafb;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 18px;
+        }
+
+        .result-box.highlight {
+            grid-column: 1 / -1;
+            background: rgba(22, 160, 133, 0.08);
+            border-color: rgba(22, 160, 133, 0.28);
+        }
+
+        .result-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .result-value {
+            display: block;
+            color: var(--primary);
+            font-size: 1.35rem;
+            line-height: 1.25;
+        }
+
+        .result-box.highlight .result-value {
+            font-size: 1.75rem;
+            color: var(--secondary-dark);
+        }
+
+        .result-note {
+            padding: 0 28px 28px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .negative {
+            color: var(--danger) !important;
+        }
+
+        .info-card {
+            padding: 27px 28px;
+        }
+
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .info-card ul {
+            padding-left: 20px;
+            color: var(--muted);
+        }
+
+        .info-card li + li {
+            margin-top: 8px;
+        }
+
+        .consultation-box {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 13px;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .consultation-box h3 {
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .consultation-box p {
+            opacity: 0.92;
+            margin-bottom: 15px;
+        }
+
+        .whatsapp-btn {
+            display: inline-flex;
+            padding: 11px 17px;
+            border-radius: 9px;
+            background: var(--secondary);
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .disclaimer {
+            width: min(900px, 100%);
+            margin: 34px auto 0;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.88rem;
+        }
+
+        .site-footer {
+            padding: 28px 20px;
+            background: var(--primary);
+            color: rgba(255, 255, 255, 0.88);
+            text-align: center;
+        }
+
+        .site-footer a {
+            color: var(--white);
+        }
+
+        @media (max-width: 860px) {
+            .calculator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header-container {
+                min-height: 68px;
+            }
+
+            .logo img {
+                width: 125px;
+            }
+
+            .home-link {
+                padding: 9px 12px;
+                font-size: 0.9rem;
+            }
+
+            .hero {
+                padding: 55px 18px 38px;
+            }
+
+            .calculator-section {
+                padding: 35px 15px 60px;
+            }
+
+            .calculator-card {
+                padding: 24px 18px;
+            }
+
+            .form-grid,
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .result-box.highlight {
+                grid-column: auto;
+            }
+
+            .results-heading,
+            .results-grid,
+            .info-card {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Pharmacy Profit Calculator",
+      "url": "https://medvika.co.in/tools/pharmacy-profit-calculator.html",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "A free calculator for estimating pharmacy gross profit, operating expenses, net profit, profit margin and break-even sales.",
+      "provider": {
+        "@type": "Organization",
+        "name": "Medvika Healthcare Solutions",
+        "url": "https://medvika.co.in/"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "INR"
+      }
+    }
+    </script>
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="header-container">
+        <a href="../index.html" class="logo" aria-label="Medvika homepage">
+            <img src="../logo.png" alt="Medvika Healthcare Solutions">
+        </a>
+
+        <a href="../index.html" class="home-link">
+            Back to Home
+        </a>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero-content">
+            <span class="eyebrow">Free Pharmacy Business Tool</span>
+
+            <h1>Pharmacy Profit Calculator</h1>
+
+            <p>
+                Estimate your pharmacy's monthly gross profit, operating
+                expenses, net profit, profit margin and break-even sales.
+            </p>
+        </div>
+    </section>
+
+    <section class="calculator-section">
+        <div class="calculator-container">
+
+            <div class="calculator-card">
+                <h2>Enter Monthly Business Details</h2>
+
+                <p class="intro-text">
+                    Use approximate monthly figures from your pharmacy records.
+                </p>
+
+                <form id="profitCalculator">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="monthlySales">Monthly sales</label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="monthlySales"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="500000"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="costOfGoods">
+                                Medicine purchase cost
+                            </label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="costOfGoods"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="380000"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rent">Rent</label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="rent"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="25000"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="staffSalary">Staff salaries</label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="staffSalary"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="40000"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="utilities">
+                                Electricity and utilities
+                            </label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="utilities"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="8000"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="otherExpenses">
+                                Other operating expenses
+                            </label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="otherExpenses"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="12000"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="targetMargin">
+                                Target net profit margin
+                            </label>
+
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="targetMargin"
+                                    class="percentage-input"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value="10"
+                                >
+
+                                <span class="percent-symbol">%</span>
+                            </div>
+
+                            <span class="field-help">
+                                Used to estimate the sales required to reach your
+                                desired profit level.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="submit" class="calculate-btn">
+                            Calculate Pharmacy Profit
+                        </button>
+
+                        <button type="reset" class="reset-btn">
+                            Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="results-column">
+
+                <section class="results-card" aria-live="polite">
+                    <div class="results-heading">
+                        <h2>Estimated Results</h2>
+
+                        <p class="intro-text">
+                            Your calculated monthly business summary.
+                        </p>
+                    </div>
+
+                    <div class="results-grid">
+
+                        <div class="result-box">
+                            <span class="result-label">Gross profit</span>
+                            <strong class="result-value" id="grossProfit">₹0</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Gross margin</span>
+                            <strong class="result-value" id="grossMargin">0%</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Operating expenses
+                            </span>
+
+                            <strong class="result-value" id="operatingExpenses">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Break-even sales</span>
+
+                            <strong class="result-value" id="breakEvenSales">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box highlight">
+                            <span class="result-label">
+                                Estimated monthly net profit
+                            </span>
+
+                            <strong class="result-value" id="netProfit">₹0</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Net profit margin</span>
+
+                            <strong class="result-value" id="netMargin">
+                                0%
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Projected annual profit
+                            </span>
+
+                            <strong class="result-value" id="annualProfit">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Sales needed for target margin
+                            </span>
+
+                            <strong class="result-value" id="targetSales">
+                                ₹0
+                            </strong>
+                        </div>
+                    </div>
+
+                    <p class="result-note" id="resultMessage">
+                        Enter your pharmacy figures and select Calculate.
+                    </p>
+                </section>
+
+                <aside class="info-card">
+                    <h3>How to interpret the results</h3>
+
+                    <ul>
+                        <li>
+                            Gross profit is sales minus the cost of medicines
+                            purchased.
+                        </li>
+
+                        <li>
+                            Net profit is the amount remaining after operating
+                            expenses.
+                        </li>
+
+                        <li>
+                            Break-even sales estimate the minimum monthly sales
+                            required to cover operating expenses.
+                        </li>
+                    </ul>
+
+                    <div class="consultation-box">
+                        <h3>Need a detailed pharmacy assessment?</h3>
+
+                        <p>
+                            Medvika can help identify expiry losses, inventory
+                            issues and operational improvement opportunities.
+                        </p>
+
+                        <a
+                            class="whatsapp-btn"
+                            href="https://wa.me/918979841035?text=Hello%20Medvika%2C%20I%20used%20the%20Pharmacy%20Profit%20Calculator%20and%20would%20like%20a%20pharmacy%20business%20consultation."
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            Request Consultation
+                        </a>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <p class="disclaimer">
+            This calculator provides estimates for educational and business
+            planning purposes. Actual profitability may differ based on taxes,
+            credit sales, discounts, returns, expiry losses, inventory
+            adjustments and other business conditions.
+        </p>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <p>
+        © 2026 Medvika Healthcare Solutions ·
+        <a href="../pages/privacy-policy.html">Privacy Policy</a>
+    </p>
+</footer>
+
+<script>
+    const calculator = document.getElementById("profitCalculator");
+
+    const outputElements = {
+        grossProfit: document.getElementById("grossProfit"),
+        grossMargin: document.getElementById("grossMargin"),
+        operatingExpenses: document.getElementById("operatingExpenses"),
+        netProfit: document.getElementById("netProfit"),
+        netMargin: document.getElementById("netMargin"),
+        annualProfit: document.getElementById("annualProfit"),
+        breakEvenSales: document.getElementById("breakEvenSales"),
+        targetSales: document.getElementById("targetSales"),
+        resultMessage: document.getElementById("resultMessage")
+    };
+
+    function getNumber(id) {
+        const value = Number.parseFloat(
+            document.getElementById(id).value
+        );
+
+        return Number.isFinite(value) && value >= 0 ? value : 0;
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function formatPercentage(value) {
+        return `${value.toFixed(2)}%`;
+    }
+
+    function setProfitAppearance(element, value) {
+        element.classList.toggle("negative", value < 0);
+    }
+
+    calculator.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const monthlySales = getNumber("monthlySales");
+        const costOfGoods = getNumber("costOfGoods");
+        const rent = getNumber("rent");
+        const staffSalary = getNumber("staffSalary");
+        const utilities = getNumber("utilities");
+        const otherExpenses = getNumber("otherExpenses");
+        const targetMarginPercent = getNumber("targetMargin");
+
+        if (monthlySales <= 0) {
+            outputElements.resultMessage.textContent =
+                "Please enter monthly sales greater than zero.";
+
+            return;
+        }
+
+        if (costOfGoods > monthlySales) {
+            outputElements.resultMessage.textContent =
+                "Purchase cost is higher than sales. Please verify the figures.";
+        }
+
+        const grossProfit = monthlySales - costOfGoods;
+
+        const grossMargin =
+            monthlySales > 0
+                ? (grossProfit / monthlySales) * 100
+                : 0;
+
+        const operatingExpenses =
+            rent + staffSalary + utilities + otherExpenses;
+
+        const netProfit = grossProfit - operatingExpenses;
+
+        const netMargin =
+            monthlySales > 0
+                ? (netProfit / monthlySales) * 100
+                : 0;
+
+        const annualProfit = netProfit * 12;
+
+        const grossMarginDecimal = grossMargin / 100;
+
+        const breakEvenSales =
+            grossMarginDecimal > 0
+                ? operatingExpenses / grossMarginDecimal
+                : 0;
+
+        const targetMarginDecimal = targetMarginPercent / 100;
+
+        const availableContribution =
+            grossMarginDecimal - targetMarginDecimal;
+
+        const targetSales =
+            availableContribution > 0
+                ? operatingExpenses / availableContribution
+                : 0;
+
+        outputElements.grossProfit.textContent =
+            formatCurrency(grossProfit);
+
+        outputElements.grossMargin.textContent =
+            formatPercentage(grossMargin);
+
+        outputElements.operatingExpenses.textContent =
+            formatCurrency(operatingExpenses);
+
+        outputElements.netProfit.textContent =
+            formatCurrency(netProfit);
+
+        outputElements.netMargin.textContent =
+            formatPercentage(netMargin);
+
+        outputElements.annualProfit.textContent =
+            formatCurrency(annualProfit);
+
+        outputElements.breakEvenSales.textContent =
+            formatCurrency(breakEvenSales);
+
+        outputElements.targetSales.textContent =
+            targetSales > 0
+                ? formatCurrency(targetSales)
+                : "Not achievable";
+
+        setProfitAppearance(outputElements.grossProfit, grossProfit);
+        setProfitAppearance(outputElements.netProfit, netProfit);
+        setProfitAppearance(outputElements.netMargin, netMargin);
+        setProfitAppearance(outputElements.annualProfit, annualProfit);
+
+        if (netProfit > 0) {
+            outputElements.resultMessage.textContent =
+                "Your estimate shows a monthly operating profit. Review inventory, discounts and expenses regularly to protect this margin.";
+        } else if (netProfit === 0) {
+            outputElements.resultMessage.textContent =
+                "Your pharmacy is approximately at break-even based on the entered figures.";
+        } else {
+            outputElements.resultMessage.textContent =
+                "Your estimate shows an operating loss. Review purchase cost, stock movement and fixed expenses.";
+        }
+    });
+
+    calculator.addEventListener("reset", function () {
+        window.setTimeout(function () {
+            outputElements.grossProfit.textContent = "₹0";
+            outputElements.grossMargin.textContent = "0%";
+            outputElements.operatingExpenses.textContent = "₹0";
+            outputElements.netProfit.textContent = "₹0";
+            outputElements.netMargin.textContent = "0%";
+            outputElements.annualProfit.textContent = "₹0";
+            outputElements.breakEvenSales.textContent = "₹0";
+            outputElements.targetSales.textContent = "₹0";
+
+            outputElements.resultMessage.textContent =
+                "Enter your pharmacy figures and select Calculate.";
+
+            document
+                .querySelectorAll(".result-value")
+                .forEach(function (element) {
+                    element.classList.remove("negative");
+                });
+        }, 0);
+    });
+</script>
+
+</body>
+  </html>
