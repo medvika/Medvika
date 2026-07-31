@@ -2898,3 +2898,14 @@ body {
         text-align: center;
     }
 }
+.resources-footer{
+    text-align:center;
+    margin-top:50px;
+}
+
+.resources-footer .primary-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 28px;
+}
