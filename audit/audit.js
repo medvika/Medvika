@@ -14,6 +14,8 @@ let currentAuditId = null;
 let projects = [];
 let zones = [];
 let teams = [];
+let nearExpiryDays = 180;
+let currentAuditDate = null;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
@@ -168,6 +170,10 @@ async function loadProjectDetails(){
   $("clientStaff").textContent=fmtNum(data.expected_client_staff);
   $("medvikaTeam").textContent=fmtNum(data.medvika_team_size);
   $("expectedItems").textContent=fmtNum(data.expected_running_items);
+  nearExpiryDays = Number(data.near_expiry_days || 180);
+  currentAuditDate = data.audit_date || null;
+  if($("nearExpiryRule")) $("nearExpiryRule").textContent = `${nearExpiryDays} days`;
+  if($("expiryRuleDays")) $("expiryRuleDays").value = String(nearExpiryDays);
 }
 
 async function loadDashboard(){
@@ -259,7 +265,7 @@ $("countForm").addEventListener("submit", async e=>{
     pack_uom:$("packUom").value.trim()||null,
     physical_qty:Number($("physicalQty").value),
     system_qty:$("systemQty").value===""?null:Number($("systemQty").value),
-    condition:$("condition").value,
+    condition:classifyCondition(enteredExpiry||s?.expiry_date||null, explicitCondition),
     counted_by:$("countedBy").value.trim()||null,
     remarks:$("remarks").value.trim()||null,
     count_status:"counted"
@@ -330,7 +336,8 @@ const HEADER_ALIASES = {
   physical_qty:["physical_qty","physical qty","physical stock","count qty","counted qty","actual qty","actual stock","quantity","qty"],
   mrp:["mrp","m.r.p"],
   purchase_rate:["purchase_rate","purchase rate","ptr","cost","cost rate"],
-  stock_value:["stock_value","stock value","inventory value"]
+  stock_value:["stock_value","stock value","inventory value"],
+  condition:["condition","stock condition","physical condition","status","item condition"]
 };
 
 function normHeader(v){
@@ -364,6 +371,60 @@ function toISODate(v){
   if(!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0,10);
   return null;
 }
+
+function parseConditionText(v){
+  const s=String(v??"").trim().toLowerCase();
+  if(!s) return null;
+  if(/damag|broken|leak|torn|crush|open pack|non.?saleable/.test(s)) return "damaged";
+  if(/expired/.test(s)) return "expired";
+  if(/near.?exp|short.?exp/.test(s)) return "near_expiry";
+  if(/saleable|good|ok|normal/.test(s)) return "saleable";
+  return null;
+}
+
+function auditReferenceDate(){
+  if(currentAuditDate){
+    const d=new Date(currentAuditDate+"T00:00:00");
+    if(!Number.isNaN(d.getTime())) return d;
+  }
+  const n=new Date();
+  return new Date(n.getFullYear(),n.getMonth(),n.getDate());
+}
+
+function classifyCondition(expiryDate, explicitCondition=null){
+  // Physical damage always overrides expiry-derived condition.
+  if(explicitCondition==="damaged") return "damaged";
+
+  if(expiryDate){
+    const exp=new Date(expiryDate+"T23:59:59");
+    const ref=auditReferenceDate();
+    if(!Number.isNaN(exp.getTime())){
+      const diffDays=Math.ceil((exp-ref)/(1000*60*60*24));
+      if(diffDays < 0) return "expired";
+      if(diffDays <= Number(nearExpiryDays||180)) return "near_expiry";
+    }
+  }
+
+  // Respect an explicit expired/near-expiry status if no usable date was supplied.
+  if(["expired","near_expiry","saleable"].includes(explicitCondition)) return explicitCondition;
+  return "saleable";
+}
+
+function conditionLabel(v){
+  return ({
+    saleable:"Saleable",
+    near_expiry:"Near Expiry",
+    expired:"Expired",
+    damaged:"Damaged",
+    other:"Other"
+  })[v] || v || "—";
+}
+
+function conditionChip(v){
+  const safe=v||"saleable";
+  return `<span class="condition-chip condition-${esc(safe)}">${esc(conditionLabel(safe))}</span>`;
+}
+
 function detectColumn(headers,key){
   const aliases=HEADER_ALIASES[key]||[];
   const nheaders=headers.map(normHeader);
@@ -406,7 +467,7 @@ function renderMapping(container,rows,type){
   const isSystem=type==="system";
   const fields=isSystem
     ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Manufacturer","manufacturer",false],["MRP","mrp",false],["Purchase Rate","purchase_rate",false]]
-    : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false]];
+    : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Condition / Damage","condition",false]];
   container.__rows=rows;
   container.innerHTML=`<div class="mapping-card">
     <strong>Column Mapping</strong>
@@ -553,10 +614,10 @@ async function importPhysicalRows(container){
         audit_id:currentAuditId,zone_id:zoneId,team_id:teamId,system_stock_id:s?.id||null,import_job_id:jobId,
         item_code:code||s?.item_code||null,barcode:barcode||s?.barcode||null,item_name:name||s?.item_name,
         category:(map.category?String(r[map.category]??"").trim():null)||s?.category||null,
-        batch_no:batch||s?.batch_no||null,expiry_date:(map.expiry_date?toISODate(r[map.expiry_date]):null)||s?.expiry_date||null,
+        batch_no:batch||s?.batch_no||null,expiry_date:importedExpiry,
         pack_uom:(map.pack_uom?String(r[map.pack_uom]??"").trim():null)||s?.pack_uom||null,
         physical_qty:physical,system_qty:s?Number(s.system_qty||0):0,
-        condition:"saleable",count_status:(s && physical!==Number(s.system_qty||0))?"recount":"counted",
+        condition:finalCondition,count_status:(s && physical!==Number(s.system_qty||0))?"recount":"counted",
         match_status:matchStatus,excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
         counted_by:"Physical Import"
       });
@@ -624,6 +685,8 @@ function buildReconciliationRows(systemStock, countLines){
           item_code:c.item_code||null,
           batch_no:c.batch_no||null,
           category:c.category||null,
+          expiry_date:c.expiry_date||null,
+          condition:c.condition||classifyCondition(c.expiry_date,null),
           system_qty:0,
           physical_qty:0,
           recount:false,
@@ -656,6 +719,8 @@ function buildReconciliationRows(systemStock, countLines){
       item_code:s.item_code||"",
       batch_no:s.batch_no||"",
       category:s.category||"",
+      expiry_date:g?.latest_count?.expiry_date || s.expiry_date || null,
+      condition:g?.latest_count?.condition || classifyCondition(s.expiry_date,null),
       system_qty:sys,
       physical_qty:phy,
       variance,
@@ -677,6 +742,8 @@ function buildReconciliationRows(systemStock, countLines){
       item_code:g.item_code||"",
       batch_no:g.batch_no||"",
       category:g.category||"",
+      expiry_date:g.expiry_date||null,
+      condition:g.condition||"saleable",
       system_qty:0,
       physical_qty:Number(g.physical_qty||0),
       variance:Number(g.physical_qty||0),
@@ -709,15 +776,17 @@ function filteredReconciliationRows(){
   const q=($("reconSearch")?.value||"").trim().toLowerCase();
   const status=$("reconStatusFilter")?.value||"all";
   const category=$("reconCategoryFilter")?.value||"all";
+  const condition=$("reconConditionFilter")?.value||"all";
 
   return reconciliationRows.filter(r=>{
     const hay=[r.item_name,r.item_code,r.batch_no,r.category].join(" ").toLowerCase();
     const qOk=!q || hay.includes(q);
     const categoryOk=category==="all" || (r.category||"")===category;
+    const conditionOk=condition==="all" || (r.condition||"saleable")===condition;
     let statusOk=true;
     if(status==="recount") statusOk=r.recount===true;
     else if(status!=="all") statusOk=r.status===status;
-    return qOk && categoryOk && statusOk;
+    return qOk && categoryOk && conditionOk && statusOk;
   });
 }
 
@@ -746,12 +815,14 @@ function renderReconciliationTable(){
       <td>${esc(r.item_code||"—")}</td>
       <td>${esc(r.batch_no||"—")}</td>
       <td>${esc(r.category||"—")}</td>
+      <td>${esc(r.expiry_date||"—")}</td>
+      <td>${conditionChip(r.condition)}</td>
       <td>${esc(r.system_qty)}</td>
       <td>${esc(r.physical_qty)}</td>
       <td class="${varianceClass(r.variance)}">${esc(r.variance)}</td>
       <td>${r.recount?'<span class="status-chip status-recount">Recount</span>':'—'}</td>
     </tr>
-  `).join("") : '<tr><td colspan="9" class="empty">No reconciliation rows for this filter.</td></tr>';
+  `).join("") : '<tr><td colspan="11" class="empty">No reconciliation rows for this filter.</td></tr>';
 
   if($("reconFooter")){
     $("reconFooter").innerHTML=`<span>Showing ${fmtNum(rows.length)} of ${fmtNum(reconciliationRows.length)} reconciliation rows</span><span>Positive variance = excess · Negative variance = short</span>`;
@@ -776,7 +847,7 @@ async function loadReconciliation(){
     renderReconciliationTable();
   }catch(err){
     console.error("Reconciliation load error:",err);
-    $("reconBody").innerHTML=`<tr><td colspan="9" class="empty">${esc(err.message||"Unable to load reconciliation")}</td></tr>`;
+    $("reconBody").innerHTML=`<tr><td colspan="11" class="empty">${esc(err.message||"Unable to load reconciliation")}</td></tr>`;
   }
 }
 
@@ -784,7 +855,7 @@ async function fetchAllCountLinesDetailed(){
   const all=[]; let from=0; const size=1000;
   while(true){
     const {data,error}=await sb.from("medvika_audit_count_lines")
-      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,physical_qty,system_qty,count_status,match_status")
+      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,expiry_date,condition,physical_qty,system_qty,count_status,match_status")
       .eq("audit_id",currentAuditId).range(from,from+size-1);
     if(error) throw error;
     all.push(...(data||[]));
@@ -801,6 +872,8 @@ function reconciliationExportRows(){
     Item_Code:r.item_code||"",
     Batch_No:r.batch_no||"",
     Category:r.category||"",
+    Expiry_Date:r.expiry_date||"",
+    Condition:conditionLabel(r.condition),
     System_Qty:r.system_qty,
     Physical_Qty:r.physical_qty,
     Variance:r.variance,
@@ -834,7 +907,7 @@ function exportReconciliationExcel(){
   const ws=XLSX.utils.json_to_sheet(rows);
   ws["!cols"]=[
     {wch:18},{wch:32},{wch:16},{wch:16},{wch:22},
-    {wch:12},{wch:12},{wch:12},{wch:10},{wch:36}
+    {wch:14},{wch:16},{wch:12},{wch:12},{wch:12},{wch:10},{wch:36}
   ];
   const book=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book,ws,"Reconciliation");
@@ -861,8 +934,52 @@ function exportReconciliationExcel(){
 $("reconSearch")?.addEventListener("input",renderReconciliationTable);
 $("reconStatusFilter")?.addEventListener("change",renderReconciliationTable);
 $("reconCategoryFilter")?.addEventListener("change",renderReconciliationTable);
+$("reconConditionFilter")?.addEventListener("change",renderReconciliationTable);
 $("reloadReconButton")?.addEventListener("click",loadReconciliation);
 $("exportReconCsvButton")?.addEventListener("click",exportReconciliationCsv);
 $("exportReconExcelButton")?.addEventListener("click",exportReconciliationExcel);
+
+
+async function saveNearExpiryRule(){
+  const days=Number($("expiryRuleDays")?.value||180);
+  if(!currentAuditId || !days) return;
+  const {error}=await sb.from("medvika_audit_projects")
+    .update({near_expiry_days:days})
+    .eq("id",currentAuditId);
+  if(error){toast(error.message,"error");return;}
+  nearExpiryDays=days;
+  if($("nearExpiryRule")) $("nearExpiryRule").textContent=`${days} days`;
+  toast(`Near-expiry rule saved: ${days} days`);
+
+  // Reclassify existing non-damaged physical count rows using their expiry dates.
+  const counts=await fetchAllCountLinesForCondition();
+  for(let i=0;i<counts.length;i+=300){
+    const chunk=counts.slice(i,i+300);
+    await Promise.all(chunk.map(async c=>{
+      if(c.condition==="damaged") return;
+      const next=classifyCondition(c.expiry_date,c.condition);
+      if(next!==c.condition){
+        await sb.from("medvika_audit_count_lines").update({condition:next}).eq("id",c.id);
+      }
+    }));
+  }
+  await Promise.all([loadDashboard(),loadExceptions(),loadReconciliation()]);
+}
+
+async function fetchAllCountLinesForCondition(){
+  const all=[];let from=0;const size=1000;
+  while(true){
+    const {data,error}=await sb.from("medvika_audit_count_lines")
+      .select("id,expiry_date,condition")
+      .eq("audit_id",currentAuditId).range(from,from+size-1);
+    if(error) throw error;
+    all.push(...(data||[]));
+    if(!data||data.length<size) break;
+    from+=size;
+  }
+  return all;
+}
+
+$("saveExpiryRuleButton")?.addEventListener("click",saveNearExpiryRule);
 
 requireSession();

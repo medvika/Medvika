@@ -62,3 +62,13 @@ input,select,textarea{width:100%;border:1px solid #cbd9df;border-radius:10px;pad
 .recon-click{color:var(--green);font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:1100px){.recon-summary{grid-template-columns:repeat(3,1fr)}.recon-toolbar{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.recon-summary{grid-template-columns:repeat(2,1fr)}.recon-toolbar{grid-template-columns:1fr}.recon-actions{width:100%}.recon-actions .btn{flex:1}}
+
+/* STEP 5 - EXPIRY & DAMAGE */
+.expiry-rule-row{display:grid;grid-template-columns:220px auto 1fr;gap:12px;align-items:end}
+.expiry-rule-row label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--navy)}
+.condition-chip{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:900;text-transform:uppercase;white-space:nowrap}
+.condition-saleable{background:#e7f7ed;color:#08733f}
+.condition-near_expiry{background:#fff4d6;color:#92400e}
+.condition-expired{background:#fee2e2;color:#991b1b}
+.condition-damaged{background:#fce7f3;color:#9d174d}
+@media(max-width:800px){.expiry-rule-row{grid-template-columns:1fr}}
