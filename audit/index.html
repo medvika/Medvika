@@ -8,6 +8,8 @@
   <link rel="icon" href="./logo.png">
   <link rel="stylesheet" href="./audit.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -45,6 +47,7 @@
         <button class="nav-btn" data-view="count">Physical Count</button>
         <button class="nav-btn" data-view="zones">Zones & Teams</button>
         <button class="nav-btn" data-view="exceptions">Exceptions</button>
+        <button class="nav-btn" data-view="imports">Imports</button>
       </nav>
       <div class="sidebar-footer">
         <div id="signedInAs" class="signed-in"></div>
@@ -79,6 +82,7 @@
           <article class="kpi"><span>Verified</span><strong id="kpiVerified">0</strong><small>verified lines</small></article>
           <article class="kpi warning"><span>Recount</span><strong id="kpiRecount">0</strong><small>needs attention</small></article>
           <article class="kpi danger"><span>Variance</span><strong id="kpiVariance">0</strong><small>system mismatch</small></article>
+          <article class="kpi danger"><span>Unlisted Excess</span><strong id="kpiExcess">0</strong><small>not in current stock</small></article>
           <article class="kpi amber"><span>Expiry Flags</span><strong id="kpiExpiry">0</strong><small>expired + near expiry</small></article>
           <article class="kpi"><span>Progress</span><strong id="kpiProgress">0%</strong><small>vs expected running items</small></article>
         </div>
@@ -203,6 +207,62 @@
           </section>
         </div>
       </section>
+
+      <section id="importsView" class="view">
+        <div class="import-grid">
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3>1. System Stock / Current Inventory Import</h3>
+                <span>CSV or Excel · designed for 20,000+ current rows</span>
+              </div>
+            </div>
+            <p class="helper">Import the client's current stock before physical counting. The portal will use item code + batch, barcode + batch, then item name + batch for matching.</p>
+            <div class="import-options">
+              <label>Import mode
+                <select id="systemImportMode">
+                  <option value="replace">Replace current project stock</option>
+                  <option value="append">Append to existing stock</option>
+                </select>
+              </label>
+              <label>Choose CSV / Excel
+                <input id="systemStockFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+              </label>
+            </div>
+            <button id="previewSystemButton" class="btn secondary" type="button">Preview & Map Columns</button>
+            <div id="systemImportArea"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3>2. Physical Quantity Import</h3>
+                <span>Match physical counts against system stock</span>
+              </div>
+            </div>
+            <p class="helper">Upload physical stock prepared in Excel/CSV. If an item/batch does not exist in current stock, Medvika will add it with system quantity 0 and flag it as <strong>Unlisted Excess</strong>.</p>
+            <div class="import-options">
+              <label>Zone for imported counts
+                <select id="physicalImportZone"></select>
+              </label>
+              <label>Team for imported counts
+                <select id="physicalImportTeam"></select>
+              </label>
+              <label>Choose CSV / Excel
+                <input id="physicalCountFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+              </label>
+            </div>
+            <button id="previewPhysicalButton" class="btn secondary" type="button">Preview & Match</button>
+            <div id="physicalImportArea"></div>
+          </section>
+        </div>
+
+        <section class="card">
+          <div class="card-head"><h3>Import History</h3><button id="reloadImportsButton" class="text-btn" type="button">Reload</button></div>
+          <div id="importHistoryWrap" class="table-wrap"></div>
+        </section>
+      </section>
+
     </main>
   </div>
 
