@@ -246,44 +246,138 @@ $("countForm").addEventListener("submit", async e=>{
   if(!currentAuditId) return;
   const btn=$("saveCountButton");
   btn.disabled=true; btn.textContent="Saving…";
-  const record={
-    audit_id:currentAuditId,
-    zone_id:$("countZone").value,
-    team_id:$("countTeam").value,
-    item_name:$("itemName").value.trim(),
-    item_code:$("itemCode").value.trim()||null,
-    barcode:$("barcode").value.trim()||null,
-    batch_no:$("batchNo").value.trim()||null,
-    expiry_date:expiryMonthToDate($("expiryDate").value),
-    pack_uom:$("packUom").value.trim()||null,
-    physical_qty:Number($("physicalQty").value),
-    system_qty:$("systemQty").value===""?null:Number($("systemQty").value),
-    condition:$("condition").value,
-    counted_by:$("countedBy").value.trim()||null,
-    remarks:$("remarks").value.trim()||null,
-    count_status:"counted"
-  };
-  const {error}=await sb.from("medvika_audit_count_lines").insert(record);
-  btn.disabled=false; btn.textContent="Save Count";
-  if(error){toast(error.message,"error");return;}
-  toast("Count saved");
-  const keepZone=$("countZone").value, keepTeam=$("countTeam").value, keepCounter=$("countedBy").value;
-  e.target.reset();
-  $("countZone").value=keepZone; $("countTeam").value=keepTeam; $("countedBy").value=keepCounter; $("condition").value="saleable";
-  $("itemName").focus();
-  await Promise.all([loadDashboard(),loadRecentCounts()]);
+
+  try{
+    const stock = await fetchAllSystemStock();
+    const matchers = buildStockMatchers(stock);
+
+    const name=$("itemName").value.trim();
+    const code=$("itemCode").value.trim();
+    const barcode=$("barcode").value.trim();
+    const batch=$("batchNo").value.trim();
+    const physical=Number($("physicalQty").value);
+
+    const {stock:s,matchStatus}=findStockMatch(matchers,{code,barcode,name,batch});
+
+    const systemQty = s ? Number(s.system_qty||0) : 0;
+    const isVariance = physical !== systemQty;
+
+    const record={
+      audit_id:currentAuditId,
+      zone_id:$("countZone").value,
+      team_id:$("countTeam").value,
+      system_stock_id:s?.id||null,
+      item_name:name,
+      item_code:code||s?.item_code||null,
+      barcode:barcode||s?.barcode||null,
+      batch_no:batch||s?.batch_no||null,
+      expiry_date:expiryMonthToDate($("expiryDate").value)||s?.expiry_date||null,
+      pack_uom:$("packUom").value.trim()||s?.pack_uom||null,
+      category:s?.category||null,
+      physical_qty:physical,
+      system_qty:systemQty,
+      condition:$("condition").value,
+      counted_by:$("countedBy").value.trim()||null,
+      remarks:$("remarks").value.trim()||null,
+      count_status:isVariance && s ? "recount" : "counted",
+      match_status:matchStatus,
+      excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock."
+    };
+
+    const {error}=await sb.from("medvika_audit_count_lines").insert(record);
+    if(error) throw error;
+
+    toast(s ? (isVariance ? "Count saved — variance flagged for recount" : "Count saved — matched") : "Count saved — unlisted excess flagged");
+
+    const keepZone=$("countZone").value, keepTeam=$("countTeam").value, keepCounter=$("countedBy").value;
+    e.target.reset();
+    $("countZone").value=keepZone;
+    $("countTeam").value=keepTeam;
+    $("countedBy").value=keepCounter;
+    $("condition").value="saleable";
+    $("itemName").focus();
+
+    await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions()]);
+  }catch(err){
+    console.error("Manual count save error:",err);
+    toast(err.message||"Unable to save count","error");
+  }finally{
+    btn.disabled=false; btn.textContent="Save Count";
+  }
 });
 
 async function loadExceptions(){
-  const [rr,er]=await Promise.all([
-    sb.from("medvika_audit_recounts").select("*").eq("audit_id",currentAuditId).eq("status","open").order("created_at",{ascending:false}).limit(100),
-    sb.from("medvika_audit_count_lines").select("item_name,item_code,batch_no,expiry_date,physical_qty,condition,count_status").eq("audit_id",currentAuditId).in("condition",["near_expiry","expired","damaged"]).order("counted_at",{ascending:false}).limit(100)
-  ]);
-  if(!rr.error){
-    $("recountWrap").innerHTML=tableHtml(["Item","Batch","System","First","Recount","Status"],(rr.data||[]).map(r=>[r.item_name,r.batch_no||"—",r.system_qty??"—",r.first_count_qty??"—",r.recount_qty??"—",r.status]));
-  }
-  if(!er.error){
-    $("expiryWrap").innerHTML=tableHtml(["Item","Batch","Expiry","Qty","Condition"],(er.data||[]).map(r=>[r.item_name,r.batch_no||"—",r.expiry_date||"—",r.physical_qty,r.condition.replaceAll("_"," ")]));
+  try{
+    const [stock, counts, rr, er] = await Promise.all([
+      fetchAllSystemStock(),
+      fetchAllCountLines(),
+      sb.from("medvika_audit_recounts").select("*").eq("audit_id",currentAuditId).eq("status","open").order("created_at",{ascending:false}).limit(100),
+      sb.from("medvika_audit_count_lines").select("item_name,item_code,batch_no,expiry_date,physical_qty,condition,count_status").eq("audit_id",currentAuditId).in("condition",["near_expiry","expired","damaged"]).order("counted_at",{ascending:false}).limit(100)
+    ]);
+
+    const countedSystemIds = new Set(counts.filter(c=>c.system_stock_id).map(c=>String(c.system_stock_id)));
+
+    const missing = stock.filter(s=>!countedSystemIds.has(String(s.id)));
+
+    const unlisted = counts.filter(c=>c.match_status==="unmatched_excess");
+
+    const quantityVariance = counts.filter(c=>
+      c.match_status!=="unmatched_excess" &&
+      c.system_qty!==null &&
+      Number(c.physical_qty)!==Number(c.system_qty)
+    );
+
+    const matched = counts.filter(c=>
+      c.match_status!=="unmatched_excess" &&
+      c.system_qty!==null &&
+      Number(c.physical_qty)===Number(c.system_qty)
+    );
+
+    const blocks=[];
+
+    blocks.push(`<div class="mapping-card"><strong>Quantity Variance / Recount</strong>${
+      quantityVariance.length
+        ? tableHtml(["Item","Code","Batch","System","Physical","Variance","Status"],
+            quantityVariance.map(c=>[
+              c.item_name,c.item_code||"—",c.batch_no||"—",c.system_qty,c.physical_qty,
+              Number(c.physical_qty)-Number(c.system_qty),c.count_status
+            ]))
+        : '<div class="empty">No quantity variances.</div>'
+    }</div>`);
+
+    blocks.push(`<div class="mapping-card"><strong>Unlisted Excess</strong>${
+      unlisted.length
+        ? tableHtml(["Item","Code","Batch","System","Physical","Finding"],
+            unlisted.map(c=>[
+              c.item_name,c.item_code||"—",c.batch_no||"—",0,c.physical_qty,"Not in current stock"
+            ]))
+        : '<div class="empty">No unlisted excess items.</div>'
+    }</div>`);
+
+    blocks.push(`<div class="mapping-card"><strong>System Stock Not Found Physically</strong>${
+      missing.length
+        ? tableHtml(["Item","Code","Batch","System Qty","Finding"],
+            missing.map(s=>[
+              s.item_name,s.item_code||"—",s.batch_no||"—",s.system_qty,"Missing / not physically counted"
+            ]))
+        : '<div class="empty">No missing system-stock items.</div>'
+    }</div>`);
+
+    blocks.push(`<div class="mapping-card"><strong>Matched Lines</strong><div class="empty">${fmtNum(matched.length)} matched line(s).</div></div>`);
+
+    $("recountWrap").innerHTML=blocks.join("");
+
+    if(!er.error){
+      $("expiryWrap").innerHTML=tableHtml(
+        ["Item","Batch","Expiry","Qty","Condition"],
+        (er.data||[]).map(r=>[
+          r.item_name,r.batch_no||"—",r.expiry_date||"—",r.physical_qty,r.condition.replaceAll("_"," ")
+        ])
+      );
+    }
+  }catch(err){
+    console.error("Exception loading error:",err);
+    $("recountWrap").innerHTML=`<div class="empty">${esc(err.message||"Unable to load exceptions")}</div>`;
   }
 }
 
@@ -518,8 +612,91 @@ async function fetchAllSystemStock(){
   }
   return all;
 }
+
+async function fetchAllCountLines(){
+  const all=[]; let from=0; const size=1000;
+  while(true){
+    const {data,error}=await sb.from("medvika_audit_count_lines")
+      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,physical_qty,system_qty,count_status,match_status")
+      .eq("audit_id",currentAuditId).range(from,from+size-1);
+    if(error) throw error;
+    all.push(...(data||[]));
+    if(!data||data.length<size) break;
+    from+=size;
+  }
+  return all;
+}
 function stockKey(v,b){return `${cleanCode(v)}|${cleanBatch(b)}`;}
 function nameKey(v,b){return `${normName(v)}|${cleanBatch(b)}`;}
+function codeOnlyKey(v){ return cleanCode(v); }
+function barcodeOnlyKey(v){ return cleanCode(v); }
+function nameOnlyKey(v){ return normName(v); }
+
+function addToMultiMap(map,key,row){
+  if(!key) return;
+  if(!map.has(key)) map.set(key,[]);
+  map.get(key).push(row);
+}
+
+function uniqueMatch(map,key){
+  const rows = map.get(key) || [];
+  return rows.length === 1 ? rows[0] : null;
+}
+
+function buildStockMatchers(stock){
+  const byCodeBatch=new Map(), byBarcodeBatch=new Map(), byNameBatch=new Map();
+  const byCodeOnly=new Map(), byBarcodeOnly=new Map(), byNameOnly=new Map();
+
+  stock.forEach(s=>{
+    const batch = s.batch_no || "";
+    if(s.item_code){
+      byCodeBatch.set(stockKey(s.item_code,batch),s);
+      addToMultiMap(byCodeOnly,codeOnlyKey(s.item_code),s);
+    }
+    if(s.barcode){
+      byBarcodeBatch.set(stockKey(s.barcode,batch),s);
+      addToMultiMap(byBarcodeOnly,barcodeOnlyKey(s.barcode),s);
+    }
+    byNameBatch.set(nameKey(s.normalized_name||s.item_name,batch),s);
+    addToMultiMap(byNameOnly,nameOnlyKey(s.normalized_name||s.item_name),s);
+  });
+
+  return {byCodeBatch,byBarcodeBatch,byNameBatch,byCodeOnly,byBarcodeOnly,byNameOnly};
+}
+
+function findStockMatch(matchers,{code,barcode,name,batch}){
+  const b = cleanBatch(batch);
+  let s=null, matchStatus="unmatched_excess";
+
+  // Strict batch-aware matching first.
+  if(code && b && matchers.byCodeBatch.has(stockKey(code,b))){
+    s=matchers.byCodeBatch.get(stockKey(code,b));
+    matchStatus="matched_item_batch";
+  } else if(barcode && b && matchers.byBarcodeBatch.has(stockKey(barcode,b))){
+    s=matchers.byBarcodeBatch.get(stockKey(barcode,b));
+    matchStatus="matched_barcode_batch";
+  } else if(name && b && matchers.byNameBatch.has(nameKey(name,b))){
+    s=matchers.byNameBatch.get(nameKey(name,b));
+    matchStatus="matched_name_batch";
+  }
+
+  // If batch is missing or slightly inconsistent, only fall back when the item
+  // resolves to exactly ONE system-stock row. This prevents cross-batch matches.
+  if(!s && code){
+    const u=uniqueMatch(matchers.byCodeOnly,codeOnlyKey(code));
+    if(u){ s=u; matchStatus="matched_item_batch"; }
+  }
+  if(!s && barcode){
+    const u=uniqueMatch(matchers.byBarcodeOnly,barcodeOnlyKey(barcode));
+    if(u){ s=u; matchStatus="matched_barcode_batch"; }
+  }
+  if(!s && name){
+    const u=uniqueMatch(matchers.byNameOnly,nameOnlyKey(name));
+    if(u){ s=u; matchStatus="matched_name_batch"; }
+  }
+
+  return {stock:s,matchStatus};
+}
 
 async function importPhysicalRows(container){
   const rows=container.__rows||[], map=readMapping(container), file=$("physicalCountFile").files[0];
@@ -527,49 +704,77 @@ async function importPhysicalRows(container){
   const progress=container.querySelector("[data-progress]"); progress.hidden=false; progress.textContent="Loading current inventory for matching…";
   if(!map.item_name||!map.physical_qty){progress.className="import-progress error";progress.textContent="Map Item Name and Physical Qty.";return;}
   let jobId=null;
+
   try{
     jobId=await createImportJob("physical_count",file,"append",rows.length);
     const stock=await fetchAllSystemStock();
-    const byCode=new Map(),byBarcode=new Map(),byName=new Map();
-    stock.forEach(s=>{
-      if(s.item_code) byCode.set(stockKey(s.item_code,s.batch_no),s);
-      if(s.barcode) byBarcode.set(stockKey(s.barcode,s.batch_no),s);
-      byName.set(nameKey(s.normalized_name||s.item_name,s.batch_no),s);
-    });
-    const recs=[];let matched=0,unmatched=0,failed=0;
+    const matchers=buildStockMatchers(stock);
+
+    const recs=[];let matched=0,unmatched=0,failed=0,variance=0;
+
     rows.forEach(r=>{
       const name=String(r[map.item_name]??"").trim(), physical=toNumber(r[map.physical_qty]);
       if(!name||physical===null){failed++;return;}
+
       const code=map.item_code?String(r[map.item_code]??"").trim():"";
       const barcode=map.barcode?String(r[map.barcode]??"").trim():"";
       const batch=map.batch_no?String(r[map.batch_no]??"").trim():"";
-      let s=null,matchStatus="unmatched_excess";
-      if(code && byCode.has(stockKey(code,batch))){s=byCode.get(stockKey(code,batch));matchStatus="matched_item_batch";}
-      else if(barcode && byBarcode.has(stockKey(barcode,batch))){s=byBarcode.get(stockKey(barcode,batch));matchStatus="matched_barcode_batch";}
-      else if(byName.has(nameKey(name,batch))){s=byName.get(nameKey(name,batch));matchStatus="matched_name_batch";}
+
+      const result=findStockMatch(matchers,{code,barcode,name,batch});
+      const s=result.stock;
+      const matchStatus=result.matchStatus;
+
       if(s) matched++; else unmatched++;
+
+      const systemQty=s?Number(s.system_qty||0):0;
+      const isVariance=physical!==systemQty;
+      if(s && isVariance) variance++;
+
       recs.push({
-        audit_id:currentAuditId,zone_id:zoneId,team_id:teamId,system_stock_id:s?.id||null,import_job_id:jobId,
-        item_code:code||s?.item_code||null,barcode:barcode||s?.barcode||null,item_name:name||s?.item_name,
+        audit_id:currentAuditId,
+        zone_id:zoneId,
+        team_id:teamId,
+        system_stock_id:s?.id||null,
+        import_job_id:jobId,
+        item_code:code||s?.item_code||null,
+        barcode:barcode||s?.barcode||null,
+        item_name:name||s?.item_name,
         category:(map.category?String(r[map.category]??"").trim():null)||s?.category||null,
-        batch_no:batch||s?.batch_no||null,expiry_date:(map.expiry_date?toISODate(r[map.expiry_date]):null)||s?.expiry_date||null,
+        batch_no:batch||s?.batch_no||null,
+        expiry_date:(map.expiry_date?toISODate(r[map.expiry_date]):null)||s?.expiry_date||null,
         pack_uom:(map.pack_uom?String(r[map.pack_uom]??"").trim():null)||s?.pack_uom||null,
-        physical_qty:physical,system_qty:s?Number(s.system_qty||0):0,
-        condition:"saleable",count_status:(s && physical!==Number(s.system_qty||0))?"recount":"counted",
-        match_status:matchStatus,excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
+        physical_qty:physical,
+        system_qty:systemQty,
+        condition:"saleable",
+        count_status:s && isVariance ? "recount" : "counted",
+        match_status:matchStatus,
+        excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
         counted_by:"Physical Import"
       });
     });
+
     progress.textContent=`Saving ${fmtNum(recs.length)} physical count rows…`;
     const inserted=await insertChunks("medvika_audit_count_lines",recs);
-    await finishImportJob(jobId,{inserted_rows:inserted,matched_rows:matched,unmatched_rows:unmatched,failed_rows:failed});
+
+    await finishImportJob(jobId,{
+      inserted_rows:inserted,
+      matched_rows:matched,
+      unmatched_rows:unmatched,
+      failed_rows:failed
+    });
+
     progress.className="import-progress";
-    progress.innerHTML=`Completed: ${fmtNum(inserted)} counts · ${fmtNum(matched)} matched · <strong>${fmtNum(unmatched)} unlisted excess</strong>${failed?` · ${failed} skipped`:""}.`;
+    progress.innerHTML=`Completed: ${fmtNum(inserted)} counts · ${fmtNum(matched)} matched · ${fmtNum(variance)} quantity variance · <strong>${fmtNum(unmatched)} unlisted excess</strong>${failed?` · ${failed} skipped`:""}.`;
+
     toast("Physical count import completed");
     await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory()]);
   }catch(e){
-    if(jobId) await finishImportJob(jobId,{inserted_rows:0,matched_rows:0,unmatched_rows:0,failed_rows:rows.length},e.message);
-    progress.className="import-progress error";progress.textContent=e.message;toast(e.message,"error");
+    if(jobId) await finishImportJob(jobId,{
+      inserted_rows:0,matched_rows:0,unmatched_rows:0,failed_rows:rows.length
+    },e.message);
+    progress.className="import-progress error";
+    progress.textContent=e.message;
+    toast(e.message,"error");
   }
 }
 
