@@ -107,10 +107,11 @@ document.querySelectorAll(".nav-btn").forEach(btn=>{
     const view=btn.dataset.view;
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     $(view+"View").classList.add("active");
-    const titles={dashboard:"Audit Dashboard",count:"Physical Stock Count",zones:"Zones & Teams",exceptions:"Exceptions & Controls",reconciliation:"Complete Reconciliation",imports:"Stock Imports"};
+    const titles={dashboard:"Audit Dashboard",count:"Physical Stock Count",zones:"Zones & Teams",exceptions:"Exceptions & Controls",reconciliation:"Complete Reconciliation",report:"Final Audit Report",imports:"Stock Imports"};
     $("viewTitle").textContent=titles[view]||"Stock Audit";
     if(view==="count") $("itemName").focus();
     if(view==="reconciliation") loadReconciliation();
+    if(view==="report") loadFinalReport();
   });
 });
 
@@ -150,7 +151,7 @@ $("reloadCountsButton").addEventListener("click",loadRecentCounts);
 
 async function loadCurrentAudit(){
   if(!currentAuditId) return;
-  await Promise.all([loadProjectDetails(),loadZonesAndTeams(),loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory(),loadReconciliation()]);
+  await Promise.all([loadProjectDetails(),loadZonesAndTeams(),loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory(),loadReconciliation(),loadFinalReport()]);
 }
 
 async function loadProjectDetails(){
@@ -251,34 +252,101 @@ function expiryMonthToDate(v){
 $("countForm").addEventListener("submit", async e=>{
   e.preventDefault();
   if(!currentAuditId) return;
+
   const btn=$("saveCountButton");
-  btn.disabled=true; btn.textContent="Saving…";
-  const record={
-    audit_id:currentAuditId,
-    zone_id:$("countZone").value,
-    team_id:$("countTeam").value,
-    item_name:$("itemName").value.trim(),
-    item_code:$("itemCode").value.trim()||null,
-    barcode:$("barcode").value.trim()||null,
-    batch_no:$("batchNo").value.trim()||null,
-    expiry_date:expiryMonthToDate($("expiryDate").value),
-    pack_uom:$("packUom").value.trim()||null,
-    physical_qty:Number($("physicalQty").value),
-    system_qty:$("systemQty").value===""?null:Number($("systemQty").value),
-    condition:classifyCondition(enteredExpiry||s?.expiry_date||null, explicitCondition),
-    counted_by:$("countedBy").value.trim()||null,
-    remarks:$("remarks").value.trim()||null,
-    count_status:"counted"
-  };
-  const {error}=await sb.from("medvika_audit_count_lines").insert(record);
-  btn.disabled=false; btn.textContent="Save Count";
-  if(error){toast(error.message,"error");return;}
-  toast("Count saved");
-  const keepZone=$("countZone").value, keepTeam=$("countTeam").value, keepCounter=$("countedBy").value;
-  e.target.reset();
-  $("countZone").value=keepZone; $("countTeam").value=keepTeam; $("countedBy").value=keepCounter; $("condition").value="saleable";
-  $("itemName").focus();
-  await Promise.all([loadDashboard(),loadRecentCounts()]);
+  btn.disabled=true;
+  btn.textContent="Saving…";
+
+  try{
+    const stock=await fetchAllSystemStock();
+    const name=$("itemName").value.trim();
+    const code=$("itemCode").value.trim();
+    const barcode=$("barcode").value.trim();
+    const batch=$("batchNo").value.trim();
+    const physical=Number($("physicalQty").value);
+    const enteredExpiry=expiryMonthToDate($("expiryDate").value);
+    const explicitCondition=$("condition").value;
+
+    let s=null, matchStatus="unmatched_excess";
+
+    // Exact item+batch match first.
+    if(code){
+      s=stock.find(x=>cleanCode(x.item_code)===cleanCode(code) && cleanBatch(x.batch_no)===cleanBatch(batch)) || null;
+      if(s) matchStatus="matched_item_batch";
+    }
+    if(!s && barcode){
+      s=stock.find(x=>cleanCode(x.barcode)===cleanCode(barcode) && cleanBatch(x.batch_no)===cleanBatch(batch)) || null;
+      if(s) matchStatus="matched_barcode_batch";
+    }
+    if(!s && name){
+      s=stock.find(x=>normName(x.item_name)===normName(name) && cleanBatch(x.batch_no)===cleanBatch(batch)) || null;
+      if(s) matchStatus="matched_name_batch";
+    }
+
+    // Safe fallback if only one system row exists for the supplied item.
+    if(!s && code){
+      const candidates=stock.filter(x=>cleanCode(x.item_code)===cleanCode(code));
+      if(candidates.length===1){s=candidates[0];matchStatus="matched_item_batch";}
+    }
+    if(!s && barcode){
+      const candidates=stock.filter(x=>cleanCode(x.barcode)===cleanCode(barcode));
+      if(candidates.length===1){s=candidates[0];matchStatus="matched_barcode_batch";}
+    }
+    if(!s && name){
+      const candidates=stock.filter(x=>normName(x.item_name)===normName(name));
+      if(candidates.length===1){s=candidates[0];matchStatus="matched_name_batch";}
+    }
+
+    const finalExpiry=enteredExpiry||s?.expiry_date||null;
+    const finalCondition=classifyCondition(finalExpiry,explicitCondition);
+    const systemQty=s?Number(s.system_qty||0):0;
+    const hasVariance=s && physical!==systemQty;
+
+    const record={
+      audit_id:currentAuditId,
+      zone_id:$("countZone").value,
+      team_id:$("countTeam").value,
+      system_stock_id:s?.id||null,
+      item_name:name,
+      item_code:code||s?.item_code||null,
+      barcode:barcode||s?.barcode||null,
+      batch_no:batch||s?.batch_no||null,
+      expiry_date:finalExpiry,
+      pack_uom:$("packUom").value.trim()||s?.pack_uom||null,
+      category:s?.category||null,
+      physical_qty:physical,
+      system_qty:systemQty,
+      condition:finalCondition,
+      counted_by:$("countedBy").value.trim()||null,
+      remarks:$("remarks").value.trim()||null,
+      count_status:hasVariance?"recount":"counted",
+      match_status:matchStatus,
+      excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock."
+    };
+
+    const {error}=await sb.from("medvika_audit_count_lines").insert(record);
+    if(error) throw error;
+
+    toast(s ? (hasVariance?"Count saved - variance flagged":"Count saved - matched") : "Count saved - unlisted excess");
+
+    const keepZone=$("countZone").value;
+    const keepTeam=$("countTeam").value;
+    const keepCounter=$("countedBy").value;
+    e.target.reset();
+    $("countZone").value=keepZone;
+    $("countTeam").value=keepTeam;
+    $("countedBy").value=keepCounter;
+    $("condition").value="saleable";
+    $("itemName").focus();
+
+    await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions(),loadReconciliation(),loadFinalReport()]);
+  }catch(err){
+    console.error("Manual count save error:",err);
+    toast(err.message||"Unable to save count","error");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Save Count";
+  }
 });
 
 async function loadExceptions(){
@@ -635,7 +703,7 @@ async function importPhysicalRows(container){
     progress.className="import-progress";
     progress.innerHTML=`Completed: ${fmtNum(inserted)} counts · ${fmtNum(matched)} matched · <strong>${fmtNum(unmatched)} unlisted excess</strong>${failed?` · ${failed} skipped`:""}.`;
     toast("Physical count import completed");
-    await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory()]);
+    await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory(),loadReconciliation(),loadFinalReport()]);
   }catch(e){
     if(jobId) await finishImportJob(jobId,{inserted_rows:0,matched_rows:0,unmatched_rows:0,failed_rows:rows.length},e.message);
     progress.className="import-progress error";progress.textContent=e.message;toast(e.message,"error");
@@ -988,5 +1056,463 @@ async function fetchAllCountLinesForCondition(){
 }
 
 $("saveExpiryRuleButton")?.addEventListener("click",saveNearExpiryRule);
+
+
+// ============================================================
+// STEP 6 - FINAL CLIENT AUDIT REPORT
+// ============================================================
+let finalReportData = null;
+
+function daysFromAudit(expiryDate){
+  if(!expiryDate) return null;
+  const exp=new Date(expiryDate+"T23:59:59");
+  const ref=auditReferenceDate();
+  if(Number.isNaN(exp.getTime()) || Number.isNaN(ref.getTime())) return null;
+  return Math.ceil((exp-ref)/(1000*60*60*24));
+}
+
+function systemExpiryClass(expiryDate){
+  const d=daysFromAudit(expiryDate);
+  if(d===null) return "no_expiry";
+  if(d<0) return "expired";
+  if(d<=Number(nearExpiryDays||180)) return "near_expiry";
+  return "saleable";
+}
+
+function aggregatePhysicalConditions(counts){
+  const out={saleable:0,near_expiry:0,expired:0,damaged:0,other:0};
+  counts.forEach(c=>{
+    const key=out.hasOwnProperty(c.condition)?c.condition:"other";
+    out[key]+=Number(c.physical_qty||0);
+  });
+  return out;
+}
+
+function buildReportReconciliation(systemStock,counts){
+  // Re-use the complete reconciliation engine if present.
+  return buildReconciliationRows(systemStock,counts);
+}
+
+function reportStat(label,value,cssClass="",small=""){
+  return `<div class="report-stat ${cssClass}"><span>${esc(label)}</span><strong>${fmtNum(value)}</strong>${small?`<small>${esc(small)}</small>`:""}</div>`;
+}
+
+async function fetchSignoff(){
+  const {data,error}=await sb.from("medvika_audit_signoff")
+    .select("*").eq("audit_id",currentAuditId).maybeSingle();
+  if(error) throw error;
+  return data||null;
+}
+
+async function saveReportDetails(){
+  if(!currentAuditId) return;
+  const payload={
+    audit_id:currentAuditId,
+    medvika_lead_name:$("reportLeadName")?.value.trim()||null,
+    client_representative_name:$("reportClientRep")?.value.trim()||null,
+    medvika_remarks:$("reportMedvikaRemarks")?.value.trim()||null,
+    client_remarks:$("reportClientRemarks")?.value.trim()||null
+  };
+  const {error}=await sb.from("medvika_audit_signoff").upsert(payload,{onConflict:"audit_id"});
+  if(error){toast(error.message,"error");return;}
+  toast("Report details saved");
+  await loadFinalReport();
+}
+
+async function loadFinalReport(){
+  if(!currentAuditId || !$("reportView")) return;
+
+  try{
+    const [projectRes,systemStock,counts,zoneRes,teamRes,signoff]=await Promise.all([
+      sb.from("medvika_audit_projects")
+        .select("*,medvika_audit_clients(client_name,business_name,contact_person)")
+        .eq("id",currentAuditId).single(),
+      fetchAllSystemStock(),
+      fetchAllCountLinesDetailed(),
+      sb.from("medvika_audit_zones").select("*").eq("audit_id",currentAuditId).order("sequence_no"),
+      sb.from("medvika_audit_teams").select("*").eq("audit_id",currentAuditId).eq("active",true).order("team_code"),
+      fetchSignoff()
+    ]);
+
+    if(projectRes.error) throw projectRes.error;
+    if(zoneRes.error) throw zoneRes.error;
+    if(teamRes.error) throw teamRes.error;
+
+    const project=projectRes.data;
+    const client=project.medvika_audit_clients?.business_name || project.medvika_audit_clients?.client_name || "Client";
+    const recon=buildReportReconciliation(systemStock,counts);
+
+    const reconCounts={
+      matched:recon.filter(r=>r.status==="matched").length,
+      excess:recon.filter(r=>r.status==="excess").length,
+      short:recon.filter(r=>r.status==="short").length,
+      missing:recon.filter(r=>r.status==="missing").length,
+      unlisted:recon.filter(r=>r.status==="unlisted").length,
+      recount:recon.filter(r=>r.recount).length
+    };
+
+    const physicalConditions=aggregatePhysicalConditions(counts);
+
+    const systemExpiryRows=systemStock.map(s=>({
+      ...s,
+      expiry_class:systemExpiryClass(s.expiry_date),
+      days_to_expiry:daysFromAudit(s.expiry_date)
+    }));
+
+    const systemExpiry={
+      expired_lines:systemExpiryRows.filter(r=>r.expiry_class==="expired").length,
+      expired_qty:systemExpiryRows.filter(r=>r.expiry_class==="expired").reduce((a,r)=>a+Number(r.system_qty||0),0),
+      near_lines:systemExpiryRows.filter(r=>r.expiry_class==="near_expiry").length,
+      near_qty:systemExpiryRows.filter(r=>r.expiry_class==="near_expiry").reduce((a,r)=>a+Number(r.system_qty||0),0)
+    };
+
+    finalReportData={
+      project,client,systemStock,counts,recon,zones:zoneRes.data||[],teams:teamRes.data||[],
+      signoff,reconCounts,physicalConditions,systemExpiryRows,systemExpiry
+    };
+
+    $("reportProjectMeta").textContent=`${client} • ${project.project_code||""} • ${project.location||""} • ${project.audit_date||""}`;
+    $("reportProjectStatus").textContent=(project.status||"planning").replaceAll("_"," ");
+
+    $("reportReconSummary").innerHTML=[
+      reportStat("System Lines",systemStock.length,"","item + batch"),
+      reportStat("Physical Lines",counts.length,"","count entries"),
+      reportStat("Matched",reconCounts.matched,"ok"),
+      reportStat("Excess",reconCounts.excess,"warn"),
+      reportStat("Short",reconCounts.short,"danger"),
+      reportStat("Missing",reconCounts.missing,"danger"),
+      reportStat("Unlisted",reconCounts.unlisted,"danger"),
+      reportStat("Recount",reconCounts.recount,"warn")
+    ].join("");
+
+    $("reportSystemExpiry").innerHTML=[
+      reportStat("Expired Lines",systemExpiry.expired_lines,"danger"),
+      reportStat("Expired Qty",systemExpiry.expired_qty,"danger"),
+      reportStat("Near Expiry Lines",systemExpiry.near_lines,"warn"),
+      reportStat("Near Expiry Qty",systemExpiry.near_qty,"warn")
+    ].join("");
+
+    $("reportPhysicalCondition").innerHTML=[
+      reportStat("Saleable Qty",physicalConditions.saleable,"ok"),
+      reportStat("Damaged Qty",physicalConditions.damaged,"danger"),
+      reportStat("Expired Qty",physicalConditions.expired,"danger"),
+      reportStat("Near Expiry Qty",physicalConditions.near_expiry,"warn")
+    ].join("");
+
+    const exposureRows=systemExpiryRows
+      .filter(r=>["expired","near_expiry"].includes(r.expiry_class))
+      .sort((a,b)=>(a.days_to_expiry??999999)-(b.days_to_expiry??999999))
+      .slice(0,100);
+
+    $("reportSystemExpiryTable").innerHTML=tableHtml(
+      ["Item","Batch","Expiry","System Qty","Finding"],
+      exposureRows.map(r=>[
+        r.item_name,r.batch_no||"—",r.expiry_date||"—",r.system_qty,
+        r.expiry_class==="expired"?"Expired":"Near Expiry"
+      ])
+    );
+
+    const conditionRows=counts
+      .filter(c=>["damaged","expired","near_expiry"].includes(c.condition))
+      .sort((a,b)=>String(a.item_name).localeCompare(String(b.item_name)))
+      .slice(0,150);
+
+    $("reportConditionTable").innerHTML=tableHtml(
+      ["Item","Batch","Expiry","Qty","Condition"],
+      conditionRows.map(c=>[
+        c.item_name,c.batch_no||"—",c.expiry_date||"—",c.physical_qty,conditionLabel(c.condition)
+      ])
+    );
+
+    $("reportZoneTable").innerHTML=tableHtml(
+      ["Zone","Category","Status","Supervisor"],
+      (zoneRes.data||[]).map(z=>[
+        `${z.zone_code} - ${z.zone_name}`,z.category||"—",z.status,z.assigned_supervisor||"—"
+      ])
+    );
+
+    const exceptions=recon.filter(r=>r.status!=="matched");
+    $("reportExceptionTable").innerHTML=tableHtml(
+      ["Status","Item","Code","Batch","System","Physical","Variance","Condition"],
+      exceptions.slice(0,500).map(r=>[
+        statusLabel(r),r.item_name,r.item_code||"—",r.batch_no||"—",
+        r.system_qty,r.physical_qty,r.variance,conditionLabel(r.condition)
+      ])
+    );
+
+    if($("reportLeadName")) $("reportLeadName").value=signoff?.medvika_lead_name||"";
+    if($("reportClientRep")) $("reportClientRep").value=signoff?.client_representative_name||project.medvika_audit_clients?.contact_person||"";
+    if($("reportMedvikaRemarks")) $("reportMedvikaRemarks").value=signoff?.medvika_remarks||"";
+    if($("reportClientRemarks")) $("reportClientRemarks").value=signoff?.client_remarks||"";
+
+  }catch(err){
+    console.error("Final report load error:",err);
+    toast("Final report could not load: "+(err.message||err),"error");
+  }
+}
+
+function reportExcelRows(){
+  if(!finalReportData) return [];
+  return finalReportData.recon.map(r=>({
+    Status:statusLabel(r),
+    Item_Name:r.item_name,
+    Item_Code:r.item_code||"",
+    Batch_No:r.batch_no||"",
+    Category:r.category||"",
+    Expiry_Date:r.expiry_date||"",
+    Condition:conditionLabel(r.condition),
+    System_Qty:r.system_qty,
+    Physical_Qty:r.physical_qty,
+    Variance:r.variance,
+    Recount:r.recount?"Yes":"No",
+    Finding:r.finding
+  }));
+}
+
+function exportFinalReportExcel(){
+  if(!finalReportData){toast("Load report first","error");return;}
+  if(!window.XLSX){toast("Excel library not loaded","error");return;}
+
+  const book=XLSX.utils.book_new();
+
+  const summaryRows=[
+    ["Medvika Stock Audit - Final Report"],
+    ["Client",finalReportData.client],
+    ["Project",finalReportData.project.project_code||""],
+    ["Audit Date",finalReportData.project.audit_date||""],
+    ["Location",finalReportData.project.location||""],
+    [],
+    ["Reconciliation","Count"],
+    ["Matched",finalReportData.reconCounts.matched],
+    ["Excess",finalReportData.reconCounts.excess],
+    ["Short",finalReportData.reconCounts.short],
+    ["Missing",finalReportData.reconCounts.missing],
+    ["Unlisted Excess",finalReportData.reconCounts.unlisted],
+    ["Recount",finalReportData.reconCounts.recount],
+    [],
+    ["Physical Condition","Quantity"],
+    ["Saleable",finalReportData.physicalConditions.saleable],
+    ["Damaged",finalReportData.physicalConditions.damaged],
+    ["Expired",finalReportData.physicalConditions.expired],
+    ["Near Expiry",finalReportData.physicalConditions.near_expiry],
+    [],
+    ["Current Stock Expiry Exposure","Value"],
+    ["Expired Lines",finalReportData.systemExpiry.expired_lines],
+    ["Expired Qty",finalReportData.systemExpiry.expired_qty],
+    ["Near Expiry Lines",finalReportData.systemExpiry.near_lines],
+    ["Near Expiry Qty",finalReportData.systemExpiry.near_qty]
+  ];
+  XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(summaryRows),"Summary");
+
+  XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(reportExcelRows()),"Reconciliation");
+
+  const conditionRows=finalReportData.counts
+    .filter(c=>["damaged","expired","near_expiry"].includes(c.condition))
+    .map(c=>({
+      Item:c.item_name,Code:c.item_code||"",Batch:c.batch_no||"",
+      Expiry:c.expiry_date||"",Physical_Qty:c.physical_qty,Condition:conditionLabel(c.condition)
+    }));
+  XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(conditionRows),"Condition Findings");
+
+  const expiryRows=finalReportData.systemExpiryRows
+    .filter(r=>["expired","near_expiry"].includes(r.expiry_class))
+    .map(r=>({
+      Item:r.item_name,Code:r.item_code||"",Batch:r.batch_no||"",
+      Expiry:r.expiry_date||"",System_Qty:r.system_qty,
+      Finding:r.expiry_class==="expired"?"Expired":"Near Expiry"
+    }));
+  XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(expiryRows),"System Expiry Exposure");
+
+  XLSX.writeFile(book,`Medvika_Final_Audit_Report_${finalReportData.project.project_code||"Audit"}.xlsx`);
+}
+
+function safePdfText(v){
+  return String(v??"").replace(/[^\x20-\x7E]/g," ");
+}
+
+async function logoDataUrl(){
+  try{
+    const res=await fetch("./logo.png");
+    const blob=await res.blob();
+    return await new Promise((resolve,reject)=>{
+      const fr=new FileReader();
+      fr.onload=()=>resolve(fr.result);
+      fr.onerror=reject;
+      fr.readAsDataURL(blob);
+    });
+  }catch(e){return null;}
+}
+
+async function exportFinalReportPdf(){
+  if(!finalReportData){toast("Load report first","error");return;}
+  if(!window.jspdf?.jsPDF){toast("PDF library not loaded","error");return;}
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  const navy=[11,60,93], green=[11,143,77], dark=[29,43,54], grey=[102,117,128];
+  const pageW=210, margin=15;
+  let y=15;
+
+  const addHeader=async(first=false)=>{
+    const logo=await logoDataUrl();
+    if(logo){
+      try{doc.addImage(logo,"PNG",margin,9,43,13);}catch(e){}
+    }
+    doc.setTextColor(...navy);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(first?16:10);
+    doc.text(first?"STOCK AUDIT - FINAL REPORT":"MEDVIKA HEALTHCARE SOLUTIONS",first?margin+49:margin,first?16:12);
+    if(first){
+      doc.setFontSize(8);
+      doc.setTextColor(...green);
+      doc.text("Independent verification | Inventory control | Actionable reporting",margin+49,21);
+    }
+    doc.setDrawColor(215,225,231);
+    doc.line(margin,27,pageW-margin,27);
+    y=33;
+  };
+
+  const footer=()=>{
+    const n=doc.getNumberOfPages();
+    for(let i=1;i<=n;i++){
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(...grey);
+      doc.text("Confidential - Medvika Healthcare Solutions",margin,290);
+      doc.text(`Page ${i} of ${n}`,pageW-margin,290,{align:"right"});
+    }
+  };
+
+  await addHeader(true);
+
+  doc.setFontSize(9); doc.setTextColor(...dark); doc.setFont("helvetica","normal");
+  const meta=[
+    ["Client",finalReportData.client],
+    ["Project",finalReportData.project.project_code||""],
+    ["Audit Date",finalReportData.project.audit_date||""],
+    ["Location",finalReportData.project.location||""],
+    ["Audit Status",(finalReportData.project.status||"").replaceAll("_"," ")]
+  ];
+  doc.autoTable({
+    startY:y,head:[["Engagement","Details"]],body:meta,
+    theme:"grid",styles:{fontSize:8,cellPadding:2.2},
+    headStyles:{fillColor:navy,textColor:[255,255,255]},
+    columnStyles:{0:{fontStyle:"bold",cellWidth:35}}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+  doc.setTextColor(...navy); doc.setFont("helvetica","bold"); doc.setFontSize(12);
+  doc.text("Executive Summary",margin,y); y+=4;
+
+  const rc=finalReportData.reconCounts, pc=finalReportData.physicalConditions, se=finalReportData.systemExpiry;
+  doc.autoTable({
+    startY:y,
+    head:[["Metric","Count","Metric","Count"]],
+    body:[
+      ["Matched",rc.matched,"Excess",rc.excess],
+      ["Short",rc.short,"Missing",rc.missing],
+      ["Unlisted Excess",rc.unlisted,"Recount",rc.recount],
+      ["Damaged Qty",pc.damaged,"Expired Physical Qty",pc.expired],
+      ["Near Expiry Physical Qty",pc.near_expiry,"Saleable Qty",pc.saleable],
+      ["System Expired Lines",se.expired_lines,"System Near Expiry Lines",se.near_lines]
+    ],
+    theme:"grid",styles:{fontSize:8,cellPadding:2},
+    headStyles:{fillColor:green,textColor:[255,255,255]}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+  const exceptions=finalReportData.recon.filter(r=>r.status!=="matched");
+  if(y>245){doc.addPage();await addHeader();}
+  doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("Material Reconciliation Exceptions",margin,y); y+=3;
+  doc.autoTable({
+    startY:y,
+    head:[["Status","Item","Batch","System","Physical","Variance"]],
+    body:exceptions.map(r=>[
+      statusLabel(r),safePdfText(r.item_name),safePdfText(r.batch_no||"-"),
+      r.system_qty,r.physical_qty,r.variance
+    ]),
+    theme:"striped",
+    styles:{fontSize:7,cellPadding:1.6,overflow:"linebreak"},
+    headStyles:{fillColor:navy,textColor:[255,255,255]},
+    columnStyles:{1:{cellWidth:55},2:{cellWidth:27}},
+    margin:{left:margin,right:margin,top:31,bottom:15}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+  if(y>235){doc.addPage();await addHeader();}
+  doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("Expiry & Condition Findings",margin,y); y+=3;
+
+  const findings=finalReportData.counts.filter(c=>["damaged","expired","near_expiry"].includes(c.condition));
+  doc.autoTable({
+    startY:y,
+    head:[["Item","Batch","Expiry","Qty","Condition"]],
+    body:findings.map(c=>[
+      safePdfText(c.item_name),safePdfText(c.batch_no||"-"),c.expiry_date||"-",
+      c.physical_qty,conditionLabel(c.condition)
+    ]),
+    theme:"grid",
+    styles:{fontSize:7,cellPadding:1.6},
+    headStyles:{fillColor:green,textColor:[255,255,255]},
+    margin:{left:margin,right:margin,top:31,bottom:15}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+  if(y>225){doc.addPage();await addHeader();}
+  doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("Zone Completion",margin,y); y+=3;
+  doc.autoTable({
+    startY:y,
+    head:[["Zone","Category","Status","Supervisor"]],
+    body:finalReportData.zones.map(z=>[
+      safePdfText(`${z.zone_code} - ${z.zone_name}`),safePdfText(z.category||"-"),
+      safePdfText(z.status),safePdfText(z.assigned_supervisor||"-")
+    ]),
+    theme:"grid",styles:{fontSize:7.5,cellPadding:1.8},
+    headStyles:{fillColor:navy,textColor:[255,255,255]}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+  const lead=$("reportLeadName")?.value.trim()||finalReportData.signoff?.medvika_lead_name||"";
+  const clientRep=$("reportClientRep")?.value.trim()||finalReportData.signoff?.client_representative_name||"";
+  const medRemarks=$("reportMedvikaRemarks")?.value.trim()||finalReportData.signoff?.medvika_remarks||"No additional observations recorded.";
+  const clientRemarks=$("reportClientRemarks")?.value.trim()||finalReportData.signoff?.client_remarks||"";
+
+  if(y>215){doc.addPage();await addHeader();}
+  doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("Management Observations",margin,y); y+=5;
+  doc.setTextColor(...dark);doc.setFontSize(8);doc.setFont("helvetica","normal");
+  const lines=doc.splitTextToSize(safePdfText(medRemarks),180);
+  doc.text(lines,margin,y); y+=Math.max(12,lines.length*4)+4;
+
+  if(clientRemarks){
+    doc.setTextColor(...navy);doc.setFont("helvetica","bold");doc.text("Client Remarks",margin,y); y+=5;
+    doc.setTextColor(...dark);doc.setFont("helvetica","normal");
+    const cl=doc.splitTextToSize(safePdfText(clientRemarks),180);
+    doc.text(cl,margin,y);y+=Math.max(10,cl.length*4)+4;
+  }
+
+  doc.setDrawColor(215,225,231);
+  doc.line(margin,y,pageW-margin,y); y+=8;
+  doc.setFontSize(8);doc.setTextColor(...dark);
+  doc.text(`Medvika Audit Lead: ${safePdfText(lead||"________________")}`,margin,y);
+  doc.text(`Client Representative: ${safePdfText(clientRep||"________________")}`,110,y);
+  y+=14;
+  doc.text("Signature: __________________________",margin,y);
+  doc.text("Signature: __________________________",110,y);
+
+  y+=14;
+  doc.setFontSize(7.5);doc.setTextColor(...grey);
+  doc.text("Detailed item-and-batch reconciliation is available in the accompanying Excel/CSV export.",margin,y);
+
+  footer();
+  doc.save(`Medvika_Final_Audit_Report_${finalReportData.project.project_code||"Audit"}.pdf`);
+}
+
+$("refreshReportButton")?.addEventListener("click",loadFinalReport);
+$("saveReportRemarksButton")?.addEventListener("click",saveReportDetails);
+$("exportReportExcelButton")?.addEventListener("click",exportFinalReportExcel);
+$("exportReportPdfButton")?.addEventListener("click",exportFinalReportPdf);
 
 requireSession();

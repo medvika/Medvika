@@ -8,6 +8,8 @@
   <link rel="icon" href="./logo.png">
   <link rel="stylesheet" href="./audit.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -48,6 +50,7 @@
         <button class="nav-btn" data-view="zones">Zones & Teams</button>
         <button class="nav-btn" data-view="exceptions">Exceptions</button>
         <button class="nav-btn" data-view="reconciliation">Reconciliation</button>
+        <button class="nav-btn" data-view="report">Final Report</button>
         <button class="nav-btn" data-view="imports">Imports</button>
       </nav>
       <div class="sidebar-footer">
@@ -308,6 +311,90 @@
             </table>
           </div>
           <div id="reconFooter" class="recon-footer"></div>
+        </section>
+      </section>
+
+
+      <section id="reportView" class="view">
+        <section class="report-cover card">
+          <div class="report-brand">
+            <img src="./logo.png" alt="Medvika" class="report-logo">
+            <div>
+              <span class="eyebrow">Medvika Healthcare Solutions</span>
+              <h3>Stock Audit - Final Report</h3>
+              <p id="reportProjectMeta">Loading audit details...</p>
+            </div>
+            <span id="reportProjectStatus" class="status-pill">—</span>
+          </div>
+
+          <div class="report-actions">
+            <button id="refreshReportButton" type="button" class="btn secondary">Refresh Report</button>
+            <button id="exportReportExcelButton" type="button" class="btn secondary">Export Report Excel</button>
+            <button id="exportReportPdfButton" type="button" class="btn primary">Generate Client PDF</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div><h3>Executive Audit Summary</h3><span>System stock vs physical stock</span></div>
+          </div>
+          <div id="reportReconSummary" class="report-stat-grid"></div>
+        </section>
+
+        <div class="two-col">
+          <section class="card">
+            <div class="card-head"><h3>Current Stock Expiry Exposure</h3><span>Based on book/system stock expiry</span></div>
+            <div id="reportSystemExpiry" class="report-stat-grid compact"></div>
+            <div id="reportSystemExpiryTable" class="table-wrap report-small-table"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><h3>Physical Condition Findings</h3><span>Based on stock physically found</span></div>
+            <div id="reportPhysicalCondition" class="report-stat-grid compact"></div>
+            <div id="reportConditionTable" class="table-wrap report-small-table"></div>
+          </section>
+        </div>
+
+        <div class="two-col">
+          <section class="card">
+            <div class="card-head"><h3>Zone / Team Completion</h3><span>Execution status</span></div>
+            <div id="reportZoneTable" class="table-wrap"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><h3>Audit Sign-off Details</h3><span>Used in the client PDF</span></div>
+            <div class="report-form-grid">
+              <label>Medvika Audit Lead
+                <input id="reportLeadName" type="text" placeholder="Audit Lead">
+              </label>
+              <label>Client Representative
+                <input id="reportClientRep" type="text" placeholder="Client representative">
+              </label>
+              <label class="span-2">Medvika Observations
+                <textarea id="reportMedvikaRemarks" rows="5" placeholder="Key audit observations, control gaps and recommendations"></textarea>
+              </label>
+              <label class="span-2">Client Remarks
+                <textarea id="reportClientRemarks" rows="3" placeholder="Optional client remarks"></textarea>
+              </label>
+            </div>
+            <button id="saveReportRemarksButton" type="button" class="btn secondary">Save Report Details</button>
+          </section>
+        </div>
+
+        <section class="card">
+          <div class="card-head">
+            <div><h3>Material Exceptions</h3><span>All non-matched reconciliation items</span></div>
+          </div>
+          <div id="reportExceptionTable" class="table-wrap report-exception-table"></div>
+        </section>
+
+        <section class="card">
+          <div class="report-note">
+            <strong>Reporting basis:</strong>
+            Full item-and-batch reconciliation remains available through the Reconciliation Excel/CSV export.
+            The client PDF focuses on executive summary, material exceptions, expiry/damage findings,
+            audit execution status and management observations.
+          </div>
         </section>
       </section>
 

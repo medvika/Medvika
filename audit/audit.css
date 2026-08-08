@@ -72,3 +72,32 @@ input,select,textarea{width:100%;border:1px solid #cbd9df;border-radius:10px;pad
 .condition-expired{background:#fee2e2;color:#991b1b}
 .condition-damaged{background:#fce7f3;color:#9d174d}
 @media(max-width:800px){.expiry-rule-row{grid-template-columns:1fr}}
+
+/* STEP 6 - FINAL AUDIT REPORT */
+.report-cover{background:linear-gradient(135deg,#ffffff,#f4faf7)}
+.report-brand{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.report-logo{width:150px;height:auto}
+.report-brand h3{margin:4px 0;color:var(--navy);font-size:24px}
+.report-brand p{margin:0;color:var(--muted);font-size:12px}
+.report-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}
+.report-stat-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:9px}
+.report-stat-grid.compact{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}
+.report-stat{border:1px solid var(--line);border-radius:12px;background:#f9fbfc;padding:12px}
+.report-stat span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+.report-stat strong{display:block;color:var(--navy);font-size:20px;margin-top:4px}
+.report-stat small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.report-stat.ok strong{color:var(--green)}
+.report-stat.warn strong{color:#b7791f}
+.report-stat.danger strong{color:var(--red)}
+.report-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:12px}
+.report-form-grid label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--navy);margin-top:10px}
+.report-small-table{max-height:320px}
+.report-exception-table{max-height:520px;border:1px solid var(--line);border-radius:12px}
+.report-note{padding:13px;border-radius:10px;background:#f5f9fb;color:var(--muted);font-size:12px;line-height:1.55}
+@media(max-width:1200px){.report-stat-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:800px){
+  .report-brand{grid-template-columns:1fr}.report-logo{width:120px}
+  .report-actions{justify-content:stretch}.report-actions .btn{flex:1}
+  .report-stat-grid,.report-stat-grid.compact{grid-template-columns:repeat(2,1fr)}
+  .report-form-grid{grid-template-columns:1fr}.report-form-grid .span-2{grid-column:auto}
+}
