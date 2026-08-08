@@ -267,7 +267,18 @@ $("countForm").addEventListener("submit", async e=>{
     const code=$("itemCode").value.trim();
     const barcode=$("barcode").value.trim();
     const batch=$("batchNo").value.trim();
-    const physical=Number($("physicalQty").value);
+    const manualPackSize=toNumber($("packSize")?.value);
+    const manualFullPackQty=toNumber($("fullPackQty")?.value);
+    const manualLooseQty=toNumber($("looseQty")?.value);
+    const manualQtyBasis=$("qtyBasis")?.value||"decimal";
+    const physical=calculateDecimalPackQty({
+      physicalQty:$("physicalQty").value,
+      fullPackQty:manualFullPackQty,
+      looseQty:manualLooseQty,
+      packSize:manualPackSize,
+      qtyBasis:manualQtyBasis
+    });
+    if(physical===null) throw new Error("Enter Physical Qty or Pack + Loose quantities.");
     const enteredExpiry=expiryMonthToDate($("expiryDate").value);
     const explicitCondition=$("condition").value;
 
@@ -317,6 +328,10 @@ $("countForm").addEventListener("submit", async e=>{
       batch_no:batch||s?.batch_no||null,
       expiry_date:finalExpiry,
       pack_uom:$("packUom").value.trim()||s?.pack_uom||null,
+      pack_size:manualPackSize||s?.pack_size||null,
+      full_pack_qty:manualFullPackQty,
+      loose_qty:manualLooseQty,
+      qty_basis:manualQtyBasis,
       category:s?.category||null,
       physical_qty:physical,
       system_qty:systemQty,
@@ -404,6 +419,10 @@ const HEADER_ALIASES = {
   batch_no:["batch_no","batch no","batch","batch number"],
   expiry_date:["expiry_date","expiry date","expiry","exp date","exp"],
   pack_uom:["pack_uom","pack uom","pack","uom","unit","packing"],
+  pack_size:["pack_size","pack size","units per pack","unit per pack","tabs per strip","tablets per strip","pcs per pack"],
+  full_pack_qty:["full_pack_qty","full pack qty","pack qty","full packs","packs"],
+  loose_qty:["loose_qty","loose qty","loose units","loose","loose tablets","loose pcs"],
+  qty_basis:["qty_basis","quantity basis","qty basis"],
   system_qty:["system_qty","system qty","stock","stock qty","current stock","book stock","quantity","qty"],
   physical_qty:["physical_qty","physical qty","physical stock","count qty","counted qty","actual qty","actual stock","quantity","qty"],
   mrp:["mrp","m.r.p"],
@@ -425,6 +444,46 @@ function toNumber(v){
   if(v===null||v===undefined||v==="") return null;
   const n=Number(String(v).replace(/,/g,"").trim());
   return Number.isFinite(n)?n:null;
+}
+
+function normalizeQtyBasis(v){
+  const s=String(v??"").trim().toLowerCase();
+  if(/pack.?loose|pack \+ loose|packs? and loose/.test(s)) return "pack_loose";
+  if(/base|tablet|piece|unit/.test(s)) return "base_unit";
+  return "decimal";
+}
+
+function calculateDecimalPackQty({physicalQty=null,fullPackQty=null,looseQty=null,packSize=null,qtyBasis="decimal"}){
+  const basis=normalizeQtyBasis(qtyBasis);
+
+  // If pack+loose is selected and enough information exists, calculate on pack basis.
+  if(basis==="pack_loose"){
+    const fp=Number(fullPackQty||0);
+    const lq=Number(looseQty||0);
+    const ps=Number(packSize||0);
+    if(ps>0) return fp + (lq/ps);
+  }
+
+  // Base units can be converted to pack basis only when pack size is known.
+  if(basis==="base_unit"){
+    const pq=toNumber(physicalQty);
+    const ps=Number(packSize||0);
+    if(pq!==null && ps>0) return pq/ps;
+  }
+
+  // Decimal quantities are retained exactly as supplied.
+  const pq=toNumber(physicalQty);
+  if(pq!==null) return pq;
+
+  // Sensible fallback if physical qty is blank but pack+loose values are present.
+  if(fullPackQty!==null || looseQty!==null){
+    const fp=Number(fullPackQty||0);
+    const lq=Number(looseQty||0);
+    const ps=Number(packSize||0);
+    if(ps>0) return fp + (lq/ps);
+    if(lq===0) return fp;
+  }
+  return null;
 }
 function toISODate(v){
   if(!v) return null;
@@ -539,8 +598,8 @@ function renderMapping(container,rows,type){
   const headers=Object.keys(rows[0]);
   const isSystem=type==="system";
   const fields=isSystem
-    ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Manufacturer","manufacturer",false],["MRP","mrp",false],["Purchase Rate Ex-GST","purchase_rate",false],["GST %","gst_percent",false]]
-    : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Condition / Damage","condition",false]];
+    ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Qty Basis","qty_basis",false],["Category","category",false],["Manufacturer","manufacturer",false],["MRP","mrp",false],["Purchase Rate Ex-GST","purchase_rate",false],["GST %","gst_percent",false]]
+    : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Full Pack Qty","full_pack_qty",false],["Loose Qty","loose_qty",false],["Qty Basis","qty_basis",false],["Category","category",false],["Condition / Damage","condition",false]];
   container.__rows=rows;
   container.innerHTML=`<div class="mapping-card">
     <strong>Column Mapping</strong>
@@ -621,6 +680,8 @@ async function importSystemRows(container){
         batch_no:map.batch_no?String(r[map.batch_no]??"").trim()||null:null,
         expiry_date:map.expiry_date?toISODate(r[map.expiry_date]):null,
         pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim()||null:null,
+        pack_size:map.pack_size?toNumber(r[map.pack_size]):null,
+        qty_basis:map.qty_basis?normalizeQtyBasis(r[map.qty_basis]):"decimal",
         category:map.category?String(r[map.category]??"").trim()||null:null,
         manufacturer:map.manufacturer?String(r[map.manufacturer]??"").trim()||null:null,
         system_qty:qty,mrp:map.mrp?toNumber(r[map.mrp]):null,
@@ -645,7 +706,7 @@ async function fetchAllSystemStock(){
   const all=[]; let from=0; const size=1000;
   while(true){
     const {data,error}=await sb.from("medvika_audit_system_stock")
-      .select("id,item_code,barcode,item_name,normalized_name,batch_no,expiry_date,pack_uom,category,system_qty,mrp,purchase_rate,gst_percent")
+      .select("id,item_code,barcode,item_name,normalized_name,batch_no,expiry_date,pack_uom,category,system_qty,mrp,purchase_rate,gst_percent,pack_size,qty_basis")
       .eq("audit_id",currentAuditId).range(from,from+size-1);
     if(error) throw error;
     all.push(...(data||[]));
@@ -661,7 +722,7 @@ async function importPhysicalRows(container){
   const rows=container.__rows||[], map=readMapping(container), file=$("physicalCountFile").files[0];
   const zoneId=$("physicalImportZone").value||null, teamId=$("physicalImportTeam").value||null;
   const progress=container.querySelector("[data-progress]"); progress.hidden=false; progress.textContent="Loading current inventory for matching…";
-  if(!map.item_name||!map.physical_qty){progress.className="import-progress error";progress.textContent="Map Item Name and Physical Qty.";return;}
+  if(!map.item_name||(!map.physical_qty && !map.full_pack_qty)){progress.className="import-progress error";progress.textContent="Map Item Name and either Physical Qty or Full Pack Qty.";return;}
   let jobId=null;
   try{
     jobId=await createImportJob("physical_count",file,"append",rows.length);
@@ -674,7 +735,18 @@ async function importPhysicalRows(container){
     });
     const recs=[];let matched=0,unmatched=0,failed=0;
     rows.forEach(r=>{
-      const name=String(r[map.item_name]??"").trim(), physical=toNumber(r[map.physical_qty]);
+      const name=String(r[map.item_name]??"").trim();
+      const importedPackSize=map.pack_size?toNumber(r[map.pack_size]):null;
+      const importedFullPackQty=map.full_pack_qty?toNumber(r[map.full_pack_qty]):null;
+      const importedLooseQty=map.loose_qty?toNumber(r[map.loose_qty]):null;
+      const importedQtyBasis=map.qty_basis?normalizeQtyBasis(r[map.qty_basis]):(map.full_pack_qty||map.loose_qty?"pack_loose":"decimal");
+      const physical=calculateDecimalPackQty({
+        physicalQty:map.physical_qty?r[map.physical_qty]:null,
+        fullPackQty:importedFullPackQty,
+        looseQty:importedLooseQty,
+        packSize:importedPackSize,
+        qtyBasis:importedQtyBasis
+      });
       if(!name||physical===null){failed++;return;}
       const code=map.item_code?String(r[map.item_code]??"").trim():"";
       const barcode=map.barcode?String(r[map.barcode]??"").trim():"";
@@ -697,6 +769,10 @@ async function importPhysicalRows(container){
         category:(map.category?String(r[map.category]??"").trim():null)||s?.category||null,
         batch_no:batch||s?.batch_no||null,expiry_date:importedExpiry,
         pack_uom:(map.pack_uom?String(r[map.pack_uom]??"").trim():null)||s?.pack_uom||null,
+        pack_size:importedPackSize||s?.pack_size||null,
+        full_pack_qty:importedFullPackQty,
+        loose_qty:importedLooseQty,
+        qty_basis:importedQtyBasis,
         physical_qty:physical,system_qty:s?Number(s.system_qty||0):0,
         condition:finalCondition,count_status:(s && physical!==Number(s.system_qty||0))?"recount":"counted",
         match_status:matchStatus,excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
@@ -768,6 +844,10 @@ function buildReconciliationRows(systemStock, countLines){
           category:c.category||null,
           expiry_date:c.expiry_date||null,
           condition:c.condition||classifyCondition(c.expiry_date,null),
+          pack_size:c.pack_size||null,
+          full_pack_qty:c.full_pack_qty??null,
+          loose_qty:c.loose_qty??null,
+          qty_basis:c.qty_basis||"decimal",
           system_qty:0,
           physical_qty:0,
           recount:false,
@@ -802,6 +882,10 @@ function buildReconciliationRows(systemStock, countLines){
       category:s.category||"",
       expiry_date:g?.latest_count?.expiry_date || s.expiry_date || null,
       condition:g?.latest_count?.condition || classifyCondition(s.expiry_date,null),
+      pack_size:g?.latest_count?.pack_size || s.pack_size || null,
+      full_pack_qty:g?.latest_count?.full_pack_qty ?? null,
+      loose_qty:g?.latest_count?.loose_qty ?? null,
+      qty_basis:g?.latest_count?.qty_basis || s.qty_basis || "decimal",
       purchase_rate:s.purchase_rate===null||s.purchase_rate===undefined?null:Number(s.purchase_rate),
       gst_percent:s.gst_percent===null||s.gst_percent===undefined?null:Number(s.gst_percent),
       mrp:s.mrp===null||s.mrp===undefined?null:Number(s.mrp),
@@ -831,6 +915,10 @@ function buildReconciliationRows(systemStock, countLines){
       category:g.category||"",
       expiry_date:g.expiry_date||null,
       condition:g.condition||"saleable",
+      pack_size:g.pack_size||null,
+      full_pack_qty:g.full_pack_qty??null,
+      loose_qty:g.loose_qty??null,
+      qty_basis:g.qty_basis||"decimal",
       purchase_rate:null,
       gst_percent:null,
       mrp:null,
@@ -953,7 +1041,7 @@ async function fetchAllCountLinesDetailed(){
   const all=[]; let from=0; const size=1000;
   while(true){
     const {data,error}=await sb.from("medvika_audit_count_lines")
-      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,expiry_date,condition,physical_qty,system_qty,count_status,match_status")
+      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,expiry_date,condition,physical_qty,system_qty,count_status,match_status,pack_size,full_pack_qty,loose_qty,qty_basis")
       .eq("audit_id",currentAuditId).range(from,from+size-1);
     if(error) throw error;
     all.push(...(data||[]));
@@ -972,6 +1060,10 @@ function reconciliationExportRows(){
     Category:r.category||"",
     Expiry_Date:r.expiry_date||"",
     Condition:conditionLabel(r.condition),
+    Pack_Size:r.pack_size??"",
+    Full_Pack_Qty:r.full_pack_qty??"",
+    Loose_Qty:r.loose_qty??"",
+    Qty_Basis:r.qty_basis||"",
     Purchase_Rate_Ex_GST:r.purchase_rate,
     GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
@@ -1790,5 +1882,29 @@ async function resetImportedAuditData(){
 $("deletePhysicalDataButton")?.addEventListener("click",deletePhysicalAuditData);
 $("deleteSystemDataButton")?.addEventListener("click",deleteSystemAuditData);
 $("resetAuditDataButton")?.addEventListener("click",resetImportedAuditData);
+
+
+function updateManualQtyPreview(){
+  const out=$("calculatedPhysicalQty");
+  if(!out) return;
+  const basis=$("qtyBasis")?.value||"decimal";
+  const qty=calculateDecimalPackQty({
+    physicalQty:$("physicalQty")?.value,
+    fullPackQty:toNumber($("fullPackQty")?.value),
+    looseQty:toNumber($("looseQty")?.value),
+    packSize:toNumber($("packSize")?.value),
+    qtyBasis:basis
+  });
+  if(qty===null){
+    out.textContent="—";
+    return;
+  }
+  out.textContent=`${Number(qty).toFixed(3)} ${$("packUom")?.value||"pack basis"}`;
+}
+
+["physicalQty","fullPackQty","looseQty","packSize","qtyBasis","packUom"].forEach(id=>{
+  $(id)?.addEventListener("input",updateManualQtyPreview);
+  $(id)?.addEventListener("change",updateManualQtyPreview);
+});
 
 requireSession();

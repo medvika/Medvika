@@ -153,6 +153,25 @@
                 <label>Pack / UOM
                   <input id="packUom" type="text" placeholder="Strip / Bottle / Piece">
                 </label>
+                <label>Pack Size
+                  <input id="packSize" type="number" step="0.001" min="0" inputmode="decimal" placeholder="e.g. 10 tablets / strip">
+                </label>
+                <label>Full Pack Qty
+                  <input id="fullPackQty" type="number" step="0.001" min="0" inputmode="decimal" placeholder="Optional">
+                </label>
+                <label>Loose Qty
+                  <input id="looseQty" type="number" step="0.001" min="0" inputmode="decimal" placeholder="Optional loose units">
+                </label>
+                <label>Quantity Basis
+                  <select id="qtyBasis">
+                    <option value="decimal">Decimal quantity supplied</option>
+                    <option value="pack_loose">Pack + loose entry</option>
+                    <option value="base_unit">Base units</option>
+                  </select>
+                </label>
+                <div class="span-2 qty-preview" id="qtyPreview">
+                  <strong>Calculated Physical Qty:</strong> <span id="calculatedPhysicalQty">—</span>
+                </div>
                 <label>Physical Qty *
                   <input id="physicalQty" type="number" step="0.001" min="0" required inputmode="decimal">
                 </label>
@@ -435,7 +454,7 @@
                 <span>Match physical counts against system stock</span>
               </div>
             </div>
-            <p class="helper">Upload physical stock prepared in Excel/CSV. If an item/batch does not exist in current stock, Medvika will add it with system quantity 0 and flag it as <strong>Unlisted Excess</strong>.</p>
+            <p class="helper">Upload physical stock prepared in Excel/CSV. Decimal quantities are accepted directly. If Pack Size + Full Pack Qty + Loose Qty are provided, Medvika automatically converts them to the same decimal pack basis for matching. If an item/batch does not exist in current stock, it is flagged as <strong>Unlisted Excess</strong>.</p>
             <div class="import-options">
               <label>Zone for imported counts
                 <select id="physicalImportZone"></select>

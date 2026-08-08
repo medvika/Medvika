@@ -119,3 +119,7 @@ input,select,textarea{width:100%;border:1px solid #cbd9df;border-radius:10px;pad
 .btn.strong-danger{background:#b91c1c;color:#fff;border-color:#b91c1c}
 .btn.strong-danger:hover{background:#991b1b}
 @media(max-width:900px){.delete-control-grid{grid-template-columns:1fr}}
+
+/* STEP 9 - PACK + LOOSE QUANTITY */
+.qty-preview{margin-top:14px;padding:10px 12px;border:1px dashed #b7ccd7;border-radius:10px;background:#f7fbfd;color:var(--navy);font-size:12px}
+.qty-preview strong{margin-right:5px}
