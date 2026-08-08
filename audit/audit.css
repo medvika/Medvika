@@ -1,4 +1,8 @@
 
+/* LOGIN VISIBILITY FIX */
+[hidden]{display:none !important;}
+.login-view[hidden], .app-shell[hidden]{display:none !important;}
+
 :root{
   --navy:#0b3c5d;--navy2:#082f49;--green:#0b8f4d;--green2:#08733f;
   --bg:#f3f7f9;--card:#fff;--text:#1d2b36;--muted:#667580;--line:#dbe5ea;

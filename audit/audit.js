@@ -34,30 +34,56 @@ async function requireSession(){
     await bootstrap();
   }else{
     $("loginView").hidden = false;
+    $("loginView").style.display = "";
     $("appShell").hidden = true;
+    $("appShell").style.display = "none";
   }
 }
 
 function showApp(user){
   $("loginView").hidden = true;
+  $("loginView").style.display = "none";
   $("appShell").hidden = false;
-  $("signedInAs").textContent = user.email || "Authorised user";
+  $("appShell").style.display = "";
+  $("signedInAs").textContent = user?.email || "Authorised user";
 }
 
 $("loginForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
-  $("loginMessage").textContent="";
-  $("loginButton").disabled=true;
-  $("loginButton").textContent="Signing in…";
-  const {data,error}=await sb.auth.signInWithPassword({
-    email:$("loginEmail").value.trim(),
-    password:$("loginPassword").value
-  });
-  $("loginButton").disabled=false;
-  $("loginButton").textContent="Sign in";
-  if(error){ $("loginMessage").textContent=error.message; return; }
-  showApp(data.user);
-  await bootstrap();
+  const message = $("loginMessage");
+  const btn = $("loginButton");
+  message.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "Signing in...";
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: $("loginEmail").value.trim(),
+      password: $("loginPassword").value
+    });
+
+    if (error) throw error;
+    if (!data || !data.session || !data.user) {
+      throw new Error("Login completed but no active session was returned.");
+    }
+
+    // Show the dashboard immediately after successful authentication.
+    showApp(data.user);
+    localStorage.setItem("medvika_login_ok", "1");
+
+    try {
+      await bootstrap();
+    } catch (bootError) {
+      console.error("Dashboard bootstrap error:", bootError);
+      toast("Signed in. Dashboard data could not load: " + (bootError.message || bootError), "error");
+    }
+  } catch (err) {
+    console.error("Login error:", err);
+    message.textContent = err.message || "Unable to sign in.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sign in";
+  }
 });
 
 $("signOutButton").addEventListener("click", async ()=>{
