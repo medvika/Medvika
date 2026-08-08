@@ -650,8 +650,8 @@ function renderMapping(container,rows,type){
   const headers=Object.keys(rows[0]);
   const isSystem=type==="system";
   const fields=isSystem
-    ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Qty Basis","qty_basis",false],["Category","category",false],["Manufacturer","manufacturer",false],["MRP","mrp",false],["Purchase Rate Ex-GST","purchase_rate",false],["GST %","gst_percent",false]]
-    : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Full Pack Qty","full_pack_qty",false],["Loose Qty","loose_qty",false],["Qty Basis","qty_basis",false],["Category","category",false],["Condition / Damage","condition",false]];
+    ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Category","category",false],["Manufacturer","manufacturer",false],["Purchase Rate Ex-GST","purchase_rate",false],["GST %","gst_percent",false],["MRP","mrp",false]]
+    : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Category","category",false],["Condition / Damage","condition",false]];
   container.__rows=rows;
   container.innerHTML=`<div class="mapping-card">
     <strong>Column Mapping</strong>
@@ -735,7 +735,7 @@ async function importSystemRows(container){
         expiry_date:map.expiry_date?toISODate(r[map.expiry_date]):null,
         pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim()||null:null,
         pack_size:importedPackSize,
-        qty_basis:map.qty_basis?normalizeQtyBasis(r[map.qty_basis]):"decimal",
+        qty_basis:"decimal", // retained in DB for compatibility; quantity format is auto-detected
         category:map.category?String(r[map.category]??"").trim()||null:null,
         manufacturer:map.manufacturer?String(r[map.manufacturer]??"").trim()||null:null,
         system_qty:qty,mrp:map.mrp?toNumber(r[map.mrp]):null,
@@ -776,7 +776,7 @@ async function importPhysicalRows(container){
   const rows=container.__rows||[], map=readMapping(container), file=$("physicalCountFile").files[0];
   const zoneId=$("physicalImportZone").value||null, teamId=$("physicalImportTeam").value||null;
   const progress=container.querySelector("[data-progress]"); progress.hidden=false; progress.textContent="Loading current inventory for matching…";
-  if(!map.item_name||(!map.physical_qty && !map.full_pack_qty)){progress.className="import-progress error";progress.textContent="Map Item Name and either Physical Qty or Full Pack Qty.";return;}
+  if(!map.item_name||!map.physical_qty){progress.className="import-progress error";progress.textContent="Map Item Name and Physical Qty.";return;}
   let jobId=null;
   try{
     jobId=await createImportJob("physical_count",file,"append",rows.length);
@@ -791,20 +791,9 @@ async function importPhysicalRows(container){
     rows.forEach(r=>{
       const name=String(r[map.item_name]??"").trim();
       const importedPackSize=map.pack_size?toNumber(r[map.pack_size]):null;
-      const importedFullPackQty=map.full_pack_qty?toNumber(r[map.full_pack_qty]):null;
-      const importedLooseQty=map.loose_qty?toNumber(r[map.loose_qty]):null;
-      const importedQtyBasis=map.qty_basis?normalizeQtyBasis(r[map.qty_basis]):(map.full_pack_qty||map.loose_qty?"pack_loose":"decimal");
       const rawPhysical=map.physical_qty?r[map.physical_qty]:null;
-      let physical=parsePharmacyQuantity(rawPhysical,importedPackSize);
-      if(physical===null){
-        physical=calculateDecimalPackQty({
-          physicalQty:rawPhysical,
-          fullPackQty:importedFullPackQty,
-          looseQty:importedLooseQty,
-          packSize:importedPackSize,
-          qtyBasis:importedQtyBasis
-        });
-      }
+      // Auto-detect decimal or pharmacy-style quantity, e.g. 2.5 or 2Strip10Tab.
+      const physical=parsePharmacyQuantity(rawPhysical,importedPackSize);
       if(!name||physical===null){failed++;return;}
       const code=map.item_code?String(r[map.item_code]??"").trim():"";
       const barcode=map.barcode?String(r[map.barcode]??"").trim():"";
@@ -828,9 +817,9 @@ async function importPhysicalRows(container){
         batch_no:batch||s?.batch_no||null,expiry_date:importedExpiry,
         pack_uom:(map.pack_uom?String(r[map.pack_uom]??"").trim():null)||s?.pack_uom||null,
         pack_size:importedPackSize||s?.pack_size||null,
-        full_pack_qty:importedFullPackQty,
-        loose_qty:importedLooseQty,
-        qty_basis:importedQtyBasis,
+        full_pack_qty:null,
+        loose_qty:null,
+        qty_basis:"decimal", // retained in DB for compatibility; quantity format is auto-detected
         physical_qty:physical,system_qty:s?Number(s.system_qty||0):0,
         condition:finalCondition,count_status:(s && physical!==Number(s.system_qty||0))?"recount":"counted",
         match_status:matchStatus,excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
