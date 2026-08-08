@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Medvika Audit Team Count</title>
+  <link rel="icon" href="./logo.png">
+  <link rel="stylesheet" href="./team.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <section id="loginView" class="login-view">
+    <div class="login-card">
+      <img src="./logo.png" alt="Medvika" class="logo">
+      <span class="eyebrow">Blind Physical Counting</span>
+      <h1>Audit Team Portal</h1>
+      <p>Enter your assigned team code and PIN. System stock, rates and variance are intentionally hidden.</p>
+
+      <form id="loginForm">
+        <label>Team Code
+          <input id="teamCode" autocomplete="off" required placeholder="e.g. T01-Z1">
+        </label>
+        <label>PIN
+          <input id="teamPin" type="password" inputmode="numeric" autocomplete="off" required placeholder="4+ digit PIN">
+        </label>
+        <button id="loginButton" class="btn primary" type="submit">Open Counting Portal</button>
+        <div id="loginMessage" class="message"></div>
+      </form>
+    </div>
+  </section>
+
+  <div id="portal" class="portal" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <img src="./logo.png" alt="Medvika">
+        <div>
+          <span class="eyebrow">Medvika Stock Audit</span>
+          <h2 id="teamHeading">Counting Team</h2>
+          <p id="projectMeta">—</p>
+        </div>
+      </div>
+      <button id="logoutButton" class="btn ghost" type="button">Sign out</button>
+    </header>
+
+    <main>
+      <section class="zone-card">
+        <div>
+          <span>Assigned Zone</span>
+          <strong id="zoneName">—</strong>
+        </div>
+        <div>
+          <span>Team</span>
+          <strong id="teamName">—</strong>
+        </div>
+        <div>
+          <span>Mode</span>
+          <strong>Blind Count</strong>
+        </div>
+      </section>
+
+      <section class="card search-card">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Step 1</span>
+            <h3>Find Item / Batch</h3>
+          </div>
+          <span class="safe-chip">No system quantity shown</span>
+        </div>
+        <input id="itemSearch" class="big-input" type="search" autocomplete="off" placeholder="Search item, code, barcode or batch">
+        <div id="searchResults" class="search-results">
+          <div class="empty">Start typing to find an item.</div>
+        </div>
+      </section>
+
+      <section class="card count-card">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Step 2</span>
+            <h3>Enter Physical Count</h3>
+          </div>
+          <button id="clearItemButton" class="text-btn" type="button">Clear item</button>
+        </div>
+
+        <div id="selectedItem" class="selected-item empty">No item selected.</div>
+
+        <form id="countForm">
+          <div class="grid">
+            <label>Item Name *
+              <input id="itemName" required autocomplete="off" placeholder="Select above or type unlisted item">
+            </label>
+            <label>Item Code
+              <input id="itemCode" autocomplete="off">
+            </label>
+            <label>Barcode
+              <input id="barcode" autocomplete="off" inputmode="numeric">
+            </label>
+            <label>Batch No.
+              <input id="batchNo" autocomplete="off">
+            </label>
+            <label>Expiry
+              <input id="expiryDate" type="month">
+            </label>
+            <label>Pack / UOM
+              <input id="packUom" placeholder="Strip / Bottle / Piece">
+            </label>
+            <label>Pack Size
+              <input id="packSize" type="number" min="0" step="0.001" inputmode="decimal" placeholder="e.g. 10">
+            </label>
+            <label class="qty-label">Physical Qty *
+              <input id="physicalQty" class="qty-input" required autocomplete="off"
+                     placeholder="e.g. 2.5 or 2Strip5Tab">
+              <small>Decimals and formats like 2Strip10Tab are accepted.</small>
+            </label>
+            <label>Condition
+              <select id="condition">
+                <option value="saleable">Saleable</option>
+                <option value="damaged">Damaged</option>
+                <option value="expired">Expired</option>
+                <option value="near_expiry">Near Expiry</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Counted By *
+              <input id="countedBy" required placeholder="Staff name">
+            </label>
+            <label class="span-2">Remarks
+              <textarea id="remarks" rows="2" placeholder="Optional note"></textarea>
+            </label>
+          </div>
+
+          <div class="qty-preview">
+            Normalized Qty: <strong id="normalizedQty">—</strong>
+          </div>
+
+          <button id="saveCountButton" class="btn primary large" type="submit">Save Physical Count</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <div><span class="eyebrow">Your Team</span><h3>Recent Entries</h3></div>
+          <button id="reloadRecentButton" class="text-btn" type="button">Reload</button>
+        </div>
+        <div id="recentList" class="recent-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./team.js"></script>
+</body>
+</html>
