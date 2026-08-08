@@ -610,6 +610,13 @@ async function importPhysicalRows(container){
       else if(barcode && byBarcode.has(stockKey(barcode,batch))){s=byBarcode.get(stockKey(barcode,batch));matchStatus="matched_barcode_batch";}
       else if(byName.has(nameKey(name,batch))){s=byName.get(nameKey(name,batch));matchStatus="matched_name_batch";}
       if(s) matched++; else unmatched++;
+
+      // Read expiry and condition from the imported physical-count row.
+      // If expiry is blank, fall back to the matched system-stock expiry.
+      const importedExpiry = map.expiry_date ? toISODate(r[map.expiry_date]) : (s?.expiry_date || null);
+      const explicitCondition = map.condition ? parseConditionText(r[map.condition]) : null;
+      const finalCondition = classifyCondition(importedExpiry, explicitCondition);
+
       recs.push({
         audit_id:currentAuditId,zone_id:zoneId,team_id:teamId,system_stock_id:s?.id||null,import_job_id:jobId,
         item_code:code||s?.item_code||null,barcode:barcode||s?.barcode||null,item_name:name||s?.item_name,
