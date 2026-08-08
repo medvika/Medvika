@@ -485,6 +485,58 @@ function calculateDecimalPackQty({physicalQty=null,fullPackQty=null,looseQty=nul
   }
   return null;
 }
+
+function parsePharmacyQuantity(value, packSize=null){
+  if(value===null || value===undefined || value==="") return null;
+
+  const direct=toNumber(value);
+  if(direct!==null) return direct;
+
+  const ps=Number(packSize||0);
+  const raw=String(value).trim().toLowerCase()
+    .replace(/\+/g," ")
+    .replace(/,/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+
+  let packQty=0;
+  let looseQty=0;
+  let found=false;
+
+  const tokenRe=/(\d+(?:\.\d+)?)\s*(strips?|packs?|boxes?|bottles?|vials?|amp(?:oules?)?|pieces?|pcs?|tabs?|tablets?|caps?|capsules?|units?)/gi;
+  let m;
+  while((m=tokenRe.exec(raw))!==null){
+    found=true;
+    const qty=Number(m[1]);
+    const unit=m[2].toLowerCase();
+
+    if(/^(strip|strips|pack|packs|box|boxes|bottle|bottles|vial|vials|amp|ampoule|ampoules)$/.test(unit)){
+      packQty += qty;
+    }else{
+      looseQty += qty;
+    }
+  }
+
+  if(!found){
+    const shortRe=/(\d+(?:\.\d+)?)\s*([sptcu])/gi;
+    while((m=shortRe.exec(raw))!==null){
+      found=true;
+      const qty=Number(m[1]);
+      const unit=m[2].toLowerCase();
+      if(unit==="s" || unit==="p") packQty += qty;
+      else looseQty += qty;
+    }
+  }
+
+  if(!found) return null;
+
+  if(looseQty>0){
+    if(!(ps>0)) return null;
+    return packQty + (looseQty/ps);
+  }
+
+  return packQty;
+}
 function toISODate(v){
   if(!v) return null;
   if(typeof v==="number" && window.XLSX){
@@ -671,7 +723,9 @@ async function importSystemRows(container){
     const recs=[];
     let failed=0;
     rows.forEach((r,idx)=>{
-      const name=String(r[map.item_name]??"").trim(), qty=toNumber(r[map.system_qty]);
+      const name=String(r[map.item_name]??"").trim();
+      const importedPackSize=map.pack_size?toNumber(r[map.pack_size]):null;
+      const qty=parsePharmacyQuantity(r[map.system_qty],importedPackSize);
       if(!name||qty===null){failed++;return;}
       recs.push({
         audit_id:currentAuditId,import_job_id:jobId,source_row_no:idx+2,
@@ -680,7 +734,7 @@ async function importSystemRows(container){
         batch_no:map.batch_no?String(r[map.batch_no]??"").trim()||null:null,
         expiry_date:map.expiry_date?toISODate(r[map.expiry_date]):null,
         pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim()||null:null,
-        pack_size:map.pack_size?toNumber(r[map.pack_size]):null,
+        pack_size:importedPackSize,
         qty_basis:map.qty_basis?normalizeQtyBasis(r[map.qty_basis]):"decimal",
         category:map.category?String(r[map.category]??"").trim()||null:null,
         manufacturer:map.manufacturer?String(r[map.manufacturer]??"").trim()||null:null,
@@ -740,13 +794,17 @@ async function importPhysicalRows(container){
       const importedFullPackQty=map.full_pack_qty?toNumber(r[map.full_pack_qty]):null;
       const importedLooseQty=map.loose_qty?toNumber(r[map.loose_qty]):null;
       const importedQtyBasis=map.qty_basis?normalizeQtyBasis(r[map.qty_basis]):(map.full_pack_qty||map.loose_qty?"pack_loose":"decimal");
-      const physical=calculateDecimalPackQty({
-        physicalQty:map.physical_qty?r[map.physical_qty]:null,
-        fullPackQty:importedFullPackQty,
-        looseQty:importedLooseQty,
-        packSize:importedPackSize,
-        qtyBasis:importedQtyBasis
-      });
+      const rawPhysical=map.physical_qty?r[map.physical_qty]:null;
+      let physical=parsePharmacyQuantity(rawPhysical,importedPackSize);
+      if(physical===null){
+        physical=calculateDecimalPackQty({
+          physicalQty:rawPhysical,
+          fullPackQty:importedFullPackQty,
+          looseQty:importedLooseQty,
+          packSize:importedPackSize,
+          qtyBasis:importedQtyBasis
+        });
+      }
       if(!name||physical===null){failed++;return;}
       const code=map.item_code?String(r[map.item_code]??"").trim():"";
       const barcode=map.barcode?String(r[map.barcode]??"").trim():"";
