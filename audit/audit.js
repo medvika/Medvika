@@ -29,6 +29,10 @@ function toast(message, type="ok"){
 }
 
 function fmtNum(v){ return Number(v || 0).toLocaleString("en-IN"); }
+function fmtMoney(v){
+  if(v===null||v===undefined||Number.isNaN(Number(v))) return "—";
+  return "₹"+Number(v).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 function fmtDate(v){
   if(!v) return "—";
   const d = new Date(v);
@@ -403,7 +407,8 @@ const HEADER_ALIASES = {
   system_qty:["system_qty","system qty","stock","stock qty","current stock","book stock","quantity","qty"],
   physical_qty:["physical_qty","physical qty","physical stock","count qty","counted qty","actual qty","actual stock","quantity","qty"],
   mrp:["mrp","m.r.p"],
-  purchase_rate:["purchase_rate","purchase rate","ptr","cost","cost rate"],
+  purchase_rate:["purchase_rate","purchase rate","purchase rate ex gst","purchase rate ex-gst","ptr","cost","cost rate"],
+  gst_percent:["gst_percent","gst percent","gst %","gst","tax %","tax percent"],
   stock_value:["stock_value","stock value","inventory value"],
   condition:["condition","stock condition","physical condition","status","item condition"]
 };
@@ -534,7 +539,7 @@ function renderMapping(container,rows,type){
   const headers=Object.keys(rows[0]);
   const isSystem=type==="system";
   const fields=isSystem
-    ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Manufacturer","manufacturer",false],["MRP","mrp",false],["Purchase Rate","purchase_rate",false]]
+    ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Manufacturer","manufacturer",false],["MRP","mrp",false],["Purchase Rate Ex-GST","purchase_rate",false],["GST %","gst_percent",false]]
     : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Category","category",false],["Condition / Damage","condition",false]];
   container.__rows=rows;
   container.innerHTML=`<div class="mapping-card">
@@ -620,6 +625,7 @@ async function importSystemRows(container){
         manufacturer:map.manufacturer?String(r[map.manufacturer]??"").trim()||null:null,
         system_qty:qty,mrp:map.mrp?toNumber(r[map.mrp]):null,
         purchase_rate:map.purchase_rate?toNumber(r[map.purchase_rate]):null,
+        gst_percent:map.gst_percent?toNumber(r[map.gst_percent]):null,
         normalized_name:normName(name)
       });
     });
@@ -639,7 +645,7 @@ async function fetchAllSystemStock(){
   const all=[]; let from=0; const size=1000;
   while(true){
     const {data,error}=await sb.from("medvika_audit_system_stock")
-      .select("id,item_code,barcode,item_name,normalized_name,batch_no,expiry_date,pack_uom,category,system_qty")
+      .select("id,item_code,barcode,item_name,normalized_name,batch_no,expiry_date,pack_uom,category,system_qty,mrp,purchase_rate,gst_percent")
       .eq("audit_id",currentAuditId).range(from,from+size-1);
     if(error) throw error;
     all.push(...(data||[]));
@@ -796,9 +802,15 @@ function buildReconciliationRows(systemStock, countLines){
       category:s.category||"",
       expiry_date:g?.latest_count?.expiry_date || s.expiry_date || null,
       condition:g?.latest_count?.condition || classifyCondition(s.expiry_date,null),
+      purchase_rate:s.purchase_rate===null||s.purchase_rate===undefined?null:Number(s.purchase_rate),
+      gst_percent:s.gst_percent===null||s.gst_percent===undefined?null:Number(s.gst_percent),
+      mrp:s.mrp===null||s.mrp===undefined?null:Number(s.mrp),
       system_qty:sys,
       physical_qty:phy,
       variance,
+      system_value:s.purchase_rate===null||s.purchase_rate===undefined?null:sys*Number(s.purchase_rate),
+      physical_value:s.purchase_rate===null||s.purchase_rate===undefined?null:phy*Number(s.purchase_rate),
+      variance_value:s.purchase_rate===null||s.purchase_rate===undefined?null:variance*Number(s.purchase_rate),
       status,
       recount:!!g?.recount,
       finding:
@@ -819,9 +831,15 @@ function buildReconciliationRows(systemStock, countLines){
       category:g.category||"",
       expiry_date:g.expiry_date||null,
       condition:g.condition||"saleable",
+      purchase_rate:null,
+      gst_percent:null,
+      mrp:null,
       system_qty:0,
       physical_qty:Number(g.physical_qty||0),
       variance:Number(g.physical_qty||0),
+      system_value:0,
+      physical_value:null,
+      variance_value:null,
       status:"unlisted",
       recount:!!g.recount,
       finding:"Physical stock not present in current/system stock"
@@ -892,12 +910,17 @@ function renderReconciliationTable(){
       <td>${esc(r.category||"—")}</td>
       <td>${esc(r.expiry_date||"—")}</td>
       <td>${conditionChip(r.condition)}</td>
+      <td>${r.purchase_rate===null?"—":fmtMoney(r.purchase_rate)}</td>
+      <td>${r.gst_percent===null?"—":esc(r.gst_percent)+"%"}</td>
       <td>${esc(r.system_qty)}</td>
       <td>${esc(r.physical_qty)}</td>
       <td class="${varianceClass(r.variance)}">${esc(r.variance)}</td>
+      <td>${r.system_value===null?"—":fmtMoney(r.system_value)}</td>
+      <td>${r.physical_value===null?"—":fmtMoney(r.physical_value)}</td>
+      <td class="${r.variance_value===null?"":(r.variance_value<0?"money-negative":r.variance_value>0?"money-positive":"money-neutral")}">${r.variance_value===null?"—":fmtMoney(r.variance_value)}</td>
       <td>${r.recount?'<span class="status-chip status-recount">Recount</span>':'—'}</td>
     </tr>
-  `).join("") : '<tr><td colspan="11" class="empty">No reconciliation rows for this filter.</td></tr>';
+  `).join("") : '<tr><td colspan="16" class="empty">No reconciliation rows for this filter.</td></tr>';
 
   if($("reconFooter")){
     $("reconFooter").innerHTML=`<span>Showing ${fmtNum(rows.length)} of ${fmtNum(reconciliationRows.length)} reconciliation rows</span><span>Positive variance = excess · Negative variance = short</span>`;
@@ -922,7 +945,7 @@ async function loadReconciliation(){
     renderReconciliationTable();
   }catch(err){
     console.error("Reconciliation load error:",err);
-    $("reconBody").innerHTML=`<tr><td colspan="11" class="empty">${esc(err.message||"Unable to load reconciliation")}</td></tr>`;
+    $("reconBody").innerHTML=`<tr><td colspan="16" class="empty">${esc(err.message||"Unable to load reconciliation")}</td></tr>`;
   }
 }
 
@@ -949,9 +972,14 @@ function reconciliationExportRows(){
     Category:r.category||"",
     Expiry_Date:r.expiry_date||"",
     Condition:conditionLabel(r.condition),
+    Purchase_Rate_Ex_GST:r.purchase_rate,
+    GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
     Physical_Qty:r.physical_qty,
     Variance:r.variance,
+    System_Value_Ex_GST:r.system_value,
+    Physical_Value_Ex_GST:r.physical_value,
+    Variance_Value_Ex_GST:r.variance_value,
     Recount:r.recount?"Yes":"No",
     Finding:r.finding
   }));
@@ -1094,7 +1122,7 @@ function buildReportReconciliation(systemStock,counts){
 }
 
 function reportStat(label,value,cssClass="",small=""){
-  return `<div class="report-stat ${cssClass}"><span>${esc(label)}</span><strong>${fmtNum(value)}</strong>${small?`<small>${esc(small)}</small>`:""}</div>`;
+  return `<div class="report-stat ${cssClass}"><span>${esc(label)}</span><strong>${typeof value==="string"?esc(value):fmtNum(value)}</strong>${small?`<small>${esc(small)}</small>`:""}</div>`;
 }
 
 async function fetchSignoff(){
@@ -1117,6 +1145,48 @@ async function saveReportDetails(){
   if(error){toast(error.message,"error");return;}
   toast("Report details saved");
   await loadFinalReport();
+}
+
+
+function calculateFinancialImpact(systemStock,counts,recon){
+  const stockById=new Map(systemStock.map(s=>[String(s.id),s]));
+  let shortageLoss=0, excessValue=0, damagedValue=0, expiredValue=0, nearExpiryValue=0;
+  let systemStockValue=0, physicalStockValue=0, unvaluedLines=0;
+
+  systemStock.forEach(s=>{
+    if(s.purchase_rate!==null && s.purchase_rate!==undefined){
+      systemStockValue += Number(s.system_qty||0)*Number(s.purchase_rate);
+    }
+  });
+
+  recon.forEach(r=>{
+    if(r.purchase_rate===null || r.purchase_rate===undefined){
+      if(r.status!=="matched") unvaluedLines++;
+      return;
+    }
+    const vv=Number(r.variance_value||0);
+    if(vv<0) shortageLoss += Math.abs(vv);
+    if(vv>0) excessValue += vv;
+    if(r.physical_value!==null) physicalStockValue += Number(r.physical_value||0);
+  });
+
+  counts.forEach(c=>{
+    const s=c.system_stock_id ? stockById.get(String(c.system_stock_id)) : null;
+    const rate=s?.purchase_rate;
+    if(rate===null || rate===undefined) return;
+    const value=Number(c.physical_qty||0)*Number(rate);
+    if(c.condition==="damaged") damagedValue += value;
+    else if(c.condition==="expired") expiredValue += value;
+    else if(c.condition==="near_expiry") nearExpiryValue += value;
+  });
+
+  return {
+    systemStockValue,physicalStockValue,shortageLoss,excessValue,
+    netInventoryVariance:excessValue-shortageLoss,
+    damagedValue,expiredValue,nearExpiryValue,
+    totalRiskExposure:shortageLoss+damagedValue+expiredValue+nearExpiryValue,
+    unvaluedLines
+  };
 }
 
 async function loadFinalReport(){
@@ -1152,6 +1222,7 @@ async function loadFinalReport(){
     };
 
     const physicalConditions=aggregatePhysicalConditions(counts);
+    const financials=calculateFinancialImpact(systemStock,counts,recon);
 
     const systemExpiryRows=systemStock.map(s=>({
       ...s,
@@ -1168,7 +1239,7 @@ async function loadFinalReport(){
 
     finalReportData={
       project,client,systemStock,counts,recon,zones:zoneRes.data||[],teams:teamRes.data||[],
-      signoff,reconCounts,physicalConditions,systemExpiryRows,systemExpiry
+      signoff,reconCounts,physicalConditions,systemExpiryRows,systemExpiry,financials
     };
 
     $("reportProjectMeta").textContent=`${client} • ${project.project_code||""} • ${project.location||""} • ${project.audit_date||""}`;
@@ -1184,6 +1255,19 @@ async function loadFinalReport(){
       reportStat("Unlisted",reconCounts.unlisted,"danger"),
       reportStat("Recount",reconCounts.recount,"warn")
     ].join("");
+
+    if($("reportFinancialSummary")){
+      $("reportFinancialSummary").innerHTML=[
+        reportStat("System Stock Value",fmtMoney(financials.systemStockValue),"","Ex-GST"),
+        reportStat("Physical Stock Value",fmtMoney(financials.physicalStockValue),"","Ex-GST"),
+        reportStat("Shortage Loss",fmtMoney(financials.shortageLoss),"danger","Ex-GST"),
+        reportStat("Excess Value",fmtMoney(financials.excessValue),"warn","Ex-GST"),
+        reportStat("Net Variance",fmtMoney(financials.netInventoryVariance),financials.netInventoryVariance<0?"danger":"ok","Ex-GST"),
+        reportStat("Damaged Value",fmtMoney(financials.damagedValue),"danger","Ex-GST"),
+        reportStat("Expired Value",fmtMoney(financials.expiredValue),"danger","Ex-GST"),
+        reportStat("Near Expiry Exposure",fmtMoney(financials.nearExpiryValue),"warn","Ex-GST")
+      ].join("");
+    }
 
     $("reportSystemExpiry").innerHTML=[
       reportStat("Expired Lines",systemExpiry.expired_lines,"danger"),
@@ -1233,10 +1317,13 @@ async function loadFinalReport(){
 
     const exceptions=recon.filter(r=>r.status!=="matched");
     $("reportExceptionTable").innerHTML=tableHtml(
-      ["Status","Item","Code","Batch","System","Physical","Variance","Condition"],
+      ["Status","Item","Code","Batch","System","Physical","Variance","Rate Ex-GST","Variance Value","Condition"],
       exceptions.slice(0,500).map(r=>[
         statusLabel(r),r.item_name,r.item_code||"—",r.batch_no||"—",
-        r.system_qty,r.physical_qty,r.variance,conditionLabel(r.condition)
+        r.system_qty,r.physical_qty,r.variance,
+        r.purchase_rate===null?"—":fmtMoney(r.purchase_rate),
+        r.variance_value===null?"—":fmtMoney(r.variance_value),
+        conditionLabel(r.condition)
       ])
     );
 
@@ -1261,9 +1348,14 @@ function reportExcelRows(){
     Category:r.category||"",
     Expiry_Date:r.expiry_date||"",
     Condition:conditionLabel(r.condition),
+    Purchase_Rate_Ex_GST:r.purchase_rate,
+    GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
     Physical_Qty:r.physical_qty,
     Variance:r.variance,
+    System_Value_Ex_GST:r.system_value,
+    Physical_Value_Ex_GST:r.physical_value,
+    Variance_Value_Ex_GST:r.variance_value,
     Recount:r.recount?"Yes":"No",
     Finding:r.finding
   }));
@@ -1300,7 +1392,20 @@ function exportFinalReportExcel(){
     ["Expired Lines",finalReportData.systemExpiry.expired_lines],
     ["Expired Qty",finalReportData.systemExpiry.expired_qty],
     ["Near Expiry Lines",finalReportData.systemExpiry.near_lines],
-    ["Near Expiry Qty",finalReportData.systemExpiry.near_qty]
+    ["Near Expiry Qty",finalReportData.systemExpiry.near_qty],
+    [],
+    ["Financial Impact - Ex-GST","Value"],
+    ["System Stock Value",finalReportData.financials.systemStockValue],
+    ["Physical Stock Value",finalReportData.financials.physicalStockValue],
+    ["Shortage Loss",finalReportData.financials.shortageLoss],
+    ["Excess Value",finalReportData.financials.excessValue],
+    ["Net Inventory Variance",finalReportData.financials.netInventoryVariance],
+    ["Damaged Value",finalReportData.financials.damagedValue],
+    ["Expired Value",finalReportData.financials.expiredValue],
+    ["Near Expiry Exposure",finalReportData.financials.nearExpiryValue],
+    ["Unvalued Exception Lines",finalReportData.financials.unvaluedLines],
+    [],
+    ["Valuation Basis","Purchase Rate excluding GST. GST % stored separately when supplied."]
   ];
   XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(summaryRows),"Summary");
 
@@ -1414,7 +1519,10 @@ async function exportFinalReportPdf(){
       ["Unlisted Excess",rc.unlisted,"Recount",rc.recount],
       ["Damaged Qty",pc.damaged,"Expired Physical Qty",pc.expired],
       ["Near Expiry Physical Qty",pc.near_expiry,"Saleable Qty",pc.saleable],
-      ["System Expired Lines",se.expired_lines,"System Near Expiry Lines",se.near_lines]
+      ["System Expired Lines",se.expired_lines,"System Near Expiry Lines",se.near_lines],
+      ["Shortage Loss Ex-GST",fmtMoney(finalReportData.financials.shortageLoss),"Excess Value Ex-GST",fmtMoney(finalReportData.financials.excessValue)],
+      ["Damaged Value Ex-GST",fmtMoney(finalReportData.financials.damagedValue),"Expired Value Ex-GST",fmtMoney(finalReportData.financials.expiredValue)],
+      ["Net Inventory Variance",fmtMoney(finalReportData.financials.netInventoryVariance),"Near Expiry Exposure",fmtMoney(finalReportData.financials.nearExpiryValue)]
     ],
     theme:"grid",styles:{fontSize:8,cellPadding:2},
     headStyles:{fillColor:green,textColor:[255,255,255]}
@@ -1504,6 +1612,8 @@ async function exportFinalReportPdf(){
 
   y+=14;
   doc.setFontSize(7.5);doc.setTextColor(...grey);
+  doc.text("Valuation basis: Purchase Rate excluding GST. GST % is stored separately where provided.",margin,y);
+  y+=4;
   doc.text("Detailed item-and-batch reconciliation is available in the accompanying Excel/CSV export.",margin,y);
 
   footer();

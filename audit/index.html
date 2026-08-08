@@ -301,9 +301,14 @@
                   <th>Category</th>
                   <th>Expiry</th>
                   <th>Condition</th>
+                  <th>Purchase Rate<br>Ex-GST</th>
+                  <th>GST %</th>
                   <th>System Qty</th>
                   <th>Physical Qty</th>
                   <th>Variance</th>
+                  <th>System Value</th>
+                  <th>Physical Value</th>
+                  <th>Variance Value</th>
                   <th>Recount</th>
                 </tr>
               </thead>
@@ -407,7 +412,7 @@
                 <span>CSV or Excel · designed for 20,000+ current rows</span>
               </div>
             </div>
-            <p class="helper">Import the client's current stock before physical counting. The portal will use item code + batch, barcode + batch, then item name + batch for matching.</p>
+            <p class="helper">Import the client's current stock before physical counting. The portal will use item code + batch, barcode + batch, then item name + batch for matching. <strong>Purchase Rate is treated as Ex-GST cost.</strong> GST % is stored separately for reference and optional future GST-inclusive reporting.</p>
             <div class="import-options">
               <label>Import mode
                 <select id="systemImportMode">

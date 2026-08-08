@@ -101,3 +101,9 @@ input,select,textarea{width:100%;border:1px solid #cbd9df;border-radius:10px;pad
   .report-stat-grid,.report-stat-grid.compact{grid-template-columns:repeat(2,1fr)}
   .report-form-grid{grid-template-columns:1fr}.report-form-grid .span-2{grid-column:auto}
 }
+
+/* STEP 7 - EX-GST VALUATION */
+.money-positive{color:#0b8f4d;font-weight:900}
+.money-negative{color:#dc2626;font-weight:900}
+.money-neutral{color:#0b3c5d;font-weight:800}
+.valuation-note{margin-top:14px;border-left:4px solid var(--green)}
