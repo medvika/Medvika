@@ -1625,4 +1625,170 @@ $("saveReportRemarksButton")?.addEventListener("click",saveReportDetails);
 $("exportReportExcelButton")?.addEventListener("click",exportFinalReportExcel);
 $("exportReportPdfButton")?.addEventListener("click",exportFinalReportPdf);
 
+
+// ============================================================
+// STEP 8 - IMPORTED DATA DELETE / RESET CONTROLS
+// ============================================================
+async function getCurrentAuditLabel(){
+  const p=projects.find(x=>x.id===currentAuditId);
+  return p?.project_code || "current audit";
+}
+
+async function deletePhysicalAuditData(){
+  if(!currentAuditId) return;
+  const label=await getCurrentAuditLabel();
+  const ok=window.confirm(
+    `Delete ALL physical count data for ${label}?\n\n`+
+    `This will remove physical count rows, recount records and physical-import history.\n`+
+    `Current/System Stock will NOT be deleted.\n\nThis action cannot be undone.`
+  );
+  if(!ok) return;
+
+  const btn=$("deletePhysicalDataButton");
+  const msg=$("deleteDataMessage");
+  if(btn){btn.disabled=true;btn.textContent="Deleting...";}
+  if(msg) msg.textContent="";
+
+  try{
+    let r=await sb.from("medvika_audit_recounts").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_expiry_actions").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_count_lines").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_import_jobs")
+      .delete()
+      .eq("audit_id",currentAuditId)
+      .eq("import_type","physical_count");
+    if(r.error) throw r.error;
+
+    if(msg) msg.textContent="Physical count data deleted successfully.";
+    toast("Physical count data deleted");
+    await loadCurrentAudit();
+  }catch(err){
+    console.error("Delete physical data error:",err);
+    if(msg) msg.textContent=err.message||"Unable to delete physical data.";
+    toast(err.message||"Unable to delete physical data","error");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="Delete Physical Count Data";}
+  }
+}
+
+async function deleteSystemAuditData(){
+  if(!currentAuditId) return;
+
+  try{
+    const {count,error}=await sb.from("medvika_audit_count_lines")
+      .select("id",{count:"exact",head:true})
+      .eq("audit_id",currentAuditId);
+    if(error) throw error;
+
+    if(Number(count||0)>0){
+      const msg="Physical count data exists. Delete Physical Count Data first, or use Reset Imported Audit Data.";
+      if($("deleteDataMessage")) $("deleteDataMessage").textContent=msg;
+      toast(msg,"error");
+      return;
+    }
+  }catch(err){
+    toast(err.message||"Unable to check physical data","error");
+    return;
+  }
+
+  const label=await getCurrentAuditLabel();
+  const ok=window.confirm(
+    `Delete ALL Current/System Stock data for ${label}?\n\n`+
+    `This removes the imported stock master and system-stock import history.\n`+
+    `The audit project, zones and teams will remain.\n\nThis action cannot be undone.`
+  );
+  if(!ok) return;
+
+  const btn=$("deleteSystemDataButton");
+  const msg=$("deleteDataMessage");
+  if(btn){btn.disabled=true;btn.textContent="Deleting...";}
+  if(msg) msg.textContent="";
+
+  try{
+    let r=await sb.from("medvika_audit_system_stock").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_import_jobs")
+      .delete()
+      .eq("audit_id",currentAuditId)
+      .eq("import_type","system_stock");
+    if(r.error) throw r.error;
+
+    if(msg) msg.textContent="Current/System Stock data deleted successfully.";
+    toast("Current stock data deleted");
+    await loadCurrentAudit();
+  }catch(err){
+    console.error("Delete system data error:",err);
+    if(msg) msg.textContent=err.message||"Unable to delete current stock data.";
+    toast(err.message||"Unable to delete current stock data","error");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="Delete Current Stock Data";}
+  }
+}
+
+async function resetImportedAuditData(){
+  if(!currentAuditId) return;
+  const label=await getCurrentAuditLabel();
+
+  const first=window.confirm(
+    `RESET ALL IMPORTED AUDIT DATA for ${label}?\n\n`+
+    `This will delete:\n`+
+    `• Current/System Stock\n`+
+    `• Physical Count data\n`+
+    `• Recount records\n`+
+    `• Expiry action records\n`+
+    `• Import history\n\n`+
+    `Client, audit project, zones and teams will be kept.`
+  );
+  if(!first) return;
+
+  const typed=window.prompt(`For safety, type RESET to confirm deletion for ${label}:`);
+  if(String(typed||"").trim().toUpperCase()!=="RESET"){
+    toast("Reset cancelled");
+    return;
+  }
+
+  const btn=$("resetAuditDataButton");
+  const msg=$("deleteDataMessage");
+  if(btn){btn.disabled=true;btn.textContent="Resetting...";}
+  if(msg) msg.textContent="";
+
+  try{
+    let r=await sb.from("medvika_audit_recounts").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_expiry_actions").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_count_lines").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_system_stock").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    r=await sb.from("medvika_audit_import_jobs").delete().eq("audit_id",currentAuditId);
+    if(r.error) throw r.error;
+
+    if(msg) msg.textContent="Imported audit data reset successfully.";
+    toast("Imported audit data reset");
+    await loadCurrentAudit();
+  }catch(err){
+    console.error("Reset audit data error:",err);
+    if(msg) msg.textContent=err.message||"Unable to reset audit data.";
+    toast(err.message||"Unable to reset audit data","error");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="Reset Imported Audit Data";}
+  }
+}
+
+$("deletePhysicalDataButton")?.addEventListener("click",deletePhysicalAuditData);
+$("deleteSystemDataButton")?.addEventListener("click",deleteSystemAuditData);
+$("resetAuditDataButton")?.addEventListener("click",resetImportedAuditData);
+
 requireSession();

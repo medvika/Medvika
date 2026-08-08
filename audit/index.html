@@ -452,6 +452,40 @@
           </section>
         </div>
 
+
+        <section class="card danger-zone-card">
+          <div class="card-head">
+            <div>
+              <h3>Imported Data Management</h3>
+              <span>Applies only to the currently selected audit project</span>
+            </div>
+          </div>
+          <p class="helper">
+            Use these controls only when a wrong file was imported or while resetting test data.
+            Client, audit project, zones and teams are not deleted.
+          </p>
+          <div class="delete-control-grid">
+            <div class="delete-control">
+              <strong>Physical Count Data</strong>
+              <span>Deletes physical count rows, recounts and physical-import history. Current/System Stock is retained.</span>
+              <button id="deletePhysicalDataButton" type="button" class="btn danger-btn">Delete Physical Count Data</button>
+            </div>
+
+            <div class="delete-control">
+              <strong>Current/System Stock Data</strong>
+              <span>Deletes imported current-stock master and its import history. Physical counts must be deleted first.</span>
+              <button id="deleteSystemDataButton" type="button" class="btn danger-btn">Delete Current Stock Data</button>
+            </div>
+
+            <div class="delete-control reset-control">
+              <strong>Reset Audit Imported Data</strong>
+              <span>Deletes both Current/System Stock and Physical Count data for this audit while keeping the audit project, zones and teams.</span>
+              <button id="resetAuditDataButton" type="button" class="btn danger-btn strong-danger">Reset Imported Audit Data</button>
+            </div>
+          </div>
+          <div id="deleteDataMessage" class="form-message"></div>
+        </section>
+
         <section class="card">
           <div class="card-head"><h3>Import History</h3><button id="reloadImportsButton" class="text-btn" type="button">Reload</button></div>
           <div id="importHistoryWrap" class="table-wrap"></div>
