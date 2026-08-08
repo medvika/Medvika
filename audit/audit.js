@@ -105,9 +105,10 @@ document.querySelectorAll(".nav-btn").forEach(btn=>{
     const view=btn.dataset.view;
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     $(view+"View").classList.add("active");
-    const titles={dashboard:"Audit Dashboard",count:"Physical Stock Count",zones:"Zones & Teams",exceptions:"Exceptions & Controls",imports:"Stock Imports"};
+    const titles={dashboard:"Audit Dashboard",count:"Physical Stock Count",zones:"Zones & Teams",exceptions:"Exceptions & Controls",reconciliation:"Complete Reconciliation",imports:"Stock Imports"};
     $("viewTitle").textContent=titles[view]||"Stock Audit";
     if(view==="count") $("itemName").focus();
+    if(view==="reconciliation") loadReconciliation();
   });
 });
 
@@ -147,7 +148,7 @@ $("reloadCountsButton").addEventListener("click",loadRecentCounts);
 
 async function loadCurrentAudit(){
   if(!currentAuditId) return;
-  await Promise.all([loadProjectDetails(),loadZonesAndTeams(),loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory()]);
+  await Promise.all([loadProjectDetails(),loadZonesAndTeams(),loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory(),loadReconciliation()]);
 }
 
 async function loadProjectDetails(){
@@ -246,138 +247,44 @@ $("countForm").addEventListener("submit", async e=>{
   if(!currentAuditId) return;
   const btn=$("saveCountButton");
   btn.disabled=true; btn.textContent="Saving…";
-
-  try{
-    const stock = await fetchAllSystemStock();
-    const matchers = buildStockMatchers(stock);
-
-    const name=$("itemName").value.trim();
-    const code=$("itemCode").value.trim();
-    const barcode=$("barcode").value.trim();
-    const batch=$("batchNo").value.trim();
-    const physical=Number($("physicalQty").value);
-
-    const {stock:s,matchStatus}=findStockMatch(matchers,{code,barcode,name,batch});
-
-    const systemQty = s ? Number(s.system_qty||0) : 0;
-    const isVariance = physical !== systemQty;
-
-    const record={
-      audit_id:currentAuditId,
-      zone_id:$("countZone").value,
-      team_id:$("countTeam").value,
-      system_stock_id:s?.id||null,
-      item_name:name,
-      item_code:code||s?.item_code||null,
-      barcode:barcode||s?.barcode||null,
-      batch_no:batch||s?.batch_no||null,
-      expiry_date:expiryMonthToDate($("expiryDate").value)||s?.expiry_date||null,
-      pack_uom:$("packUom").value.trim()||s?.pack_uom||null,
-      category:s?.category||null,
-      physical_qty:physical,
-      system_qty:systemQty,
-      condition:$("condition").value,
-      counted_by:$("countedBy").value.trim()||null,
-      remarks:$("remarks").value.trim()||null,
-      count_status:isVariance && s ? "recount" : "counted",
-      match_status:matchStatus,
-      excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock."
-    };
-
-    const {error}=await sb.from("medvika_audit_count_lines").insert(record);
-    if(error) throw error;
-
-    toast(s ? (isVariance ? "Count saved — variance flagged for recount" : "Count saved — matched") : "Count saved — unlisted excess flagged");
-
-    const keepZone=$("countZone").value, keepTeam=$("countTeam").value, keepCounter=$("countedBy").value;
-    e.target.reset();
-    $("countZone").value=keepZone;
-    $("countTeam").value=keepTeam;
-    $("countedBy").value=keepCounter;
-    $("condition").value="saleable";
-    $("itemName").focus();
-
-    await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions()]);
-  }catch(err){
-    console.error("Manual count save error:",err);
-    toast(err.message||"Unable to save count","error");
-  }finally{
-    btn.disabled=false; btn.textContent="Save Count";
-  }
+  const record={
+    audit_id:currentAuditId,
+    zone_id:$("countZone").value,
+    team_id:$("countTeam").value,
+    item_name:$("itemName").value.trim(),
+    item_code:$("itemCode").value.trim()||null,
+    barcode:$("barcode").value.trim()||null,
+    batch_no:$("batchNo").value.trim()||null,
+    expiry_date:expiryMonthToDate($("expiryDate").value),
+    pack_uom:$("packUom").value.trim()||null,
+    physical_qty:Number($("physicalQty").value),
+    system_qty:$("systemQty").value===""?null:Number($("systemQty").value),
+    condition:$("condition").value,
+    counted_by:$("countedBy").value.trim()||null,
+    remarks:$("remarks").value.trim()||null,
+    count_status:"counted"
+  };
+  const {error}=await sb.from("medvika_audit_count_lines").insert(record);
+  btn.disabled=false; btn.textContent="Save Count";
+  if(error){toast(error.message,"error");return;}
+  toast("Count saved");
+  const keepZone=$("countZone").value, keepTeam=$("countTeam").value, keepCounter=$("countedBy").value;
+  e.target.reset();
+  $("countZone").value=keepZone; $("countTeam").value=keepTeam; $("countedBy").value=keepCounter; $("condition").value="saleable";
+  $("itemName").focus();
+  await Promise.all([loadDashboard(),loadRecentCounts()]);
 });
 
 async function loadExceptions(){
-  try{
-    const [stock, counts, rr, er] = await Promise.all([
-      fetchAllSystemStock(),
-      fetchAllCountLines(),
-      sb.from("medvika_audit_recounts").select("*").eq("audit_id",currentAuditId).eq("status","open").order("created_at",{ascending:false}).limit(100),
-      sb.from("medvika_audit_count_lines").select("item_name,item_code,batch_no,expiry_date,physical_qty,condition,count_status").eq("audit_id",currentAuditId).in("condition",["near_expiry","expired","damaged"]).order("counted_at",{ascending:false}).limit(100)
-    ]);
-
-    const countedSystemIds = new Set(counts.filter(c=>c.system_stock_id).map(c=>String(c.system_stock_id)));
-
-    const missing = stock.filter(s=>!countedSystemIds.has(String(s.id)));
-
-    const unlisted = counts.filter(c=>c.match_status==="unmatched_excess");
-
-    const quantityVariance = counts.filter(c=>
-      c.match_status!=="unmatched_excess" &&
-      c.system_qty!==null &&
-      Number(c.physical_qty)!==Number(c.system_qty)
-    );
-
-    const matched = counts.filter(c=>
-      c.match_status!=="unmatched_excess" &&
-      c.system_qty!==null &&
-      Number(c.physical_qty)===Number(c.system_qty)
-    );
-
-    const blocks=[];
-
-    blocks.push(`<div class="mapping-card"><strong>Quantity Variance / Recount</strong>${
-      quantityVariance.length
-        ? tableHtml(["Item","Code","Batch","System","Physical","Variance","Status"],
-            quantityVariance.map(c=>[
-              c.item_name,c.item_code||"—",c.batch_no||"—",c.system_qty,c.physical_qty,
-              Number(c.physical_qty)-Number(c.system_qty),c.count_status
-            ]))
-        : '<div class="empty">No quantity variances.</div>'
-    }</div>`);
-
-    blocks.push(`<div class="mapping-card"><strong>Unlisted Excess</strong>${
-      unlisted.length
-        ? tableHtml(["Item","Code","Batch","System","Physical","Finding"],
-            unlisted.map(c=>[
-              c.item_name,c.item_code||"—",c.batch_no||"—",0,c.physical_qty,"Not in current stock"
-            ]))
-        : '<div class="empty">No unlisted excess items.</div>'
-    }</div>`);
-
-    blocks.push(`<div class="mapping-card"><strong>System Stock Not Found Physically</strong>${
-      missing.length
-        ? tableHtml(["Item","Code","Batch","System Qty","Finding"],
-            missing.map(s=>[
-              s.item_name,s.item_code||"—",s.batch_no||"—",s.system_qty,"Missing / not physically counted"
-            ]))
-        : '<div class="empty">No missing system-stock items.</div>'
-    }</div>`);
-
-    blocks.push(`<div class="mapping-card"><strong>Matched Lines</strong><div class="empty">${fmtNum(matched.length)} matched line(s).</div></div>`);
-
-    $("recountWrap").innerHTML=blocks.join("");
-
-    if(!er.error){
-      $("expiryWrap").innerHTML=tableHtml(
-        ["Item","Batch","Expiry","Qty","Condition"],
-        (er.data||[]).map(r=>[
-          r.item_name,r.batch_no||"—",r.expiry_date||"—",r.physical_qty,r.condition.replaceAll("_"," ")
-        ])
-      );
-    }
-  }catch(err){
-    console.error("Exception loading error:",err);
-    $("recountWrap").innerHTML=`<div class="empty">${esc(err.message||"Unable to load exceptions")}</div>`;
+  const [rr,er]=await Promise.all([
+    sb.from("medvika_audit_recounts").select("*").eq("audit_id",currentAuditId).eq("status","open").order("created_at",{ascending:false}).limit(100),
+    sb.from("medvika_audit_count_lines").select("item_name,item_code,batch_no,expiry_date,physical_qty,condition,count_status").eq("audit_id",currentAuditId).in("condition",["near_expiry","expired","damaged"]).order("counted_at",{ascending:false}).limit(100)
+  ]);
+  if(!rr.error){
+    $("recountWrap").innerHTML=tableHtml(["Item","Batch","System","First","Recount","Status"],(rr.data||[]).map(r=>[r.item_name,r.batch_no||"—",r.system_qty??"—",r.first_count_qty??"—",r.recount_qty??"—",r.status]));
+  }
+  if(!er.error){
+    $("expiryWrap").innerHTML=tableHtml(["Item","Batch","Expiry","Qty","Condition"],(er.data||[]).map(r=>[r.item_name,r.batch_no||"—",r.expiry_date||"—",r.physical_qty,r.condition.replaceAll("_"," ")]));
   }
 }
 
@@ -612,91 +519,8 @@ async function fetchAllSystemStock(){
   }
   return all;
 }
-
-async function fetchAllCountLines(){
-  const all=[]; let from=0; const size=1000;
-  while(true){
-    const {data,error}=await sb.from("medvika_audit_count_lines")
-      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,physical_qty,system_qty,count_status,match_status")
-      .eq("audit_id",currentAuditId).range(from,from+size-1);
-    if(error) throw error;
-    all.push(...(data||[]));
-    if(!data||data.length<size) break;
-    from+=size;
-  }
-  return all;
-}
 function stockKey(v,b){return `${cleanCode(v)}|${cleanBatch(b)}`;}
 function nameKey(v,b){return `${normName(v)}|${cleanBatch(b)}`;}
-function codeOnlyKey(v){ return cleanCode(v); }
-function barcodeOnlyKey(v){ return cleanCode(v); }
-function nameOnlyKey(v){ return normName(v); }
-
-function addToMultiMap(map,key,row){
-  if(!key) return;
-  if(!map.has(key)) map.set(key,[]);
-  map.get(key).push(row);
-}
-
-function uniqueMatch(map,key){
-  const rows = map.get(key) || [];
-  return rows.length === 1 ? rows[0] : null;
-}
-
-function buildStockMatchers(stock){
-  const byCodeBatch=new Map(), byBarcodeBatch=new Map(), byNameBatch=new Map();
-  const byCodeOnly=new Map(), byBarcodeOnly=new Map(), byNameOnly=new Map();
-
-  stock.forEach(s=>{
-    const batch = s.batch_no || "";
-    if(s.item_code){
-      byCodeBatch.set(stockKey(s.item_code,batch),s);
-      addToMultiMap(byCodeOnly,codeOnlyKey(s.item_code),s);
-    }
-    if(s.barcode){
-      byBarcodeBatch.set(stockKey(s.barcode,batch),s);
-      addToMultiMap(byBarcodeOnly,barcodeOnlyKey(s.barcode),s);
-    }
-    byNameBatch.set(nameKey(s.normalized_name||s.item_name,batch),s);
-    addToMultiMap(byNameOnly,nameOnlyKey(s.normalized_name||s.item_name),s);
-  });
-
-  return {byCodeBatch,byBarcodeBatch,byNameBatch,byCodeOnly,byBarcodeOnly,byNameOnly};
-}
-
-function findStockMatch(matchers,{code,barcode,name,batch}){
-  const b = cleanBatch(batch);
-  let s=null, matchStatus="unmatched_excess";
-
-  // Strict batch-aware matching first.
-  if(code && b && matchers.byCodeBatch.has(stockKey(code,b))){
-    s=matchers.byCodeBatch.get(stockKey(code,b));
-    matchStatus="matched_item_batch";
-  } else if(barcode && b && matchers.byBarcodeBatch.has(stockKey(barcode,b))){
-    s=matchers.byBarcodeBatch.get(stockKey(barcode,b));
-    matchStatus="matched_barcode_batch";
-  } else if(name && b && matchers.byNameBatch.has(nameKey(name,b))){
-    s=matchers.byNameBatch.get(nameKey(name,b));
-    matchStatus="matched_name_batch";
-  }
-
-  // If batch is missing or slightly inconsistent, only fall back when the item
-  // resolves to exactly ONE system-stock row. This prevents cross-batch matches.
-  if(!s && code){
-    const u=uniqueMatch(matchers.byCodeOnly,codeOnlyKey(code));
-    if(u){ s=u; matchStatus="matched_item_batch"; }
-  }
-  if(!s && barcode){
-    const u=uniqueMatch(matchers.byBarcodeOnly,barcodeOnlyKey(barcode));
-    if(u){ s=u; matchStatus="matched_barcode_batch"; }
-  }
-  if(!s && name){
-    const u=uniqueMatch(matchers.byNameOnly,nameOnlyKey(name));
-    if(u){ s=u; matchStatus="matched_name_batch"; }
-  }
-
-  return {stock:s,matchStatus};
-}
 
 async function importPhysicalRows(container){
   const rows=container.__rows||[], map=readMapping(container), file=$("physicalCountFile").files[0];
@@ -704,77 +528,49 @@ async function importPhysicalRows(container){
   const progress=container.querySelector("[data-progress]"); progress.hidden=false; progress.textContent="Loading current inventory for matching…";
   if(!map.item_name||!map.physical_qty){progress.className="import-progress error";progress.textContent="Map Item Name and Physical Qty.";return;}
   let jobId=null;
-
   try{
     jobId=await createImportJob("physical_count",file,"append",rows.length);
     const stock=await fetchAllSystemStock();
-    const matchers=buildStockMatchers(stock);
-
-    const recs=[];let matched=0,unmatched=0,failed=0,variance=0;
-
+    const byCode=new Map(),byBarcode=new Map(),byName=new Map();
+    stock.forEach(s=>{
+      if(s.item_code) byCode.set(stockKey(s.item_code,s.batch_no),s);
+      if(s.barcode) byBarcode.set(stockKey(s.barcode,s.batch_no),s);
+      byName.set(nameKey(s.normalized_name||s.item_name,s.batch_no),s);
+    });
+    const recs=[];let matched=0,unmatched=0,failed=0;
     rows.forEach(r=>{
       const name=String(r[map.item_name]??"").trim(), physical=toNumber(r[map.physical_qty]);
       if(!name||physical===null){failed++;return;}
-
       const code=map.item_code?String(r[map.item_code]??"").trim():"";
       const barcode=map.barcode?String(r[map.barcode]??"").trim():"";
       const batch=map.batch_no?String(r[map.batch_no]??"").trim():"";
-
-      const result=findStockMatch(matchers,{code,barcode,name,batch});
-      const s=result.stock;
-      const matchStatus=result.matchStatus;
-
+      let s=null,matchStatus="unmatched_excess";
+      if(code && byCode.has(stockKey(code,batch))){s=byCode.get(stockKey(code,batch));matchStatus="matched_item_batch";}
+      else if(barcode && byBarcode.has(stockKey(barcode,batch))){s=byBarcode.get(stockKey(barcode,batch));matchStatus="matched_barcode_batch";}
+      else if(byName.has(nameKey(name,batch))){s=byName.get(nameKey(name,batch));matchStatus="matched_name_batch";}
       if(s) matched++; else unmatched++;
-
-      const systemQty=s?Number(s.system_qty||0):0;
-      const isVariance=physical!==systemQty;
-      if(s && isVariance) variance++;
-
       recs.push({
-        audit_id:currentAuditId,
-        zone_id:zoneId,
-        team_id:teamId,
-        system_stock_id:s?.id||null,
-        import_job_id:jobId,
-        item_code:code||s?.item_code||null,
-        barcode:barcode||s?.barcode||null,
-        item_name:name||s?.item_name,
+        audit_id:currentAuditId,zone_id:zoneId,team_id:teamId,system_stock_id:s?.id||null,import_job_id:jobId,
+        item_code:code||s?.item_code||null,barcode:barcode||s?.barcode||null,item_name:name||s?.item_name,
         category:(map.category?String(r[map.category]??"").trim():null)||s?.category||null,
-        batch_no:batch||s?.batch_no||null,
-        expiry_date:(map.expiry_date?toISODate(r[map.expiry_date]):null)||s?.expiry_date||null,
+        batch_no:batch||s?.batch_no||null,expiry_date:(map.expiry_date?toISODate(r[map.expiry_date]):null)||s?.expiry_date||null,
         pack_uom:(map.pack_uom?String(r[map.pack_uom]??"").trim():null)||s?.pack_uom||null,
-        physical_qty:physical,
-        system_qty:systemQty,
-        condition:"saleable",
-        count_status:s && isVariance ? "recount" : "counted",
-        match_status:matchStatus,
-        excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
+        physical_qty:physical,system_qty:s?Number(s.system_qty||0):0,
+        condition:"saleable",count_status:(s && physical!==Number(s.system_qty||0))?"recount":"counted",
+        match_status:matchStatus,excess_reason:s?null:"Physical stock found but item/batch not present in imported current stock.",
         counted_by:"Physical Import"
       });
     });
-
     progress.textContent=`Saving ${fmtNum(recs.length)} physical count rows…`;
     const inserted=await insertChunks("medvika_audit_count_lines",recs);
-
-    await finishImportJob(jobId,{
-      inserted_rows:inserted,
-      matched_rows:matched,
-      unmatched_rows:unmatched,
-      failed_rows:failed
-    });
-
+    await finishImportJob(jobId,{inserted_rows:inserted,matched_rows:matched,unmatched_rows:unmatched,failed_rows:failed});
     progress.className="import-progress";
-    progress.innerHTML=`Completed: ${fmtNum(inserted)} counts · ${fmtNum(matched)} matched · ${fmtNum(variance)} quantity variance · <strong>${fmtNum(unmatched)} unlisted excess</strong>${failed?` · ${failed} skipped`:""}.`;
-
+    progress.innerHTML=`Completed: ${fmtNum(inserted)} counts · ${fmtNum(matched)} matched · <strong>${fmtNum(unmatched)} unlisted excess</strong>${failed?` · ${failed} skipped`:""}.`;
     toast("Physical count import completed");
     await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions(),loadImportHistory()]);
   }catch(e){
-    if(jobId) await finishImportJob(jobId,{
-      inserted_rows:0,matched_rows:0,unmatched_rows:0,failed_rows:rows.length
-    },e.message);
-    progress.className="import-progress error";
-    progress.textContent=e.message;
-    toast(e.message,"error");
+    if(jobId) await finishImportJob(jobId,{inserted_rows:0,matched_rows:0,unmatched_rows:0,failed_rows:rows.length},e.message);
+    progress.className="import-progress error";progress.textContent=e.message;toast(e.message,"error");
   }
 }
 
@@ -788,5 +584,285 @@ async function loadImportHistory(){
   );
 }
 $("reloadImportsButton")?.addEventListener("click",loadImportHistory);
+
+
+// ============================================================
+// STEP 4 - COMPLETE STOCK RECONCILIATION & EXPORT
+// ============================================================
+let reconciliationRows = [];
+
+function buildReconciliationRows(systemStock, countLines){
+  const matchedGroups = new Map();
+  const unlistedGroups = new Map();
+
+  // Aggregate matched physical counts against system_stock_id.
+  countLines.forEach(c=>{
+    if(c.system_stock_id){
+      const key=String(c.system_stock_id);
+      if(!matchedGroups.has(key)){
+        matchedGroups.set(key,{
+          physical_qty:0,
+          recount:false,
+          count_ids:[],
+          latest_count:null
+        });
+      }
+      const g=matchedGroups.get(key);
+      g.physical_qty += Number(c.physical_qty||0);
+      g.recount = g.recount || c.count_status==="recount";
+      g.count_ids.push(c.id);
+      g.latest_count=c;
+    }else if(c.match_status==="unmatched_excess"){
+      const key=[
+        cleanCode(c.item_code||""),
+        cleanBatch(c.batch_no||""),
+        normName(c.item_name||"")
+      ].join("|");
+      if(!unlistedGroups.has(key)){
+        unlistedGroups.set(key,{
+          item_name:c.item_name,
+          item_code:c.item_code||null,
+          batch_no:c.batch_no||null,
+          category:c.category||null,
+          system_qty:0,
+          physical_qty:0,
+          recount:false,
+          match_status:"unmatched_excess"
+        });
+      }
+      const g=unlistedGroups.get(key);
+      g.physical_qty += Number(c.physical_qty||0);
+      g.recount = g.recount || c.count_status==="recount";
+    }
+  });
+
+  const rows=[];
+
+  systemStock.forEach(s=>{
+    const g=matchedGroups.get(String(s.id));
+    const sys=Number(s.system_qty||0);
+    const phy=g ? Number(g.physical_qty||0) : 0;
+    const variance=phy-sys;
+
+    let status="matched";
+    if(!g) status="missing";
+    else if(variance>0) status="excess";
+    else if(variance<0) status="short";
+
+    rows.push({
+      source:"system",
+      system_stock_id:s.id,
+      item_name:s.item_name,
+      item_code:s.item_code||"",
+      batch_no:s.batch_no||"",
+      category:s.category||"",
+      system_qty:sys,
+      physical_qty:phy,
+      variance,
+      status,
+      recount:!!g?.recount,
+      finding:
+        status==="matched" ? "Matched" :
+        status==="excess" ? "Physical stock exceeds system stock" :
+        status==="short" ? "Physical stock below system stock" :
+        "System stock not found physically"
+    });
+  });
+
+  unlistedGroups.forEach(g=>{
+    rows.push({
+      source:"unlisted",
+      system_stock_id:null,
+      item_name:g.item_name,
+      item_code:g.item_code||"",
+      batch_no:g.batch_no||"",
+      category:g.category||"",
+      system_qty:0,
+      physical_qty:Number(g.physical_qty||0),
+      variance:Number(g.physical_qty||0),
+      status:"unlisted",
+      recount:!!g.recount,
+      finding:"Physical stock not present in current/system stock"
+    });
+  });
+
+  return rows.sort((a,b)=>{
+    const rank={missing:1,unlisted:2,short:3,excess:4,matched:5};
+    return (rank[a.status]-rank[b.status]) || a.item_name.localeCompare(b.item_name);
+  });
+}
+
+function statusLabel(r){
+  if(r.status==="matched") return "Matched";
+  if(r.status==="excess") return "Excess";
+  if(r.status==="short") return "Short";
+  if(r.status==="missing") return "Missing";
+  if(r.status==="unlisted") return "Unlisted Excess";
+  return r.status;
+}
+
+function statusChip(r){
+  return `<span class="status-chip status-${esc(r.status)}">${esc(statusLabel(r))}</span>`;
+}
+
+function filteredReconciliationRows(){
+  const q=($("reconSearch")?.value||"").trim().toLowerCase();
+  const status=$("reconStatusFilter")?.value||"all";
+  const category=$("reconCategoryFilter")?.value||"all";
+
+  return reconciliationRows.filter(r=>{
+    const hay=[r.item_name,r.item_code,r.batch_no,r.category].join(" ").toLowerCase();
+    const qOk=!q || hay.includes(q);
+    const categoryOk=category==="all" || (r.category||"")===category;
+    let statusOk=true;
+    if(status==="recount") statusOk=r.recount===true;
+    else if(status!=="all") statusOk=r.status===status;
+    return qOk && categoryOk && statusOk;
+  });
+}
+
+function renderReconSummary(){
+  if(!$("reconSummary")) return;
+  const count=(s)=>reconciliationRows.filter(r=>r.status===s).length;
+  const recount=reconciliationRows.filter(r=>r.recount).length;
+  $("reconSummary").innerHTML=[
+    ["Matched",count("matched"),"is-ok"],
+    ["Excess",count("excess"),"is-warn"],
+    ["Short",count("short"),"is-danger"],
+    ["Missing",count("missing"),"is-danger"],
+    ["Unlisted",count("unlisted"),"is-danger"],
+    ["Recount",recount,"is-warn"]
+  ].map(x=>`<div class="recon-stat ${x[2]}"><span>${x[0]}</span><strong>${fmtNum(x[1])}</strong></div>`).join("");
+}
+
+function renderReconciliationTable(){
+  if(!$("reconBody")) return;
+  const rows=filteredReconciliationRows();
+
+  $("reconBody").innerHTML=rows.length ? rows.map(r=>`
+    <tr>
+      <td>${statusChip(r)}</td>
+      <td>${esc(r.item_name)}</td>
+      <td>${esc(r.item_code||"—")}</td>
+      <td>${esc(r.batch_no||"—")}</td>
+      <td>${esc(r.category||"—")}</td>
+      <td>${esc(r.system_qty)}</td>
+      <td>${esc(r.physical_qty)}</td>
+      <td class="${varianceClass(r.variance)}">${esc(r.variance)}</td>
+      <td>${r.recount?'<span class="status-chip status-recount">Recount</span>':'—'}</td>
+    </tr>
+  `).join("") : '<tr><td colspan="9" class="empty">No reconciliation rows for this filter.</td></tr>';
+
+  if($("reconFooter")){
+    $("reconFooter").innerHTML=`<span>Showing ${fmtNum(rows.length)} of ${fmtNum(reconciliationRows.length)} reconciliation rows</span><span>Positive variance = excess · Negative variance = short</span>`;
+  }
+}
+
+async function loadReconciliation(){
+  if(!currentAuditId || !$("reconBody")) return;
+  try{
+    const [stock,counts]=await Promise.all([fetchAllSystemStock(),fetchAllCountLinesDetailed()]);
+    reconciliationRows=buildReconciliationRows(stock,counts);
+
+    const categories=[...new Set(reconciliationRows.map(r=>r.category).filter(Boolean))].sort();
+    const sel=$("reconCategoryFilter");
+    if(sel){
+      const current=sel.value;
+      sel.innerHTML='<option value="all">All categories</option>'+categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+      if([...sel.options].some(o=>o.value===current)) sel.value=current;
+    }
+
+    renderReconSummary();
+    renderReconciliationTable();
+  }catch(err){
+    console.error("Reconciliation load error:",err);
+    $("reconBody").innerHTML=`<tr><td colspan="9" class="empty">${esc(err.message||"Unable to load reconciliation")}</td></tr>`;
+  }
+}
+
+async function fetchAllCountLinesDetailed(){
+  const all=[]; let from=0; const size=1000;
+  while(true){
+    const {data,error}=await sb.from("medvika_audit_count_lines")
+      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,physical_qty,system_qty,count_status,match_status")
+      .eq("audit_id",currentAuditId).range(from,from+size-1);
+    if(error) throw error;
+    all.push(...(data||[]));
+    if(!data || data.length<size) break;
+    from += size;
+  }
+  return all;
+}
+
+function reconciliationExportRows(){
+  return filteredReconciliationRows().map(r=>({
+    Status:statusLabel(r),
+    Item_Name:r.item_name,
+    Item_Code:r.item_code||"",
+    Batch_No:r.batch_no||"",
+    Category:r.category||"",
+    System_Qty:r.system_qty,
+    Physical_Qty:r.physical_qty,
+    Variance:r.variance,
+    Recount:r.recount?"Yes":"No",
+    Finding:r.finding
+  }));
+}
+
+function downloadBlob(blob,fileName){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=fileName;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exportReconciliationCsv(){
+  const rows=reconciliationExportRows();
+  if(!rows.length){toast("No reconciliation rows to export","error");return;}
+  const csv=window.Papa ? Papa.unparse(rows) : [
+    Object.keys(rows[0]).join(","),
+    ...rows.map(r=>Object.values(r).map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(","))
+  ].join("\n");
+  downloadBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),`Medvika_Reconciliation_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function exportReconciliationExcel(){
+  const rows=reconciliationExportRows();
+  if(!rows.length){toast("No reconciliation rows to export","error");return;}
+  if(!window.XLSX){toast("Excel library not loaded","error");return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[
+    {wch:18},{wch:32},{wch:16},{wch:16},{wch:22},
+    {wch:12},{wch:12},{wch:12},{wch:10},{wch:36}
+  ];
+  const book=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book,ws,"Reconciliation");
+
+  const summary=[
+    ["Medvika Stock Audit Reconciliation"],
+    ["Audit Project",projects.find(p=>p.id===currentAuditId)?.project_code||currentAuditId],
+    ["Generated",new Date().toLocaleString("en-IN")],
+    [],
+    ["Metric","Count"],
+    ["Matched",reconciliationRows.filter(r=>r.status==="matched").length],
+    ["Excess",reconciliationRows.filter(r=>r.status==="excess").length],
+    ["Short",reconciliationRows.filter(r=>r.status==="short").length],
+    ["Missing",reconciliationRows.filter(r=>r.status==="missing").length],
+    ["Unlisted Excess",reconciliationRows.filter(r=>r.status==="unlisted").length],
+    ["Recount",reconciliationRows.filter(r=>r.recount).length]
+  ];
+  const sws=XLSX.utils.aoa_to_sheet(summary);
+  XLSX.utils.book_append_sheet(book,sws,"Summary");
+
+  XLSX.writeFile(book,`Medvika_Reconciliation_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+$("reconSearch")?.addEventListener("input",renderReconciliationTable);
+$("reconStatusFilter")?.addEventListener("change",renderReconciliationTable);
+$("reconCategoryFilter")?.addEventListener("change",renderReconciliationTable);
+$("reloadReconButton")?.addEventListener("click",loadReconciliation);
+$("exportReconCsvButton")?.addEventListener("click",exportReconciliationCsv);
+$("exportReconExcelButton")?.addEventListener("click",exportReconciliationExcel);
 
 requireSession();

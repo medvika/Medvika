@@ -47,6 +47,7 @@
         <button class="nav-btn" data-view="count">Physical Count</button>
         <button class="nav-btn" data-view="zones">Zones & Teams</button>
         <button class="nav-btn" data-view="exceptions">Exceptions</button>
+        <button class="nav-btn" data-view="reconciliation">Reconciliation</button>
         <button class="nav-btn" data-view="imports">Imports</button>
       </nav>
       <div class="sidebar-footer">
@@ -206,6 +207,70 @@
             <div id="expiryWrap" class="table-wrap"></div>
           </section>
         </div>
+      </section>
+
+
+      <section id="reconciliationView" class="view">
+        <section class="card reconciliation-card">
+          <div class="card-head recon-head">
+            <div>
+              <h3>Complete Stock Reconciliation</h3>
+              <span>System stock vs physical stock · item + batch level</span>
+            </div>
+            <div class="recon-actions">
+              <button id="exportReconCsvButton" class="btn secondary" type="button">Export CSV</button>
+              <button id="exportReconExcelButton" class="btn primary" type="button">Export Excel</button>
+            </div>
+          </div>
+
+          <div class="recon-summary" id="reconSummary"></div>
+
+          <div class="recon-toolbar">
+            <label class="recon-search">
+              <span>Search</span>
+              <input id="reconSearch" type="search" placeholder="Item, code, batch...">
+            </label>
+            <label>
+              <span>Status</span>
+              <select id="reconStatusFilter">
+                <option value="all">All</option>
+                <option value="matched">Matched</option>
+                <option value="excess">Excess</option>
+                <option value="short">Short</option>
+                <option value="missing">Missing</option>
+                <option value="unlisted">Unlisted Excess</option>
+                <option value="recount">Recount</option>
+              </select>
+            </label>
+            <label>
+              <span>Category</span>
+              <select id="reconCategoryFilter">
+                <option value="all">All categories</option>
+              </select>
+            </label>
+            <button id="reloadReconButton" class="btn secondary" type="button">Reload</button>
+          </div>
+
+          <div class="table-wrap reconciliation-table-wrap">
+            <table class="reconciliation-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Item</th>
+                  <th>Code</th>
+                  <th>Batch</th>
+                  <th>Category</th>
+                  <th>System Qty</th>
+                  <th>Physical Qty</th>
+                  <th>Variance</th>
+                  <th>Recount</th>
+                </tr>
+              </thead>
+              <tbody id="reconBody"></tbody>
+            </table>
+          </div>
+          <div id="reconFooter" class="recon-footer"></div>
+        </section>
       </section>
 
       <section id="importsView" class="view">

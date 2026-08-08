@@ -34,3 +34,31 @@ input,select,textarea{width:100%;border:1px solid #cbd9df;border-radius:10px;pad
 .match-badge{display:inline-flex;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900;text-transform:uppercase}
 .match-ok{background:#e6f6ed;color:#08733f}.match-excess{background:#fee2e2;color:#991b1b}.match-warn{background:#fff4d6;color:#92400e}
 @media(max-width:900px){.import-grid{grid-template-columns:1fr}.import-options,.mapping-grid{grid-template-columns:1fr}}
+
+/* STEP 4 - COMPLETE RECONCILIATION */
+.reconciliation-card{padding:18px}
+.recon-head{align-items:flex-start}
+.recon-actions{display:flex;gap:8px;flex-wrap:wrap}
+.recon-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:6px 0 16px}
+.recon-stat{border:1px solid var(--line);border-radius:12px;padding:12px;background:#f9fbfc}
+.recon-stat span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.recon-stat strong{display:block;font-size:20px;color:var(--navy);margin-top:4px}
+.recon-stat.is-danger strong{color:var(--red)}
+.recon-stat.is-warn strong{color:#b7791f}
+.recon-stat.is-ok strong{color:var(--green)}
+.recon-toolbar{display:grid;grid-template-columns:minmax(220px,1fr) 180px 220px auto;gap:10px;align-items:end;margin-bottom:14px}
+.recon-toolbar label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--navy)}
+.reconciliation-table-wrap{max-height:62vh;border:1px solid var(--line);border-radius:12px}
+.reconciliation-table{min-width:900px}
+.reconciliation-table thead th{position:sticky;top:0;z-index:2}
+.status-chip{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:900;text-transform:uppercase;white-space:nowrap}
+.status-matched{background:#e7f7ed;color:#08733f}
+.status-excess{background:#fff4d6;color:#92400e}
+.status-short{background:#fee2e2;color:#991b1b}
+.status-missing{background:#fce7f3;color:#9d174d}
+.status-unlisted{background:#ede9fe;color:#5b21b6}
+.status-recount{background:#ffedd5;color:#9a3412}
+.recon-footer{padding-top:10px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.recon-click{color:var(--green);font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:1100px){.recon-summary{grid-template-columns:repeat(3,1fr)}.recon-toolbar{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.recon-summary{grid-template-columns:repeat(2,1fr)}.recon-toolbar{grid-template-columns:1fr}.recon-actions{width:100%}.recon-actions .btn{flex:1}}
