@@ -27,4 +27,5 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 @media(max-width:900px){.allocation-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.allocation-grid{grid-template-columns:1fr}}
 
-.auth-actions{justify-content:flex-start;flex-wrap:wrap}.link-btn{background:transparent;color:var(--green);padding-left:4px;padding-right:4px;text-decoration:underline}#recoveryCard{border-color:#bfe7cf}
+.link-btn{background:transparent;color:var(--green);text-decoration:underline}
+.build-tag{display:block;margin-top:8px;color:#8aa0aa;font-size:9px}
