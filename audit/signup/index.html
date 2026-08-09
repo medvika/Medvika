@@ -1,12 +1,56 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Medvika Audit Signup</title><link rel="stylesheet" href="./app.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
-<body><div class="wrap"><div class="card"><img src="./logo.png" class="logo"><span class="eyebrow">Medvika Audit</span>
-<h1>Start Your Stock Audit Workspace</h1><p class="muted">Submit your details, choose a plan, and continue to payment verification.</p>
-<div id="plans" class="plans"></div></div>
-<div class="card"><form id="signupForm"><div class="grid">
-<label>Full Name<input id="fullName" required></label><label>Business / Pharmacy Name<input id="businessName" required></label>
-<label>Email<input id="email" type="email" required></label><label>Mobile<input id="mobile" required></label>
-<label>City<input id="city"></label><label>State<input id="state"></label>
-<label>Selected Plan<select id="planCode" required></select></label></div>
-<button class="btn primary" type="submit">Continue to Payment</button><p id="msg" class="muted"></p></form></div></div>
-<script src="./app.js"></script></body></html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Medvika Audit Signup</title>
+  <link rel="stylesheet" href="./app.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card hero">
+      <img src="./logo.png?v=3" class="logo" alt="Medvika Healthcare Solutions">
+      <span class="eyebrow">Medvika Audit</span>
+      <h1>Start Your Stock Audit Workspace</h1>
+      <p class="muted">Submit your details and choose an audit access plan. Medvika will review your registration and contact you with payment details.</p>
+    </div>
+
+    <div id="plans" class="plans"></div>
+
+    <div class="card">
+      <form id="signupForm">
+        <div class="grid">
+          <label>Full Name
+            <input id="fullName" required autocomplete="name">
+          </label>
+          <label>Business / Pharmacy Name
+            <input id="businessName" required>
+          </label>
+          <label>Email
+            <input id="email" type="email" required autocomplete="email">
+          </label>
+          <label>Mobile
+            <input id="mobile" required inputmode="tel" autocomplete="tel">
+          </label>
+          <label>City
+            <input id="city">
+          </label>
+          <label>State
+            <input id="state">
+          </label>
+          <label class="span-2">Selected Plan
+            <select id="planCode" required>
+              <option value="">Loading plans...</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="submitBtn" class="btn primary" type="submit">Submit Registration</button>
+        <p id="msg" class="muted"></p>
+      </form>
+    </div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
