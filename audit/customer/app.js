@@ -18,6 +18,23 @@ async function claimAndLoad(){
 }
 $("loginBtn").onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("authMsg").textContent=error.message;return;}await claimAndLoad();};
 $("signupBtn").onclick=async()=>{const {error}=await sb.auth.signUp({email:$("email").value,password:$("password").value});$("authMsg").textContent=error?"Signup failed: "+error.message:"Login created. If email confirmation is enabled, confirm your email, then sign in.";};
+$("forgotPasswordBtn").onclick=async()=>{
+  const email=$("email").value.trim();
+  if(!email){$("authMsg").textContent="Enter your registered email first.";$("email").focus();return;}
+  const redirectTo=location.origin+location.pathname;
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+  $("authMsg").textContent=error?"Reset failed: "+error.message:"Password reset link sent. Check your email and open the link on this device.";
+};
+$("saveNewPasswordBtn").onclick=async()=>{
+  const p=$("newPassword").value,c=$("confirmPassword").value;
+  if(p.length<8){$("authMsg").textContent="Password must be at least 8 characters.";return;}
+  if(p!==c){$("authMsg").textContent="Passwords do not match.";return;}
+  const {error}=await sb.auth.updateUser({password:p});
+  if(error){$("authMsg").textContent="Password update failed: "+error.message;return;}
+  $("resetPasswordBox").hidden=true;$("authMsg").textContent="Password updated successfully. Loading your customer workspace…";
+  history.replaceState({},document.title,location.pathname);
+  await claimAndLoad();
+};
 $("logoutBtn").onclick=async()=>{await sb.auth.signOut();location.reload();};
 
 async function loadAudits(){
@@ -70,4 +87,19 @@ window.stockAllocation=installStockAllocation({
   getAuditId:()=>currentAudit?.audit_id||null
 });
 
-(async()=>{const {data}=await sb.auth.getSession();if(data.session)await claimAndLoad();})();
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==="PASSWORD_RECOVERY"){
+    $("authCard").hidden=false;$("workspace").hidden=true;$("logoutBtn").hidden=true;$("resetPasswordBox").hidden=false;
+    $("authMsg").textContent="Recovery link verified. Set your new password below.";
+  }
+});
+
+(async()=>{
+  // Force a clean initial UI. CSS also enforces [hidden] so buttons/modals cannot leak through.
+  $("modal").hidden=true;$("workspace").hidden=true;$("logoutBtn").hidden=true;$("resetPasswordBox").hidden=true;
+  const hash=location.hash||"";
+  const recovery=hash.includes("type=recovery");
+  const {data}=await sb.auth.getSession();
+  if(recovery){$("resetPasswordBox").hidden=false;return;}
+  if(data.session) await claimAndLoad();
+})();
