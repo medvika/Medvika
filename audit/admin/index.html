@@ -145,6 +145,57 @@
   <div id="unifiedImportHistory"></div>
 </div>
 
+
+<div id="allocationPanel" class="card" hidden>
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Work Allocation</span>
+      <h2>Allocate Stock to Zones / Teams</h2>
+    </div>
+    <button id="reloadAllocation" class="btn secondary">Reload</button>
+  </div>
+
+  <p class="muted">
+    Allocate Current Stock before counting. Teams will search only stock assigned to their team/zone.
+    Use alphabetical ranges for A–M / N–Z style counting, or allocate by category/manufacturer/item-code range.
+  </p>
+
+  <div class="allocation-grid">
+    <label>Zone
+      <select id="allocationZone"></select>
+    </label>
+    <label>Team
+      <select id="allocationTeam"></select>
+    </label>
+    <label>Allocation Method
+      <select id="allocationMode">
+        <option value="alphabet">Alphabetical Item Name Range</option>
+        <option value="category">Category</option>
+        <option value="manufacturer">Manufacturer</option>
+        <option value="item_code_range">Item Code Range</option>
+        <option value="unallocated">All Currently Unallocated</option>
+        <option value="all">All Current Stock</option>
+      </select>
+    </label>
+    <label id="allocationValue1Label">From
+      <input id="allocationValue1" placeholder="A">
+    </label>
+    <label id="allocationValue2Label">To
+      <input id="allocationValue2" placeholder="M">
+    </label>
+  </div>
+
+  <div class="allocation-actions">
+    <button id="previewAllocation" class="btn secondary">Preview Items</button>
+    <button id="applyAllocation" class="btn primary">Allocate Matching Items</button>
+  </div>
+
+  <div id="allocationPreview"></div>
+
+  <h3>Allocation Summary</h3>
+  <div id="allocationSummary"></div>
+</div>
+
 <div id="modal" class="modal" hidden aria-hidden="true">
     <div class="modal-card">
       <h3>Create Audit for Client</h3>
@@ -164,6 +215,7 @@
   <p id="msg" class="muted"></p>
 </div>
 <script src="./importer.js"></script>
+<script src="./allocation.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>
