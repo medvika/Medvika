@@ -230,7 +230,7 @@ async function openAudit(id){
   currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id};
   $("auditManage").hidden=false;
   $("adminAuditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
-  await Promise.all([loadSummary(),loadZones(),loadTeams()]);
+  await Promise.all([loadSummary(),loadZones(),loadTeams()]); $("unifiedImportPanel").hidden=false; if(window.unifiedImporter) await window.unifiedImporter.history();
 }
 async function loadSummary(){
   const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id});
@@ -243,7 +243,7 @@ async function loadZones(){
   if(error){msg(error.message);return;}
   const rows=data||[];
   $("zoneList").innerHTML=rows.length?rows.map(z=>`<div class="item-row"><div><strong>${esc(z.zone_code)} — ${esc(z.zone_name)}</strong><br><small>${esc(z.category||"")}</small></div></div>`).join(""):'<p class="muted">No zones.</p>';
-  $("teamZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
+  $("teamZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("unifiedPhysicalZone")) $("unifiedPhysicalZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
 }
 $("addZoneBtn").onclick=async()=>{
   const {error}=await sb.rpc("medvika_manage_zone",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id,p_zone_name:$("zoneName").value,p_category:$("zoneCategory").value,p_zone_id:null});
@@ -255,6 +255,7 @@ async function loadTeams(){
   if(error){msg(error.message);return;}
   const rows=data||[];
   $("teamList").innerHTML=rows.length?rows.map(t=>`<div class="item-row"><div><strong>${esc(t.team_code)} — ${esc(t.team_name||"")}</strong><br><small>${esc(t.zone_code||"")} ${esc(t.zone_name||"")} • Login ${esc(t.login_code||"—")}</small></div><button class="btn secondary reset-pin" data-id="${t.team_id}">Reset PIN</button></div>`).join(""):'<p class="muted">No teams.</p>';
+  if($("unifiedPhysicalTeam")) $("unifiedPhysicalTeam").innerHTML=rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
   document.querySelectorAll(".reset-pin").forEach(b=>b.onclick=async()=>{
     const pin=prompt("New PIN:");if(!pin)return;
     const {error}=await sb.rpc("medvika_reset_customer_team_pin",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id,p_team_id:b.dataset.id,p_new_pin:pin});
@@ -266,6 +267,16 @@ $("addTeamBtn").onclick=async()=>{
   if(error){msg(error.message);return;}
   $("teamName").value="";$("teamLoginCode").value="";$("teamPin").value="";await loadTeams();
 };
+
+
+window.unifiedImporter=installUnifiedImporter({
+  sb,esc,msg,
+  getAuditId:()=>currentAudit?.audit_id||null,
+  getCustomerId:()=>currentCustomer?.customer_id||null,
+  reloadAfterImport:async()=>{if(currentAudit) await loadSummary();},
+  zoneProvider:()=>[],
+  teamProvider:()=>[]
+});
 
 closeAuditModal();
 loadAdminSession();

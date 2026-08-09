@@ -36,3 +36,9 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 
 .audit-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .btn.danger{background:#fee2e2;color:#991b1b}
+
+
+.import-box{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdfe}
+.mapping-card{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}.mapping-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.mapping-grid label{font-size:10px}
+.import-progress{margin-top:10px;font-weight:700}.table-wrap{overflow:auto;margin-top:10px;max-width:100%}
+@media(max-width:850px){.mapping-grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.mapping-grid{grid-template-columns:1fr}}
