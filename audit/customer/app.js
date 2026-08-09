@@ -1,282 +1,73 @@
 
-const SUPABASE_URL = "https://etevzodzxhsdwidtrmwv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
-
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const URL="https://etevzodzxhsdwidtrmwv.supabase.co",KEY="sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+const sb=supabase.createClient(URL,KEY,{
   auth:{storage:window.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
-});
-
-const $=id=>document.getElementById(id);
-let customers=[],currentCustomer=null,currentAudit=null,audits=[];
+}); const $=id=>document.getElementById(id);
+let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
 function msg(t){$("msg").textContent=t||"";}
-
-function closeAuditModal(){const m=$("modal");if(!m)return;m.hidden=true;m.setAttribute("aria-hidden","true");}
-function openAuditModal(){if(!currentCustomer){msg("Select a customer first.");return;}const m=$("modal");m.hidden=false;m.setAttribute("aria-hidden","false");}
-function showAdmin(){$("loginCard").hidden=true;$("adminArea").hidden=false;$("logoutBtn").hidden=false;}
-function showLogin(){$("loginCard").hidden=false;$("adminArea").hidden=true;$("logoutBtn").hidden=true;}
-
-async function verifyAdmin(){
-  const {data,error}=await sb.rpc("medvika_is_audit_admin");
-  if(error) throw error;
-  if(data!==true) throw new Error("This account is not enabled as a Medvika Audit Admin.");
+async function claimAndLoad(){
+  const {data:c,error:ce}=await sb.rpc("medvika_claim_audit_customer_account"); if(ce){msg(ce.message);return;}
+  customerId=c;
+  const {data:a,error:ae}=await sb.rpc("medvika_customer_access_row"); if(ae){msg(ae.message);return;}
+  access=a?.[0]; if(!access){msg("No audit subscription found.");return;}
+  $("authCard").hidden=true;$("workspace").hidden=false;$("logoutBtn").hidden=false;
+  $("accessBanner").innerHTML=`<span class="eyebrow">Access</span><h3>${access.access_active?"Active":"Inactive"}</h3><p class="muted">Access until ${access.access_until||"—"} • Audit limit ${access.audit_limit} • Team limit ${access.team_limit} • SKU limit ${Number(access.sku_limit||0).toLocaleString("en-IN")}</p>`;
+  await loadAudits();
 }
+$("loginBtn").onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("authMsg").textContent=error.message;return;}await claimAndLoad();};
+$("signupBtn").onclick=async()=>{const {error}=await sb.auth.signUp({email:$("email").value,password:$("password").value});$("authMsg").textContent=error?"Signup failed: "+error.message:"Login created. If email confirmation is enabled, confirm your email, then sign in.";};
+$("logoutBtn").onclick=async()=>{await sb.auth.signOut();location.reload();};
 
-async function loadAdminSession(){
-  try{
-    const {data,error}=await sb.auth.getSession();
-    if(error) throw error;
-    if(!data?.session){showLogin();return;}
-    await verifyAdmin();
-    showAdmin();
-    await loadAll();
-  }catch(err){
-    showLogin();
-    $("loginMsg").textContent=err.message||"Unable to validate admin access.";
-  }
+async function loadAudits(){
+ const {data,error}=await sb.rpc("medvika_customer_audits",{p_customer_id:customerId});if(error){msg(error.message);return;}audits=data||[];
+ $("auditList").innerHTML=audits.length?audits.map(a=>`<div class="audit-row"><div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br><small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div><div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="../?audit=${encodeURIComponent(a.audit_id)}">Open Audit Workspace</a></div></div>`).join(""):'<p class="muted">No audits yet.</p>';
+ document.querySelectorAll(".open-audit").forEach(b=>b.onclick=()=>openAudit(b.dataset.id));
 }
-
-$("loginBtn").onclick=async()=>{
-  const btn=$("loginBtn");btn.disabled=true;btn.textContent="Signing in...";$("loginMsg").textContent="";
-  try{
-    const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
-    if(error) throw error;
-    if(!data?.session) throw new Error("No active session returned.");
-    await verifyAdmin();
-    showAdmin();
-    await loadAll();
-  }catch(err){$("loginMsg").textContent=err.message||"Unable to sign in.";}
-  finally{btn.disabled=false;btn.textContent="Admin Sign In";}
+$("newAuditBtn").onclick=()=>{$("modal").hidden=false;};
+$("cancelModal").onclick=()=>{$("modal").hidden=true;};
+$("createAuditConfirm").onclick=async()=>{
+ const {data,error}=await sb.rpc("medvika_create_customer_audit",{p_customer_id:customerId,p_project_name:$("newAuditName").value,p_location:$("newAuditLocation").value,p_audit_date:$("newAuditDate").value,p_expected_items:Number($("newAuditItems").value||20000)});
+ if(error){msg(error.message);return;}$("modal").hidden=true;await loadAudits();await openAudit(data);
 };
-
-$("logoutBtn").onclick=async()=>{await sb.auth.signOut();sessionStorage.clear();location.reload();};
-$("reloadBtn").onclick=loadAll;
-
-async function loadAll(){await Promise.all([loadSignupRequests(),loadCustomersAndAccess()]);}
-
-async function loadSignupRequests(){
-  const {data,error}=await sb
-    .from("medvika_audit_signup_requests")
-    .select("id,full_name,business_name,email,mobile,city,state,plan_code,status,created_at")
-    .order("created_at",{ascending:false})
-    .limit(100);
-
-  if(error){
-    $("signupList").innerHTML=`<p class="muted">${esc(error.message)}</p>`;
-    return;
-  }
-
-  const rows=data||[];
-  $("signupList").innerHTML=rows.length?rows.map(r=>`
-    <div class="signup-row">
-      <div>
-        <strong>${esc(r.business_name)} — ${esc(r.full_name)}</strong>
-        <small>${esc(r.email)} • ${esc(r.mobile||"")} • ${esc(r.city||"")} • Plan ${esc(r.plan_code)}</small>
-        <small><span class="${r.status==="processed"?"status-processed":"status-new"}">${esc(r.status)}</span></small>
-      </div>
-      ${r.status==="processed"
-        ? '<span class="muted">Customer created</span>'
-        : `<button class="btn primary create-customer" data-id="${r.id}">Create Customer</button>`}
-    </div>
-  `).join(""):'<p class="muted">No signup requests yet.</p>';
-
-  document.querySelectorAll(".create-customer").forEach(b=>{
-    b.onclick=async()=>{
-      b.disabled=true;b.textContent="Creating...";
-      const {data,error}=await sb.rpc("medvika_audit_admin_create_customer",{p_signup_id:b.dataset.id});
-      if(error){msg(error.message);b.disabled=false;b.textContent="Create Customer";return;}
-      msg(`Customer created. Customer ID: ${data}`);
-      await loadAll();
-    };
-  });
-}
-
-async function loadCustomersAndAccess(){
-  const {data,error}=await sb.rpc("medvika_admin_subscription_list");
-  if(error){
-    $("customerList").innerHTML=`<p class="muted">${esc(error.message)}</p>`;
-    return;
-  }
-
-  customers=data||[];
-
-  $("customerList").innerHTML=customers.length?customers.map(c=>{
-    const status=String(c.customer_status||"pending").toLowerCase();
-    const badgeClass=status==="active"?"active":status==="suspended"?"suspended":status==="expired"?"expired":"pending";
-    const canActivate=c.payment_status!=="approved" || status!=="active";
-    return `
-      <div class="customer-access-card">
-        <div class="customer-access-head">
-          <div>
-            <strong>${esc(c.business_name)} — ${esc(c.full_name)}</strong>
-            <div class="customer-access-meta">
-              ${esc(c.email)} • ${esc(c.mobile||"")}<br>
-              ${esc(c.plan_name||"No plan")} • ₹${Number(c.amount||0).toLocaleString("en-IN")} • ${esc(c.validity_days||"")} days
-            </div>
-          </div>
-          <span class="badge ${badgeClass}">${esc(status)}</span>
-        </div>
-
-        <div class="customer-access-meta" style="margin-top:8px">
-          Payment: <strong>${esc(c.payment_status||"pending")}</strong><br>
-          Access Until: <span class="access-date">${esc(c.access_until||"Not activated")}</span>
-        </div>
-
-        <div class="access-actions">
-          ${canActivate?`<button class="btn primary activate" data-sub="${c.subscription_id}">Verify Payment & Activate</button>`:""}
-          <button class="btn secondary extend" data-sub="${c.subscription_id}">Extend Access</button>
-          ${status==="suspended"
-            ? `<button class="btn secondary restore" data-customer="${c.customer_id}">Restore Access</button>`
-            : `<button class="btn danger suspend" data-customer="${c.customer_id}">Suspend</button>`}
-          <button class="btn secondary open-client" data-id="${c.customer_id}">Manage Audits</button>
-        </div>
-      </div>`;
-  }).join(""):'<p class="muted">No customers.</p>';
-
-  document.querySelectorAll(".activate").forEach(b=>b.onclick=async()=>{
-    const ok=confirm("Confirm payment has been received and verified? This will activate the customer's paid access.");
-    if(!ok)return;
-    b.disabled=true;b.textContent="Activating...";
-    const {error}=await sb.rpc("medvika_audit_admin_activate_subscription",{p_subscription_id:b.dataset.sub});
-    msg(error?error.message:"Payment verified and access activated.");
-    await loadCustomersAndAccess();
-  });
-
-  document.querySelectorAll(".extend").forEach(b=>b.onclick=async()=>{
-    const days=prompt("Extend access by how many days?","30");
-    if(!days)return;
-    const n=Number(days);
-    if(!Number.isFinite(n)||n<1){msg("Enter valid extension days.");return;}
-    const {data,error}=await sb.rpc("medvika_audit_admin_extend_access",{p_subscription_id:b.dataset.sub,p_days:n});
-    msg(error?error.message:`Access extended until ${data}`);
-    await loadCustomersAndAccess();
-  });
-
-  document.querySelectorAll(".suspend").forEach(b=>b.onclick=async()=>{
-    const ok=confirm("Suspend this customer's audit access?");
-    if(!ok)return;
-    const {error}=await sb.rpc("medvika_audit_admin_suspend_customer",{p_customer_id:b.dataset.customer});
-    msg(error?error.message:"Customer access suspended.");
-    await loadCustomersAndAccess();
-  });
-
-  document.querySelectorAll(".restore").forEach(b=>b.onclick=async()=>{
-    const {error}=await sb.rpc("medvika_audit_admin_restore_customer",{p_customer_id:b.dataset.customer});
-    msg(error?error.message:"Customer access restored according to subscription validity.");
-    await loadCustomersAndAccess();
-  });
-
-  document.querySelectorAll(".open-client").forEach(b=>b.onclick=()=>openClient(b.dataset.id));
-}
-async function openClient(id){
-  currentCustomer=customers.find(c=>c.customer_id===id);
-  $("clientPanel").hidden=false;
-  $("clientTitle").textContent=currentCustomer?`${currentCustomer.business_name} — ${currentCustomer.full_name}`:"Customer";
-  const {data,error}=await sb.rpc("medvika_customer_audits",{p_customer_id:id});
-  if(error){msg(error.message);return;}
-  audits=data||[];
-  $("clientAudits").innerHTML=audits.length?audits.map(a=>`
-    <div class="audit-row">
-      <div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br>
-      <small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div>
-      <div class="audit-actions">
-        <div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="../?audit=${encodeURIComponent(a.audit_id)}">Open Audit Workspace</a>${String(a.status||"").toLowerCase()==="planning"?`<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`:""}</div>
-        ${String(a.status||"").toLowerCase()==="planning"
-          ? `<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`
-          : ""}
-      </div>
-    </div>`).join(""):'<p class="muted">No audits assigned.</p>';
-  document.querySelectorAll(".open-audit").forEach(b=>b.onclick=()=>openAudit(b.dataset.id));
-  document.querySelectorAll(".delete-audit").forEach(b=>b.onclick=async()=>{
-    const ok=confirm(`Delete ${b.dataset.code}? This is only allowed for an empty planning audit and cannot be undone.`);
-    if(!ok) return;
-
-    b.disabled=true;
-    b.textContent="Deleting...";
-
-    const {error}=await sb.rpc("medvika_admin_delete_audit",{p_audit_id:b.dataset.id});
-
-    if(error){
-      msg(error.message);
-      b.disabled=false;
-      b.textContent="Delete";
-      return;
-    }
-
-    msg("Planning audit deleted successfully.");
-    currentAudit=null;
-    $("auditManage").hidden=true;
-    await openClient(currentCustomer.customer_id);
-  });
-}
-
-$("createAuditBtn").onclick=openAuditModal;
-$("cancelModal").onclick=closeAuditModal;
-
-$("confirmAudit").onclick=async()=>{
-  const {data,error}=await sb.rpc("medvika_create_customer_audit",{
-    p_customer_id:currentCustomer.customer_id,
-    p_project_name:$("newAuditName").value,
-    p_location:$("newAuditLocation").value,
-    p_audit_date:$("newAuditDate").value,
-    p_expected_items:Number($("newAuditItems").value||20000)
-  });
-  if(error){msg(error.message);return;}
-  closeAuditModal();await openClient(currentCustomer.customer_id);await openAudit(data);
-};
-
 async function openAudit(id){
-  currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id};
-  $("auditManage").hidden=false;
-  $("adminAuditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
-  await Promise.all([loadSummary(),loadZones(),loadTeams()]); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
+ currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id}; $("auditPanel").hidden=false;$("auditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
+ await Promise.all([loadSummary(),loadZones(),loadTeams()]); if($("allocationPanel")) $("allocationPanel").hidden=false; if(window.stockAllocation) await window.stockAllocation.loadSummary(); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
 }
 async function loadSummary(){
-  const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id});
-  if(error){msg(error.message);return;}
-  const r=data?.[0]||{};
-  $("adminSummary").innerHTML=[["Count Lines",r.total_count_lines],["Variance",r.variance_lines],["Expired",r.expired_lines],["Near Expiry",r.near_expiry_lines],["Damaged",r.damaged_lines],["Progress",Number(r.progress_percent||0).toFixed(1)+"%"]].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]??0}</strong></div>`).join("");
+ const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const r=data?.[0]||{};
+ $("summaryGrid").innerHTML=[["Count Lines",r.total_count_lines],["Variance",r.variance_lines],["Expired",r.expired_lines],["Near Expiry",r.near_expiry_lines],["Damaged",r.damaged_lines],["Progress",(Number(r.progress_percent||0).toFixed(1)+"%")]].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]??0}</strong></div>`).join("");
 }
 async function loadZones(){
-  const {data,error}=await sb.rpc("medvika_customer_zones",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id});
-  if(error){msg(error.message);return;}
-  const rows=data||[];
-  $("zoneList").innerHTML=rows.length?rows.map(z=>`<div class="item-row"><div><strong>${esc(z.zone_code)} — ${esc(z.zone_name)}</strong><br><small>${esc(z.category||"")}</small></div></div>`).join(""):'<p class="muted">No zones.</p>';
-  $("teamZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("unifiedPhysicalZone")) $("unifiedPhysicalZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
+ const {data,error}=await sb.rpc("medvika_customer_zones",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[];
+ $("zoneList").innerHTML=rows.map(z=>`<div class="item-row"><div><strong>${esc(z.zone_code)} — ${esc(z.zone_name)}</strong><br><small>${esc(z.category||"")}</small></div></div>`).join("")||'<p class="muted">No zones.</p>';
+ $("teamZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("allocationZone")) $("allocationZone").innerHTML='<option value="">-- No Zone --</option>'+rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("unifiedPhysicalZone")) $("unifiedPhysicalZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
 }
-$("addZoneBtn").onclick=async()=>{
-  const {error}=await sb.rpc("medvika_manage_zone",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id,p_zone_name:$("zoneName").value,p_category:$("zoneCategory").value,p_zone_id:null});
-  if(error){msg(error.message);return;}
-  $("zoneName").value="";$("zoneCategory").value="";await loadZones();
-};
+$("addZoneBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb.rpc("medvika_manage_zone",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_zone_name:$("zoneName").value,p_category:$("zoneCategory").value,p_zone_id:null});if(error){msg(error.message);return;}$("zoneName").value="";$("zoneCategory").value="";await loadZones();};
+
 async function loadTeams(){
-  const {data,error}=await sb.rpc("medvika_customer_teams",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id});
-  if(error){msg(error.message);return;}
-  const rows=data||[];
-  $("teamList").innerHTML=rows.length?rows.map(t=>`<div class="item-row"><div><strong>${esc(t.team_code)} — ${esc(t.team_name||"")}</strong><br><small>${esc(t.zone_code||"")} ${esc(t.zone_name||"")} • Login ${esc(t.login_code||"—")}</small></div><button class="btn secondary reset-pin" data-id="${t.team_id}">Reset PIN</button></div>`).join(""):'<p class="muted">No teams.</p>';
-  if($("unifiedPhysicalTeam")) $("unifiedPhysicalTeam").innerHTML=rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
-  document.querySelectorAll(".reset-pin").forEach(b=>b.onclick=async()=>{
-    const pin=prompt("New PIN:");if(!pin)return;
-    const {error}=await sb.rpc("medvika_reset_customer_team_pin",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id,p_team_id:b.dataset.id,p_new_pin:pin});
-    msg(error?error.message:"PIN reset.");
-  });
+ const {data,error}=await sb.rpc("medvika_customer_teams",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">-- No Team --</option>'+rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
+ $("teamList").innerHTML=rows.map(t=>`<div class="item-row"><div><strong>${esc(t.team_code)} — ${esc(t.team_name||"")}</strong><br><small>${esc(t.zone_code||"")} ${esc(t.zone_name||"")} • Login ${esc(t.login_code||"—")}</small></div><button class="btn secondary reset-pin" data-id="${t.team_id}">Reset PIN</button></div>`).join("")||'<p class="muted">No teams.</p>';
+ if($("unifiedPhysicalTeam")) $("unifiedPhysicalTeam").innerHTML=rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
+ document.querySelectorAll(".reset-pin").forEach(b=>b.onclick=async()=>{const pin=prompt("Enter new PIN (4+ digits):");if(!pin)return;const {error}=await sb.rpc("medvika_reset_customer_team_pin",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_team_id:b.dataset.id,p_new_pin:pin});msg(error?error.message:"PIN reset successfully.");});
 }
-$("addTeamBtn").onclick=async()=>{
-  const {error}=await sb.rpc("medvika_create_customer_team",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id,p_zone_id:$("teamZone").value,p_team_name:$("teamName").value,p_login_code:$("teamLoginCode").value,p_pin:$("teamPin").value,p_can_add_unlisted:true});
-  if(error){msg(error.message);return;}
-  $("teamName").value="";$("teamLoginCode").value="";$("teamPin").value="";await loadTeams();
-};
+$("addTeamBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb.rpc("medvika_create_customer_team",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_zone_id:$("teamZone").value,p_team_name:$("teamName").value,p_login_code:$("teamLoginCode").value,p_pin:$("teamPin").value,p_can_add_unlisted:$("allowUnlisted").checked});if(error){msg(error.message);return;}$("teamName").value="";$("teamLoginCode").value="";$("teamPin").value="";await loadTeams();};
+
+async function loadRecon(){
+ const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}reconRows=data||[];
+ $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>`<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(r.system_qty)}</td><td>${esc(r.physical_qty)}</td><td>${esc(r.variance_qty)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`).join("")}</tbody></table></div>`;
+}
+$("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unparse(reconRows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Medvika_Reconciliation_${currentAudit.project_code||"Audit"}.csv`;a.click();};
 
 
-window.unifiedImporter=installUnifiedImporter({
+// Full stock import/reconciliation uses the shared /audit/ engine.
+
+
+
+window.stockAllocation=installStockAllocation({
   sb,esc,msg,
-  getAuditId:()=>currentAudit?.audit_id||null,
-  getCustomerId:()=>currentCustomer?.customer_id||null,
-  reloadAfterImport:async()=>{if(currentAudit) await loadSummary();},
-  zoneProvider:()=>[],
-  teamProvider:()=>[]
+  getAuditId:()=>currentAudit?.audit_id||null
 });
 
-closeAuditModal();
-loadAdminSession();
+(async()=>{const {data}=await sb.auth.getSession();if(data.session)await claimAndLoad();})();
