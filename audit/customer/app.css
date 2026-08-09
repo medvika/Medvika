@@ -27,4 +27,4 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 @media(max-width:900px){.allocation-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.allocation-grid{grid-template-columns:1fr}}
 
-.auth-secondary-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.link-btn{background:transparent;color:var(--navy);padding:10px 4px;text-decoration:underline}.reset-box{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:10px}.reset-box .btn{justify-self:start}
+.auth-actions{justify-content:flex-start;flex-wrap:wrap}.link-btn{background:transparent;color:var(--green);padding-left:4px;padding-right:4px;text-decoration:underline}#recoveryCard{border-color:#bfe7cf}

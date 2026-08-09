@@ -1,42 +1,22 @@
-
-const URL="https://etevzodzxhsdwidtrmwv.supabase.co",KEY="sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
-const sb=supabase.createClient(URL,KEY,{
-  auth:{storage:window.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
-}); const $=id=>document.getElementById(id);
+const URL="https://etevzodzxhsdwidtrmwv.supabase.co";
+const KEY="sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";
+const sb=supabase.createClient(URL,KEY,{auth:{storage:window.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
-
+let recoveryMode=false;
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
-function msg(t){$("msg").textContent=t||"";}
-async function claimAndLoad(){
-  const {data:c,error:ce}=await sb.rpc("medvika_claim_audit_customer_account"); if(ce){msg(ce.message);return;}
-  customerId=c;
-  const {data:a,error:ae}=await sb.rpc("medvika_customer_access_row"); if(ae){msg(ae.message);return;}
-  access=a?.[0]; if(!access){msg("No audit subscription found.");return;}
-  $("authCard").hidden=true;$("workspace").hidden=false;$("logoutBtn").hidden=false;
-  $("accessBanner").innerHTML=`<span class="eyebrow">Access</span><h3>${access.access_active?"Active":"Inactive"}</h3><p class="muted">Access until ${access.access_until||"—"} • Audit limit ${access.audit_limit} • Team limit ${access.team_limit} • SKU limit ${Number(access.sku_limit||0).toLocaleString("en-IN")}</p>`;
-  await loadAudits();
-}
-$("loginBtn").onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("authMsg").textContent=error.message;return;}await claimAndLoad();};
-$("signupBtn").onclick=async()=>{const {error}=await sb.auth.signUp({email:$("email").value,password:$("password").value});$("authMsg").textContent=error?"Signup failed: "+error.message:"Login created. If email confirmation is enabled, confirm your email, then sign in.";};
-$("forgotPasswordBtn").onclick=async()=>{
-  const email=$("email").value.trim();
-  if(!email){$("authMsg").textContent="Enter your registered email first.";$("email").focus();return;}
-  const redirectTo=location.origin+location.pathname;
-  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
-  $("authMsg").textContent=error?"Reset failed: "+error.message:"Password reset link sent. Check your email and open the link on this device.";
-};
-$("saveNewPasswordBtn").onclick=async()=>{
-  const p=$("newPassword").value,c=$("confirmPassword").value;
-  if(p.length<8){$("authMsg").textContent="Password must be at least 8 characters.";return;}
-  if(p!==c){$("authMsg").textContent="Passwords do not match.";return;}
-  const {error}=await sb.auth.updateUser({password:p});
-  if(error){$("authMsg").textContent="Password update failed: "+error.message;return;}
-  $("resetPasswordBox").hidden=true;$("authMsg").textContent="Password updated successfully. Loading your customer workspace…";
-  history.replaceState({},document.title,location.pathname);
-  await claimAndLoad();
-};
-$("logoutBtn").onclick=async()=>{await sb.auth.signOut();location.reload();};
-
+function msg(t){if($("msg")) $("msg").textContent=t||"";}
+function authMsg(t){if($("authMsg")) $("authMsg").textContent=t||"";}
+function showAuth(){$("authCard").hidden=false;$("workspace").hidden=true;$("logoutBtn").hidden=true;$("recoveryCard").hidden=true;}
+function showWorkspace(){$("authCard").hidden=true;$("workspace").hidden=false;$("logoutBtn").hidden=false;$("recoveryCard").hidden=true;}
+function showRecovery(){recoveryMode=true;$("authCard").hidden=true;$("workspace").hidden=true;$("logoutBtn").hidden=true;$("recoveryCard").hidden=false;}
+async function claimAndLoad(){const {data:c,error:ce}=await sb.rpc("medvika_claim_audit_customer_account");if(ce)throw ce;customerId=c;const {data:a,error:ae}=await sb.rpc("medvika_customer_access_row");if(ae)throw ae;access=a?.[0];if(!access)throw new Error("No audit subscription found for this login.");showWorkspace();$("accessBanner").innerHTML=`<span class="eyebrow">Access</span><h3>${access.access_active?"Active":"Inactive"}</h3><p class="muted">Access until ${access.access_until||"—"} • Audit limit ${access.audit_limit} • Team limit ${access.team_limit} • SKU limit ${Number(access.sku_limit||0).toLocaleString("en-IN")}</p>`;await loadAudits();}
+async function login(){const email=$("email").value.trim(),password=$("password").value;authMsg("");if(!email||!password){authMsg("Enter your registered email and password.");return;}const btn=$("loginBtn");btn.disabled=true;btn.textContent="Signing in...";try{const {error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;await claimAndLoad();}catch(err){authMsg(err.message||"Unable to sign in.");await sb.auth.signOut().catch(()=>{});showAuth();}finally{btn.disabled=false;btn.textContent="Sign In";}}
+async function createLogin(){const email=$("email").value.trim(),password=$("password").value;authMsg("");if(!email){authMsg("Enter the same email used during Medvika Audit registration.");return;}if(!password||password.length<6){authMsg("Create a password of at least 6 characters.");return;}const btn=$("signupBtn");btn.disabled=true;btn.textContent="Creating...";try{const redirectTo=location.origin+"/audit/customer/";const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirectTo}});if(error)throw error;if(data?.session){authMsg("Login created successfully.");await claimAndLoad();}else{authMsg("Login created. Check your email for confirmation, then return here and sign in.");}}catch(err){authMsg("Create Login failed: "+(err.message||"Unable to create login."));}finally{btn.disabled=false;btn.textContent="Create Login";}}
+async function forgotPassword(){const email=$("email").value.trim();authMsg("");if(!email){authMsg("Enter your registered email first, then tap Forgot Password.");$("email").focus();return;}const btn=$("forgotBtn");btn.disabled=true;btn.textContent="Sending...";try{const redirectTo=location.origin+"/audit/customer/";const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;authMsg("Password reset email sent. Check Inbox and Spam/Junk.");}catch(err){authMsg("Reset failed: "+(err.message||"Unable to send password reset email."));}finally{btn.disabled=false;btn.textContent="Forgot Password?";}}
+async function saveNewPassword(){const p1=$("newPassword").value,p2=$("confirmPassword").value;$("recoveryMsg").textContent="";if(!p1||p1.length<6){$("recoveryMsg").textContent="Password must be at least 6 characters.";return;}if(p1!==p2){$("recoveryMsg").textContent="Passwords do not match.";return;}const btn=$("savePasswordBtn");btn.disabled=true;btn.textContent="Saving...";try{const {error}=await sb.auth.updateUser({password:p1});if(error)throw error;$("recoveryMsg").textContent="Password updated successfully. Opening your customer workspace...";recoveryMode=false;await claimAndLoad();}catch(err){$("recoveryMsg").textContent=err.message||"Unable to update password.";}finally{btn.disabled=false;btn.textContent="Save New Password";}}
+$("loginBtn").addEventListener("click",login);$("signupBtn").addEventListener("click",createLogin);$("forgotBtn").addEventListener("click",forgotPassword);$("savePasswordBtn").addEventListener("click",saveNewPassword);$("cancelRecoveryBtn").addEventListener("click",async()=>{recoveryMode=false;await sb.auth.signOut().catch(()=>{});history.replaceState(null,"",location.pathname);showAuth();});$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();sessionStorage.clear();location.href=location.origin+"/audit/customer/";});
+sb.auth.onAuthStateChange(async(event,session)=>{if(event==="PASSWORD_RECOVERY"){showRecovery();return;}if(event==="SIGNED_OUT"&&!recoveryMode)showAuth();});
 async function loadAudits(){
  const {data,error}=await sb.rpc("medvika_customer_audits",{p_customer_id:customerId});if(error){msg(error.message);return;}audits=data||[];
  $("auditList").innerHTML=audits.length?audits.map(a=>`<div class="audit-row"><div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br><small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div><div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="../?audit=${encodeURIComponent(a.audit_id)}">Open Audit Workspace</a></div></div>`).join(""):'<p class="muted">No audits yet.</p>';
@@ -82,24 +62,6 @@ $("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unpars
 
 
 
-window.stockAllocation=installStockAllocation({
-  sb,esc,msg,
-  getAuditId:()=>currentAudit?.audit_id||null
-});
 
-sb.auth.onAuthStateChange(async(event,session)=>{
-  if(event==="PASSWORD_RECOVERY"){
-    $("authCard").hidden=false;$("workspace").hidden=true;$("logoutBtn").hidden=true;$("resetPasswordBox").hidden=false;
-    $("authMsg").textContent="Recovery link verified. Set your new password below.";
-  }
-});
-
-(async()=>{
-  // Force a clean initial UI. CSS also enforces [hidden] so buttons/modals cannot leak through.
-  $("modal").hidden=true;$("workspace").hidden=true;$("logoutBtn").hidden=true;$("resetPasswordBox").hidden=true;
-  const hash=location.hash||"";
-  const recovery=hash.includes("type=recovery");
-  const {data}=await sb.auth.getSession();
-  if(recovery){$("resetPasswordBox").hidden=false;return;}
-  if(data.session) await claimAndLoad();
-})();
+window.stockAllocation=installStockAllocation({sb,esc,msg,getAuditId:()=>currentAudit?.audit_id||null});
+(async()=>{try{const {data,error}=await sb.auth.getSession();if(error)throw error;const hash=(location.hash||"").toLowerCase(),search=(location.search||"").toLowerCase();const looksLikeRecovery=hash.includes("type=recovery")||search.includes("type=recovery");if(looksLikeRecovery&&data?.session){showRecovery();return;}if(data?.session){try{await claimAndLoad();}catch(err){authMsg(err.message||"Unable to open customer workspace.");showAuth();}}else showAuth();}catch(err){authMsg(err.message||"Unable to initialize customer login.");showAuth();}})();
