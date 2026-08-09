@@ -434,6 +434,7 @@
             <p><strong>Preferred:</strong> D.Pharm / B.Pharm / M.Pharm with valid State Pharmacy Council registration. Pharmacy software knowledge and willingness to travel are an advantage.</p>
 
             <div class="job-actions">
+              <a class="career-btn career-btn-outline" href="registered-pharmacist.html">View Details</a>
               <button type="button" class="career-btn career-btn-green apply-btn" data-role="Registered Pharmacist">Apply Now</button>
             </div>
           </article>
@@ -461,6 +462,7 @@
             </ul>
 
             <div class="job-actions">
+              <a class="career-btn career-btn-outline" href="pharmacy-operations-manager.html">View Details</a>
               <button type="button" class="career-btn career-btn-green apply-btn" data-role="Pharmacy Operations Manager">Apply Now</button>
             </div>
           </article>
@@ -488,6 +490,7 @@
             </ul>
 
             <div class="job-actions">
+              <a class="career-btn career-btn-outline" href="pharmacy-audit-associate.html">View Details</a>
               <button type="button" class="career-btn career-btn-green apply-btn" data-role="Pharmacy Audit Associate">Apply Now</button>
             </div>
           </article>
@@ -515,6 +518,7 @@
             </ul>
 
             <div class="job-actions">
+              <a class="career-btn career-btn-outline" href="business-development-associate.html">View Details</a>
               <button type="button" class="career-btn career-btn-green apply-btn" data-role="Business Development Associate">Apply Now</button>
             </div>
           </article>
@@ -729,6 +733,22 @@
     document.querySelectorAll(".apply-btn").forEach(btn => {
       btn.addEventListener("click", () => openApplication(btn.dataset.role || "General Application"));
     });
+
+    // Open the correct application form when a job-detail page sends ?role=...
+    const requestedRole = new URLSearchParams(window.location.search).get("role");
+    const allowedRoles = [
+      "Registered Pharmacist",
+      "Pharmacy Operations Manager",
+      "Pharmacy Audit Associate",
+      "Business Development Associate",
+      "General Application"
+    ];
+    if (requestedRole && allowedRoles.includes(requestedRole)) {
+      openApplication(requestedRole);
+      if (history.replaceState) {
+        history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      }
+    }
 
     closeBtn.addEventListener("click", closeApplication);
     modal.addEventListener("click", e => {
