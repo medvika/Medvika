@@ -1,70 +1,107 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Medvika Audit Customer Workspace</title>
-<link rel="stylesheet" href="./app.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Medvika Audit SaaS Admin</title>
+  <link rel="stylesheet" href="./app.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
-<body><div class="wrap">
-<div class="card top"><img src="./logo.png" class="logo"><div><span class="eyebrow">Customer Workspace</span><h1>Medvika Audit Dashboard</h1></div><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
+<body>
+<div class="wrap">
 
-<div id="authCard" class="card">
-  <h2>Customer Login</h2>
-  <p class="muted">Use the same email registered with Medvika Audit.</p>
-  <div class="grid">
-    <label>Email<input id="email" type="email"></label>
-    <label>Password<input id="password" type="password"></label>
-  </div>
-  <div class="actions">
-    <button id="loginBtn" class="btn primary">Sign In</button>
-    <button id="signupBtn" class="btn secondary">Create Login</button>
-  </div>
-  <p id="authMsg" class="muted"></p>
-</div>
-
-<div id="workspace" hidden>
-  <div class="card"><div id="accessBanner"></div></div>
-
-  <div class="card">
-    <div class="section-head"><div><span class="eyebrow">My Workspace</span><h2>Audits</h2></div><button id="newAuditBtn" class="btn primary">Create Audit</button></div>
-    <div id="auditList"></div>
-  </div>
-
-  <div id="auditPanel" hidden>
-    <div class="card"><div class="section-head"><div><span class="eyebrow">Selected Audit</span><h2 id="auditTitle">—</h2></div><a href="../team/" class="btn secondary">Open Team Portal</a></div>
-      <div id="summaryGrid" class="summary-grid"></div>
+  <div class="card top">
+    <img src="./logo.png?v=4" class="logo" alt="Medvika Healthcare Solutions">
+    <div>
+      <span class="eyebrow">Medvika Only</span>
+      <h1>Audit SaaS Admin</h1>
     </div>
+    <button id="logoutBtn" class="btn secondary" hidden>Sign out</button>
+  </div>
 
-    <div class="grid-two">
-      <div class="card">
-        <h3>Zones</h3>
-        <div class="grid"><label>Zone Name<input id="zoneName"></label><label>Category<input id="zoneCategory"></label></div>
-        <button id="addZoneBtn" class="btn primary">Add Zone</button>
-        <div id="zoneList"></div>
-      </div>
+  <div id="loginCard" class="card">
+    <div class="grid">
+      <label>Admin Email<input id="email" type="email"></label>
+      <label>Password<input id="password" type="password"></label>
+    </div>
+    <button id="loginBtn" class="btn primary">Admin Sign In</button>
+    <p id="loginMsg" class="muted"></p>
+  </div>
 
-      <div class="card">
-        <h3>Counting Teams</h3>
-        <div class="grid">
-          <label>Team Name<input id="teamName" placeholder="Team 1"></label>
-          <label>Zone<select id="teamZone"></select></label>
-          <label>Team Login Code<input id="teamLoginCode" placeholder="T01-Z1"></label>
-          <label>PIN<input id="teamPin" type="password" inputmode="numeric"></label>
+  <div id="adminArea" hidden>
+
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">New Registrations</span>
+          <h2>Signup Requests</h2>
         </div>
-        <label><input id="allowUnlisted" type="checkbox" checked style="width:auto"> Allow unlisted physical items</label>
-        <button id="addTeamBtn" class="btn primary">Create Team & PIN</button>
-        <div id="teamList"></div>
+        <button id="reloadBtn" class="btn secondary">Reload</button>
       </div>
+      <p class="muted">New website registrations appear here first. Create the customer record before payment activation.</p>
+      <div id="signupList"></div>
     </div>
 
     <div class="card">
-      <div class="section-head"><div><span class="eyebrow">Report</span><h2>Reconciliation Summary</h2></div><button id="exportCsvBtn" class="btn secondary">Export CSV</button></div>
-      <div id="reconTable"></div>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Customer Accounts</span>
+          <h2>Customers & Access</h2>
+        </div>
+      </div>
+      <p class="muted">Verify payment, activate plan access, extend validity, suspend access, or manage the client's audits.</p>
+      <div id="customerList"></div>
     </div>
+
+    <div id="clientPanel" hidden>
+      <div class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">Selected Customer</span><h2 id="clientTitle">—</h2></div>
+          <button id="createAuditBtn" class="btn primary">Create Audit</button>
+        </div>
+        <div id="clientAudits"></div>
+      </div>
+
+      <div id="auditManage" hidden>
+        <div class="card">
+          <div class="section-head">
+            <h2 id="adminAuditTitle">Audit Management</h2>
+            <a class="btn secondary" href="../team/">Open Team Portal</a>
+          </div>
+          <div id="adminSummary" class="summary-grid"></div>
+        </div>
+
+        <div class="grid-two">
+          <div class="card">
+            <h3>Zones</h3>
+            <div class="grid">
+              <label>Zone Name<input id="zoneName"></label>
+              <label>Category<input id="zoneCategory"></label>
+            </div>
+            <button id="addZoneBtn" class="btn primary">Add Zone</button>
+            <div id="zoneList"></div>
+          </div>
+
+          <div class="card">
+            <h3>Teams & PINs</h3>
+            <div class="grid">
+              <label>Team Name<input id="teamName"></label>
+              <label>Zone<select id="teamZone"></select></label>
+              <label>Login Code<input id="teamLoginCode"></label>
+              <label>PIN<input id="teamPin" type="password"></label>
+            </div>
+            <button id="addTeamBtn" class="btn primary">Create Team</button>
+            <div id="teamList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
-</div>
 
-
+  
 <div id="unifiedImportPanel" class="card" hidden>
   <div class="section-head">
     <div><span class="eyebrow">Single Source of Truth</span><h2>Stock Imports</h2></div>
@@ -108,14 +145,25 @@
   <div id="unifiedImportHistory"></div>
 </div>
 
-<div id="modal" class="modal" hidden><div class="modal-card">
-<h3>Create New Audit</h3>
-<div class="grid"><label>Audit Name<input id="newAuditName" placeholder="Main Store Stock Audit"></label>
-<label>Location<input id="newAuditLocation"></label><label>Audit Date<input id="newAuditDate" type="date"></label>
-<label>Expected Running Items<input id="newAuditItems" type="number" value="20000"></label></div>
-<div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="createAuditConfirm" class="btn primary">Create Audit</button></div>
-</div></div>
+<div id="modal" class="modal" hidden aria-hidden="true">
+    <div class="modal-card">
+      <h3>Create Audit for Client</h3>
+      <div class="grid">
+        <label>Audit Name<input id="newAuditName"></label>
+        <label>Location<input id="newAuditLocation"></label>
+        <label>Audit Date<input id="newAuditDate" type="date"></label>
+        <label>Expected Items<input id="newAuditItems" type="number" value="20000"></label>
+      </div>
+      <div class="actions">
+        <button id="cancelModal" class="btn secondary">Cancel</button>
+        <button id="confirmAudit" class="btn primary">Create</button>
+      </div>
+    </div>
+  </div>
 
-<p id="msg" class="muted"></p>
-</div><script src="./importer.js"></script>
-<script src="./app.js"></script></body></html>
+  <p id="msg" class="muted"></p>
+</div>
+<script src="./importer.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
