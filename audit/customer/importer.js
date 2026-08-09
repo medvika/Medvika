@@ -33,12 +33,20 @@ function installUnifiedImporter(ctx){
     if(typeof v==="number" && v>20000){const d=new Date(Math.round((v-25569)*86400*1000));return isNaN(d)? "":d.toISOString().slice(0,10);}
     const d=new Date(v);return isNaN(d)?"":d.toISOString().slice(0,10);
   };
-  const qtyText=v=>{
+  const qtyText=(v,packSize=null)=>{
     if(v===null||v===undefined||v==="")return null;
-    const s=String(v).trim();
-    const n=num(s);if(n!==null)return n;
-    const m=s.match(/^\s*(\d+(?:\.\d+)?)\s*strip(?:s)?\s*(\d+(?:\.\d+)?)\s*tab(?:s)?\s*$/i);
-    if(m) return {packs:Number(m[1]),loose:Number(m[2])};
+    const raw=String(v).trim();
+    const n=num(raw);
+    if(n!==null)return n;
+
+    // Supports: 2Strip5Tab, 02 Strip 5 Tab, 2strip10tab, 2Pack5Loose.
+    const m=raw.match(/^\s*(\d+(?:\.\d+)?)\s*(?:strip|strips|pack|packs|box|boxes|bottle|bottles)\s*(\d+(?:\.\d+)?)?\s*(?:tab|tabs|tablet|tablets|loose|unit|units|piece|pieces|pc|pcs)?\s*$/i);
+    if(m){
+      const packs=Number(m[1]||0), loose=Number(m[2]||0);
+      const ps=Number(packSize||0);
+      if(loose>0 && ps<=0) return null;
+      return ps>0 ? packs + (loose/ps) : packs;
+    }
     return null;
   };
   async function parse(file){
@@ -83,9 +91,11 @@ function installUnifiedImporter(ctx){
       pr.textContent="Preparing import…";job=await start("system_stock",file,mode,rows.length);
       const recs=[];
       rows.forEach((r,idx)=>{
-        const name=String(r[map.item_name]??"").trim(),q=num(r[map.system_qty]);
+        const name=String(r[map.item_name]??"").trim();
+        const ps=map.pack_size?num(r[map.pack_size]):null;
+        const q=qtyText(r[map.system_qty],ps);
         if(!name||q===null){failed++;return;}
-        recs.push({source_row_no:idx+2,item_name:name,item_code:map.item_code?String(r[map.item_code]??"").trim():"",barcode:map.barcode?String(r[map.barcode]??"").trim():"",batch_no:map.batch_no?String(r[map.batch_no]??"").trim():"",expiry_date:map.expiry_date?iso(r[map.expiry_date]):"",system_qty:q,pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim():"",pack_size:map.pack_size?num(r[map.pack_size]):null,qty_basis:map.qty_basis?String(r[map.qty_basis]??"").trim()||"decimal":"decimal",category:map.category?String(r[map.category]??"").trim():"",manufacturer:map.manufacturer?String(r[map.manufacturer]??"").trim():"",mrp:map.mrp?num(r[map.mrp]):null,purchase_rate:map.purchase_rate?num(r[map.purchase_rate]):null,gst_percent:map.gst_percent?num(r[map.gst_percent]):null});
+        recs.push({source_row_no:idx+2,item_name:name,item_code:map.item_code?String(r[map.item_code]??"").trim():"",barcode:map.barcode?String(r[map.barcode]??"").trim():"",batch_no:map.batch_no?String(r[map.batch_no]??"").trim():"",expiry_date:map.expiry_date?iso(r[map.expiry_date]):"",system_qty:q,pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim():"",pack_size:ps,qty_basis:"decimal",category:map.category?String(r[map.category]??"").trim():"",manufacturer:map.manufacturer?String(r[map.manufacturer]??"").trim():"",mrp:map.mrp?num(r[map.mrp]):null,purchase_rate:map.purchase_rate?num(r[map.purchase_rate]):null,gst_percent:map.gst_percent?num(r[map.gst_percent]):null});
       });
       for(let i=0;i<recs.length;i+=300){
         pr.textContent=`Uploading ${Math.min(i+300,recs.length).toLocaleString("en-IN")} / ${recs.length.toLocaleString("en-IN")}…`;
@@ -105,10 +115,10 @@ function installUnifiedImporter(ctx){
       const recs=[];
       rows.forEach(r=>{
         const name=String(r[map.item_name]??"").trim();
-        let q=num(r[map.physical_qty]);
-        if(q===null){const t=qtyText(r[map.physical_qty]);if(typeof t==="number")q=t;}
+        const ps=map.pack_size?num(r[map.pack_size]):null;
+        const q=qtyText(r[map.physical_qty],ps);
         if(!name||q===null){failed++;return;}
-        recs.push({item_name:name,item_code:map.item_code?String(r[map.item_code]??"").trim():"",barcode:map.barcode?String(r[map.barcode]??"").trim():"",batch_no:map.batch_no?String(r[map.batch_no]??"").trim():"",expiry_date:map.expiry_date?iso(r[map.expiry_date]):"",physical_qty:q,pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim():"",pack_size:map.pack_size?num(r[map.pack_size]):null,full_pack_qty:map.full_pack_qty?num(r[map.full_pack_qty]):null,loose_qty:map.loose_qty?num(r[map.loose_qty]):null,qty_basis:map.qty_basis?String(r[map.qty_basis]??"").trim()||"decimal":"decimal",category:map.category?String(r[map.category]??"").trim():"",condition:map.condition?String(r[map.condition]??"").trim().toLowerCase():"saleable"});
+        recs.push({item_name:name,item_code:map.item_code?String(r[map.item_code]??"").trim():"",barcode:map.barcode?String(r[map.barcode]??"").trim():"",batch_no:map.batch_no?String(r[map.batch_no]??"").trim():"",expiry_date:map.expiry_date?iso(r[map.expiry_date]):"",physical_qty:q,pack_uom:map.pack_uom?String(r[map.pack_uom]??"").trim():"",pack_size:ps,full_pack_qty:map.full_pack_qty?num(r[map.full_pack_qty]):null,loose_qty:map.loose_qty?num(r[map.loose_qty]):null,qty_basis:"decimal",category:map.category?String(r[map.category]??"").trim():"",condition:map.condition?String(r[map.condition]??"").trim().toLowerCase():"saleable"});
       });
       for(let i=0;i<recs.length;i+=250){
         pr.textContent=`Matching ${Math.min(i+250,recs.length).toLocaleString("en-IN")} / ${recs.length.toLocaleString("en-IN")}…`;
