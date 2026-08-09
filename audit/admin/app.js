@@ -24,6 +24,23 @@ function esc(s){
 }
 function msg(t){ $("msg").textContent = t || ""; }
 
+function closeAuditModal(){
+  const modal=$("modal");
+  if(!modal) return;
+  modal.hidden=true;
+  modal.setAttribute("aria-hidden","true");
+}
+function openAuditModal(){
+  if(!currentCustomer){
+    msg("Select a customer first.");
+    return;
+  }
+  const modal=$("modal");
+  modal.hidden=false;
+  modal.setAttribute("aria-hidden","false");
+}
+
+
 function showAdmin(){
   $("loginCard").hidden = true;
   $("adminArea").hidden = false;
@@ -152,8 +169,8 @@ async function openClient(id){
   );
 }
 
-$("createAuditBtn").onclick = ()=>{ $("modal").hidden = false; };
-$("cancelModal").onclick = ()=>{ $("modal").hidden = true; };
+$("createAuditBtn").onclick = openAuditModal;
+$("cancelModal").onclick = closeAuditModal;
 
 $("confirmAudit").onclick = async ()=>{
   const { data, error } = await sb.rpc("medvika_create_customer_audit", {
@@ -166,7 +183,7 @@ $("confirmAudit").onclick = async ()=>{
 
   if(error){ msg(error.message); return; }
 
-  $("modal").hidden = true;
+  closeAuditModal();
   await openClient(currentCustomer.customer_id);
   await openAudit(data);
 };
@@ -293,4 +310,5 @@ $("addTeamBtn").onclick = async ()=>{
   await loadTeams();
 }
 
+closeAuditModal();
 loadAdminSession();

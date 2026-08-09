@@ -3,7 +3,7 @@
 <title>Medvika Audit SaaS Admin</title><link rel="stylesheet" href="./app.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
 <body><div class="wrap">
-<div class="card top"><img src="./logo.png" class="logo" alt="Medvika"><div><span class="eyebrow">Medvika Only</span><h1>Audit SaaS Admin</h1></div><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
+<div class="card top"><img src="./logo.png?v=2" class="logo" alt="Medvika Healthcare Solutions"><div><span class="eyebrow">Medvika Only</span><h1>Audit SaaS Admin</h1></div><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
 <div id="loginCard" class="card"><div class="grid"><label>Admin Email<input id="email" type="email"></label><label>Password<input id="password" type="password"></label></div><button id="loginBtn" class="btn primary">Admin Sign In</button><p id="loginMsg" class="muted"></p></div>
 
 <div id="adminArea" hidden>
@@ -19,6 +19,6 @@
  </div>
 </div>
 
-<div id="modal" class="modal" hidden><div class="modal-card"><h3>Create Audit for Client</h3><div class="grid"><label>Audit Name<input id="newAuditName"></label><label>Location<input id="newAuditLocation"></label><label>Audit Date<input id="newAuditDate" type="date"></label><label>Expected Items<input id="newAuditItems" type="number" value="20000"></label></div><div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="confirmAudit" class="btn primary">Create</button></div></div></div>
+<div id="modal" class="modal" hidden aria-hidden="true"><div class="modal-card"><h3>Create Audit for Client</h3><div class="grid"><label>Audit Name<input id="newAuditName"></label><label>Location<input id="newAuditLocation"></label><label>Audit Date<input id="newAuditDate" type="date"></label><label>Expected Items<input id="newAuditItems" type="number" value="20000"></label></div><div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="confirmAudit" class="btn primary">Create</button></div></div></div>
 <p id="msg" class="muted"></p>
 </div><script src="./app.js"></script></body></html>
