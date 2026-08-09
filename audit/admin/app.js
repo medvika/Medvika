@@ -181,7 +181,7 @@ async function openClient(id){
       <div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br>
       <small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div>
       <div class="audit-actions">
-        <button class="btn secondary open-audit" data-id="${a.audit_id}">Manage Audit</button>
+        <div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="../?audit=${encodeURIComponent(a.audit_id)}">Open Audit Workspace</a>${String(a.status||"").toLowerCase()==="planning"?`<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`:""}</div>
         ${String(a.status||"").toLowerCase()==="planning"
           ? `<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`
           : ""}
@@ -230,7 +230,7 @@ async function openAudit(id){
   currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id};
   $("auditManage").hidden=false;
   $("adminAuditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
-  await Promise.all([loadSummary(),loadZones(),loadTeams()]); $("unifiedImportPanel").hidden=false; if(window.unifiedImporter) await window.unifiedImporter.history();
+  await Promise.all([loadSummary(),loadZones(),loadTeams()]); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
 }
 async function loadSummary(){
   const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:currentCustomer.customer_id,p_audit_id:currentAudit.audit_id});
