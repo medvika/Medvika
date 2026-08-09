@@ -1,0 +1,5 @@
+const URL="https://etevzodzxhsdwidtrmwv.supabase.co",KEY="sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw";const sb=supabase.createClient(URL,KEY);const $=id=>document.getElementById(id);
+$("loginBtn").addEventListener("click",async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("msg").textContent=error.message;return;}
+const {data:a,error:e}=await sb.rpc("medvika_audit_check_access");if(e){$("msg").textContent=e.message;return;}const r=a?.[0];if(!r){$("msg").textContent="No Medvika Audit access found for this account.";return;}
+$("loginBox").hidden=true;$("accessBox").hidden=false;$("accessText").innerHTML=`<span class="status">${r.status}</span> <strong>${r.plan_name}</strong> • Access until ${r.access_until||"—"} • SKU limit ${r.sku_limit} • Team limit ${r.team_limit}`;
+if(r.status!=="active") $("msg").textContent="Your audit access is not active. Please complete payment or contact Medvika.";});
