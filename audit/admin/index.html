@@ -1,5 +1,24 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Medvika Audit Admin</title><link rel="stylesheet" href="./app.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
-<body><div class="wrap"><div class="card"><img src="./logo.png" class="logo"><span class="eyebrow">Medvika Only</span><h1>Audit SaaS Admin</h1>
-<div id="loginBox"><div class="grid"><label>Admin Email<input id="email" type="email"></label><label>Password<input id="password" type="password"></label></div><button id="loginBtn" class="btn primary">Admin Sign In</button></div><p id="msg" class="muted"></p></div>
-<div id="adminArea" hidden><div class="card"><h2>Signup Requests</h2><div id="signupTable"></div></div><div class="card"><h2>Customer Access & Manual Payment Verification</h2><div id="paymentTable"></div></div></div></div><script src="./app.js"></script></body></html>
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medvika Audit SaaS Admin</title><link rel="stylesheet" href="./app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
+<body><div class="wrap">
+<div class="card top"><img src="./logo.png" class="logo"><div><span class="eyebrow">Medvika Only</span><h1>Audit SaaS Admin</h1></div><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
+<div id="loginCard" class="card"><div class="grid"><label>Admin Email<input id="email" type="email"></label><label>Password<input id="password" type="password"></label></div><button id="loginBtn" class="btn primary">Admin Sign In</button><p id="loginMsg" class="muted"></p></div>
+
+<div id="adminArea" hidden>
+<div class="card"><h2>Customers</h2><div id="customerList"></div></div>
+<div id="clientPanel" hidden>
+ <div class="card"><div class="section-head"><div><span class="eyebrow">Selected Customer</span><h2 id="clientTitle">—</h2></div><button id="createAuditBtn" class="btn primary">Create Audit</button></div><div id="clientAudits"></div></div>
+ <div id="auditManage" hidden>
+  <div class="card"><div class="section-head"><h2 id="adminAuditTitle">Audit Management</h2><a class="btn secondary" href="../team/">Open Team Portal</a></div><div id="adminSummary" class="summary-grid"></div></div>
+  <div class="grid-two">
+   <div class="card"><h3>Zones</h3><div class="grid"><label>Zone Name<input id="zoneName"></label><label>Category<input id="zoneCategory"></label></div><button id="addZoneBtn" class="btn primary">Add Zone</button><div id="zoneList"></div></div>
+   <div class="card"><h3>Teams & PINs</h3><div class="grid"><label>Team Name<input id="teamName"></label><label>Zone<select id="teamZone"></select></label><label>Login Code<input id="teamLoginCode"></label><label>PIN<input id="teamPin" type="password"></label></div><button id="addTeamBtn" class="btn primary">Create Team</button><div id="teamList"></div></div>
+  </div>
+ </div>
+</div>
+
+<div id="modal" class="modal" hidden><div class="modal-card"><h3>Create Audit for Client</h3><div class="grid"><label>Audit Name<input id="newAuditName"></label><label>Location<input id="newAuditLocation"></label><label>Audit Date<input id="newAuditDate" type="date"></label><label>Expected Items<input id="newAuditItems" type="number" value="20000"></label></div><div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="confirmAudit" class="btn primary">Create</button></div></div></div>
+<p id="msg" class="muted"></p>
+</div><script src="./app.js"></script></body></html>
