@@ -180,9 +180,35 @@ async function openClient(id){
     <div class="audit-row">
       <div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br>
       <small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div>
-      <button class="btn secondary open-audit" data-id="${a.audit_id}">Manage Audit</button>
+      <div class="audit-actions">
+        <button class="btn secondary open-audit" data-id="${a.audit_id}">Manage Audit</button>
+        ${String(a.status||"").toLowerCase()==="planning"
+          ? `<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`
+          : ""}
+      </div>
     </div>`).join(""):'<p class="muted">No audits assigned.</p>';
   document.querySelectorAll(".open-audit").forEach(b=>b.onclick=()=>openAudit(b.dataset.id));
+  document.querySelectorAll(".delete-audit").forEach(b=>b.onclick=async()=>{
+    const ok=confirm(`Delete ${b.dataset.code}? This is only allowed for an empty planning audit and cannot be undone.`);
+    if(!ok) return;
+
+    b.disabled=true;
+    b.textContent="Deleting...";
+
+    const {error}=await sb.rpc("medvika_admin_delete_audit",{p_audit_id:b.dataset.id});
+
+    if(error){
+      msg(error.message);
+      b.disabled=false;
+      b.textContent="Delete";
+      return;
+    }
+
+    msg("Planning audit deleted successfully.");
+    currentAudit=null;
+    $("auditManage").hidden=true;
+    await openClient(currentCustomer.customer_id);
+  });
 }
 
 $("createAuditBtn").onclick=openAuditModal;

@@ -33,3 +33,6 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 .badge.expired{background:#edf2f4;color:#51636d}
 .access-date{font-weight:800;color:var(--navy)}
 @media(max-width:700px){.customer-access-head{flex-direction:column}}
+
+.audit-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn.danger{background:#fee2e2;color:#991b1b}
