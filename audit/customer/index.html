@@ -64,6 +64,50 @@
   </div>
 </div>
 
+
+<div id="unifiedImportPanel" class="card" hidden>
+  <div class="section-head">
+    <div><span class="eyebrow">Single Source of Truth</span><h2>Stock Imports</h2></div>
+    <button id="reloadUnifiedImports" class="btn secondary">Reload History</button>
+  </div>
+  <p class="muted">Import Current/System Stock once for this audit. All counting, exceptions, reconciliation and reports use this same dataset. Physical Count import is optional when counts come from Excel/CSV instead of the team portal.</p>
+
+  <div class="grid-two">
+    <div class="import-box">
+      <h3>1. Current / System Stock</h3>
+      <label>Import Mode
+        <select id="unifiedSystemMode">
+          <option value="replace">Replace Current Stock</option>
+          <option value="append">Append to Current Stock</option>
+        </select>
+      </label>
+      <label>Choose CSV / Excel<input id="unifiedSystemFile" type="file" accept=".csv,.xlsx,.xls"></label>
+      <button id="previewUnifiedSystem" class="btn secondary">Preview & Map Columns</button>
+      <div id="unifiedSystemArea"></div>
+    </div>
+
+    <div class="import-box">
+      <h3>2. Physical Count File <span class="muted">(Optional)</span></h3>
+      <label>Import Mode
+        <select id="unifiedPhysicalMode">
+          <option value="append">Append Counts</option>
+          <option value="replace">Replace Physical Counts</option>
+        </select>
+      </label>
+      <div class="grid">
+        <label>Zone<select id="unifiedPhysicalZone"></select></label>
+        <label>Team<select id="unifiedPhysicalTeam"></select></label>
+      </div>
+      <label>Choose CSV / Excel<input id="unifiedPhysicalFile" type="file" accept=".csv,.xlsx,.xls"></label>
+      <button id="previewUnifiedPhysical" class="btn secondary">Preview & Match</button>
+      <div id="unifiedPhysicalArea"></div>
+    </div>
+  </div>
+
+  <h3>Import History</h3>
+  <div id="unifiedImportHistory"></div>
+</div>
+
 <div id="modal" class="modal" hidden><div class="modal-card">
 <h3>Create New Audit</h3>
 <div class="grid"><label>Audit Name<input id="newAuditName" placeholder="Main Store Stock Audit"></label>
@@ -73,4 +117,5 @@
 </div></div>
 
 <p id="msg" class="muted"></p>
-</div><script src="./app.js"></script></body></html>
+</div><script src="./importer.js"></script>
+<script src="./app.js"></script></body></html>

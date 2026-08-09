@@ -10,3 +10,9 @@ input,select{width:100%;padding:11px;border:1px solid #cddde4;border-radius:10px
 table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #edf2f4;font-size:10px;text-align:left}th{color:var(--navy)}.table-wrap{overflow:auto}
 .modal{position:fixed;inset:0;background:rgba(5,25,38,.45);display:grid;place-items:center;padding:18px;z-index:50}.modal-card{width:min(650px,100%);background:#fff;border-radius:18px;padding:20px}
 @media(max-width:800px){.grid,.grid-two{grid-template-columns:1fr}.summary-grid{grid-template-columns:repeat(2,1fr)}.wrap{padding:8px}.top{align-items:flex-start}.section-head{align-items:flex-start;flex-wrap:wrap}}
+
+
+.import-box{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdfe}
+.mapping-card{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}.mapping-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.mapping-grid label{font-size:10px}
+.import-progress{margin-top:10px;font-weight:700}.table-wrap{overflow:auto;margin-top:10px;max-width:100%}
+@media(max-width:850px){.mapping-grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.mapping-grid{grid-template-columns:1fr}}
