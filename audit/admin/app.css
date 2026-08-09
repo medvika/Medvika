@@ -18,3 +18,18 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 .status-new{display:inline-block;background:#fff4d6;color:#8a5a00;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900}
 .status-processed{display:inline-block;background:#e8f7ee;color:#08733f;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900}
 @media(max-width:700px){.signup-row{align-items:flex-start;flex-direction:column}}
+
+.customer-access-card{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;background:#fff}
+.customer-access-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.customer-access-head strong{color:var(--navy);font-size:14px}
+.customer-access-meta{color:var(--muted);font-size:10px;line-height:1.5;margin-top:4px}
+.access-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn.danger{background:#fee2e2;color:#991b1b}
+.btn.warn{background:#fff4d6;color:#8a5a00}
+.badge{display:inline-block;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900}
+.badge.active{background:#e7f7ed;color:#08733f}
+.badge.pending{background:#fff4d6;color:#8a5a00}
+.badge.suspended{background:#fee2e2;color:#991b1b}
+.badge.expired{background:#edf2f4;color:#51636d}
+.access-date{font-weight:800;color:var(--navy)}
+@media(max-width:700px){.customer-access-head{flex-direction:column}}

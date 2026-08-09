@@ -53,7 +53,7 @@ $("loginBtn").onclick=async()=>{
 $("logoutBtn").onclick=async()=>{await sb.auth.signOut();sessionStorage.clear();location.reload();};
 $("reloadBtn").onclick=loadAll;
 
-async function loadAll(){await Promise.all([loadSignupRequests(),loadCustomers()]);}
+async function loadAll(){await Promise.all([loadSignupRequests(),loadCustomersAndAccess()]);}
 
 async function loadSignupRequests(){
   const {data,error}=await sb
@@ -92,23 +92,83 @@ async function loadSignupRequests(){
   });
 }
 
-async function loadCustomers(){
-  const {data,error}=await sb.rpc("medvika_admin_customer_list");
-  if(error){$("customerList").innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
+async function loadCustomersAndAccess(){
+  const {data,error}=await sb.rpc("medvika_admin_subscription_list");
+  if(error){
+    $("customerList").innerHTML=`<p class="muted">${esc(error.message)}</p>`;
+    return;
+  }
+
   customers=data||[];
-  $("customerList").innerHTML=customers.length?customers.map(c=>`
-    <div class="audit-row">
-      <div>
-        <strong>${esc(c.business_name)} — ${esc(c.full_name)}</strong><br>
-        <small>${esc(c.email)} • ${esc(c.plan_name||"No plan")} • ${esc(c.status)} • Access ${esc(c.access_until||"—")}</small>
-      </div>
-      <button class="btn secondary open-client" data-id="${c.customer_id}">Manage</button>
-    </div>
-  `).join(""):'<p class="muted">No customers.</p>';
+
+  $("customerList").innerHTML=customers.length?customers.map(c=>{
+    const status=String(c.customer_status||"pending").toLowerCase();
+    const badgeClass=status==="active"?"active":status==="suspended"?"suspended":status==="expired"?"expired":"pending";
+    const canActivate=c.payment_status!=="approved" || status!=="active";
+    return `
+      <div class="customer-access-card">
+        <div class="customer-access-head">
+          <div>
+            <strong>${esc(c.business_name)} — ${esc(c.full_name)}</strong>
+            <div class="customer-access-meta">
+              ${esc(c.email)} • ${esc(c.mobile||"")}<br>
+              ${esc(c.plan_name||"No plan")} • ₹${Number(c.amount||0).toLocaleString("en-IN")} • ${esc(c.validity_days||"")} days
+            </div>
+          </div>
+          <span class="badge ${badgeClass}">${esc(status)}</span>
+        </div>
+
+        <div class="customer-access-meta" style="margin-top:8px">
+          Payment: <strong>${esc(c.payment_status||"pending")}</strong><br>
+          Access Until: <span class="access-date">${esc(c.access_until||"Not activated")}</span>
+        </div>
+
+        <div class="access-actions">
+          ${canActivate?`<button class="btn primary activate" data-sub="${c.subscription_id}">Verify Payment & Activate</button>`:""}
+          <button class="btn secondary extend" data-sub="${c.subscription_id}">Extend Access</button>
+          ${status==="suspended"
+            ? `<button class="btn secondary restore" data-customer="${c.customer_id}">Restore Access</button>`
+            : `<button class="btn danger suspend" data-customer="${c.customer_id}">Suspend</button>`}
+          <button class="btn secondary open-client" data-id="${c.customer_id}">Manage Audits</button>
+        </div>
+      </div>`;
+  }).join(""):'<p class="muted">No customers.</p>';
+
+  document.querySelectorAll(".activate").forEach(b=>b.onclick=async()=>{
+    const ok=confirm("Confirm payment has been received and verified? This will activate the customer's paid access.");
+    if(!ok)return;
+    b.disabled=true;b.textContent="Activating...";
+    const {error}=await sb.rpc("medvika_audit_admin_activate_subscription",{p_subscription_id:b.dataset.sub});
+    msg(error?error.message:"Payment verified and access activated.");
+    await loadCustomersAndAccess();
+  });
+
+  document.querySelectorAll(".extend").forEach(b=>b.onclick=async()=>{
+    const days=prompt("Extend access by how many days?","30");
+    if(!days)return;
+    const n=Number(days);
+    if(!Number.isFinite(n)||n<1){msg("Enter valid extension days.");return;}
+    const {data,error}=await sb.rpc("medvika_audit_admin_extend_access",{p_subscription_id:b.dataset.sub,p_days:n});
+    msg(error?error.message:`Access extended until ${data}`);
+    await loadCustomersAndAccess();
+  });
+
+  document.querySelectorAll(".suspend").forEach(b=>b.onclick=async()=>{
+    const ok=confirm("Suspend this customer's audit access?");
+    if(!ok)return;
+    const {error}=await sb.rpc("medvika_audit_admin_suspend_customer",{p_customer_id:b.dataset.customer});
+    msg(error?error.message:"Customer access suspended.");
+    await loadCustomersAndAccess();
+  });
+
+  document.querySelectorAll(".restore").forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.rpc("medvika_audit_admin_restore_customer",{p_customer_id:b.dataset.customer});
+    msg(error?error.message:"Customer access restored according to subscription validity.");
+    await loadCustomersAndAccess();
+  });
 
   document.querySelectorAll(".open-client").forEach(b=>b.onclick=()=>openClient(b.dataset.id));
 }
-
 async function openClient(id){
   currentCustomer=customers.find(c=>c.customer_id===id);
   $("clientPanel").hidden=false;
