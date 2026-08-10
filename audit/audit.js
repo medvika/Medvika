@@ -210,6 +210,9 @@ async function loadZonesAndTeams(){
   $("countTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
   if($("physicalImportZone")) $("physicalImportZone").innerHTML='<option value="">Select zone</option>'+zones.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
   if($("physicalImportTeam")) $("physicalImportTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
+  if($("newTeamZone")) $("newTeamZone").innerHTML='<option value="">Select zone</option>'+zones.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
+  if($("allocationZone")) $("allocationZone").innerHTML='<option value="">Select zone</option>'+zones.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
+  if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
   if($("allocationZone")) $("allocationZone").innerHTML='<option value="">Select zone</option>'+zones.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
   if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
 
@@ -223,8 +226,77 @@ async function loadZonesAndTeams(){
     ["Team","Lead","Counter 1","Counter 2","Entry","Supervisor"],
     teams.map(t=>[t.team_code,t.client_team_lead||"—",t.counter_1||"—",t.counter_2||"—",t.system_entry_person||"—",t.medvika_supervisor||"—"])
   );
+  if($("allocationSummaryWrap")) await loadAllocationSummary();
 }
 
+
+
+async function createAdminZone(){
+  if(!currentAuditId) return;
+  const name=$("newZoneName")?.value.trim();
+  const category=$("newZoneCategory")?.value.trim()||"General";
+  const box=$("zoneCreateMessage");
+  if(!name){ if(box) box.textContent="Enter Zone Name."; return; }
+  try{
+    const next=(zones.length||0)+1;
+    const code=`Z${String(next).padStart(2,"0")}`;
+    const {error}=await sb.from("medvika_audit_zones").insert({
+      audit_id:currentAuditId,
+      zone_code:code,
+      zone_name:name,
+      category,
+      sequence_no:next,
+      status:"pending"
+    });
+    if(error) throw error;
+    if(box) box.textContent=`${code} created successfully.`;
+    $("newZoneName").value=""; $("newZoneCategory").value="";
+    await loadZonesAndTeams();
+  }catch(err){
+    console.error("Create zone:",err);
+    if(box) box.textContent=err.message||"Unable to create zone.";
+    toast(err.message||"Unable to create zone","error");
+  }
+}
+
+async function createAdminTeam(){
+  if(!currentAuditId) return;
+  const zoneId=$("newTeamZone")?.value;
+  const teamName=$("newTeamName")?.value.trim();
+  const loginCode=$("newTeamLoginCode")?.value.trim();
+  const pin=$("newTeamPin")?.value.trim();
+  const box=$("teamCreateMessage");
+  if(!zoneId||!teamName||!loginCode||!pin){
+    if(box) box.textContent="Team Name, Zone, Login Code and PIN are required.";
+    return;
+  }
+  if(pin.length<4){ if(box) box.textContent="PIN must be at least 4 digits."; return; }
+
+  try{
+    const project=projects.find(p=>String(p.id)===String(currentAuditId));
+    const customerId=project?.client_id;
+    if(!customerId) throw new Error("Selected audit has no linked customer/client ID.");
+
+    const {error}=await sb.rpc("medvika_create_customer_team",{
+      p_customer_id:customerId,
+      p_audit_id:currentAuditId,
+      p_zone_id:zoneId,
+      p_team_name:teamName,
+      p_login_code:loginCode,
+      p_pin:pin,
+      p_can_add_unlisted:$("newTeamAllowUnlisted")?.checked!==false
+    });
+    if(error) throw error;
+
+    if(box) box.textContent="Team and PIN created successfully.";
+    $("newTeamName").value=""; $("newTeamLoginCode").value=""; $("newTeamPin").value="";
+    await loadZonesAndTeams();
+  }catch(err){
+    console.error("Create team:",err);
+    if(box) box.textContent=(err.message||"Unable to create team.")+" If this audit was created without a linked customer, create the team from the Customer Workspace.";
+    toast(err.message||"Unable to create team","error");
+  }
+}
 
 async function getAllocationCandidates(){
   if(!currentAuditId) return [];
@@ -232,12 +304,15 @@ async function getAllocationCandidates(){
   const method=$("allocationMethod")?.value||"unallocated";
   const range=$("allocationLetterRange")?.value||"";
   let rows=stock||[];
+
   if(range){
     rows=rows.filter(r=>{
       const c=String(r.item_name||"").trim().charAt(0).toUpperCase();
+      if(!c) return false;
       return range==="A-M" ? (c>="A"&&c<="M") : (c>="N"&&c<="Z");
     });
   }
+
   if(method==="unallocated" && rows.length){
     const {data,error}=await sb.from("medvika_audit_stock_allocations")
       .select("system_stock_id").eq("audit_id",currentAuditId).eq("active",true);
@@ -255,8 +330,18 @@ async function previewStockAllocation(){
     const rows=await getAllocationCandidates();
     const zone=zones.find(z=>String(z.id)===String($("allocationZone").value));
     const team=teams.find(t=>String(t.id)===String($("allocationTeam").value));
-    if(box) box.textContent=`${fmtNum(rows.length)} current-stock lines ready → ${zone?.zone_code||"Zone"} / ${team?.team_code||"Team"}.`;
+    const range=$("allocationLetterRange")?.value||"All";
+    if(box) box.textContent=`${fmtNum(rows.length)} eligible stock lines (${range}) → ${zone?.zone_code||"Zone"} / ${team?.team_code||"Team"}.`;
   }catch(err){ if(box) box.textContent=err.message; toast(err.message,"error"); }
+}
+
+async function deleteAllocationRowsForStockIds(ids){
+  for(let i=0;i<ids.length;i+=400){
+    const chunk=ids.slice(i,i+400);
+    const {error}=await sb.from("medvika_audit_stock_allocations")
+      .delete().eq("audit_id",currentAuditId).in("system_stock_id",chunk);
+    if(error) throw error;
+  }
 }
 
 async function allocateCurrentStock(){
@@ -267,26 +352,105 @@ async function allocateCurrentStock(){
     btn.disabled=true; btn.textContent="Allocating…";
     const rows=await getAllocationCandidates();
     if(!rows.length){ if(box) box.textContent="No eligible current-stock lines to allocate."; return; }
-    const ids=rows.map(r=>r.id);
-    // Replace allocation for selected rows when requested; this prevents duplicate/stale assignments.
-    if($("allocationMethod")?.value==="all"){
-      for(let i=0;i<ids.length;i+=500){
-        const {error}=await sb.from("medvika_audit_stock_allocations").delete()
-          .eq("audit_id",currentAuditId).in("system_stock_id",ids.slice(i,i+500));
-        if(error) throw error;
-      }
-    }
-    const records=rows.map(r=>({audit_id:currentAuditId,system_stock_id:r.id,zone_id:zoneId,team_id:teamId,active:true}));
+    const ids=[...new Set(rows.map(r=>String(r.id)))];
+
+    // Enforce exactly ONE allocation row per stock line.
+    // This also repairs a repeated A-M/N-Z or accidental repeat for the selected rows.
+    await deleteAllocationRowsForStockIds(ids);
+
+    const records=rows.map(r=>({
+      audit_id:currentAuditId,
+      system_stock_id:r.id,
+      zone_id:zoneId,
+      team_id:teamId,
+      active:true
+    }));
     const inserted=await insertChunks("medvika_audit_stock_allocations",records);
-    if(box) box.textContent=`Allocated ${fmtNum(inserted)} stock lines successfully.`;
+    if(box) box.textContent=`${fmtNum(inserted)} stock lines allocated. Existing allocation for these lines was replaced; duplicates were not created.`;
     toast(`${fmtNum(inserted)} stock lines allocated`);
-    await Promise.all([loadStockRegister(),loadFinalReport()]);
-  }catch(err){ console.error("Stock allocation:",err); if(box) box.textContent=err.message||"Allocation failed."; toast(err.message||"Allocation failed","error"); }
-  finally{ btn.disabled=false; btn.textContent="Allocate Stock"; }
+    await Promise.all([loadStockRegister(),loadFinalReport(),loadAllocationSummary()]);
+  }catch(err){
+    console.error("Stock allocation:",err);
+    if(box) box.textContent=err.message||"Allocation failed.";
+    toast(err.message||"Allocation failed","error");
+  }finally{
+    btn.disabled=false; btn.textContent="Allocate Stock";
+  }
 }
 
+async function repairDuplicateAllocations(){
+  const box=$("allocationPreview"), btn=$("repairAllocationButton");
+  if(!currentAuditId) return;
+  try{
+    if(btn){btn.disabled=true;btn.textContent="Repairing…";}
+    const {data,error}=await sb.from("medvika_audit_stock_allocations")
+      .select("id,system_stock_id,zone_id,team_id,active")
+      .eq("audit_id",currentAuditId).eq("active",true);
+    if(error) throw error;
+
+    const groups=new Map();
+    (data||[]).forEach(r=>{
+      const k=String(r.system_stock_id);
+      if(!groups.has(k)) groups.set(k,[]);
+      groups.get(k).push(r);
+    });
+
+    const deleteIds=[];
+    groups.forEach(arr=>{
+      if(arr.length>1){
+        // Keep the last returned row; remove all additional duplicate active rows.
+        arr.slice(0,-1).forEach(r=>deleteIds.push(r.id));
+      }
+    });
+
+    for(let i=0;i<deleteIds.length;i+=400){
+      const {error:e}=await sb.from("medvika_audit_stock_allocations").delete().in("id",deleteIds.slice(i,i+400));
+      if(e) throw e;
+    }
+    if(box) box.textContent=deleteIds.length
+      ?`${deleteIds.length} duplicate allocation rows removed.`
+      :"No duplicate allocation rows found.";
+    await Promise.all([loadStockRegister(),loadAllocationSummary(),loadFinalReport()]);
+  }catch(err){
+    if(box) box.textContent=err.message||"Unable to repair allocations.";
+    toast(err.message||"Unable to repair allocations","error");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="Repair Duplicate Allocations";}
+  }
+}
+
+async function loadAllocationSummary(){
+  if(!$("allocationSummaryWrap")||!currentAuditId) return;
+  const {data,error}=await sb.from("medvika_audit_stock_allocations")
+    .select("system_stock_id,zone_id,team_id,active")
+    .eq("audit_id",currentAuditId).eq("active",true);
+  if(error){ $("allocationSummaryWrap").innerHTML=`<div class="empty">${esc(error.message)}</div>`; return; }
+
+  const unique=new Map();
+  (data||[]).forEach(r=>unique.set(String(r.system_stock_id),r));
+  const rows=[...unique.values()];
+  const summary=new Map();
+  rows.forEach(r=>{
+    const k=`${r.zone_id||""}|${r.team_id||""}`;
+    summary.set(k,(summary.get(k)||0)+1);
+  });
+
+  $("allocationSummaryWrap").innerHTML=tableHtml(
+    ["Zone","Team","Allocated Stock Lines"],
+    [...summary.entries()].map(([k,n])=>{
+      const [zid,tid]=k.split("|");
+      const z=zones.find(x=>String(x.id)===zid);
+      const t=teams.find(x=>String(x.id)===tid);
+      return [z?`${z.zone_code} — ${z.zone_name}`:"—",t?`${t.team_code} — ${t.team_name||"Team"}`:"—",fmtNum(n)];
+    })
+  );
+}
+
+$("createZoneButton")?.addEventListener("click",createAdminZone);
+$("createTeamButton")?.addEventListener("click",createAdminTeam);
 $("previewAllocationButton")?.addEventListener("click",previewStockAllocation);
 $("allocateStockButton")?.addEventListener("click",allocateCurrentStock);
+$("repairAllocationButton")?.addEventListener("click",repairDuplicateAllocations);
 
 function tableHtml(headers,rows){
   if(!rows.length) return '<div class="empty">No records yet.</div>';

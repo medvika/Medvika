@@ -257,32 +257,86 @@
         </div>
       </section>
 
+      
       <section id="zonesView" class="view">
         <div class="two-col">
           <section class="card">
-            <div class="card-head"><h3>Zones</h3><span>Execution map</span></div>
-            <div id="zonesTableWrap" class="table-wrap"></div>
+            <div class="card-head"><h3>Zones</h3><span>Create and manage counting areas</span></div>
+            <div class="form-grid" style="margin-bottom:12px">
+              <label>Zone Name *
+                <input id="newZoneName" type="text" placeholder="e.g. A to M / Rack 1">
+              </label>
+              <label>Category
+                <input id="newZoneCategory" type="text" placeholder="Medicine / General">
+              </label>
+            </div>
+            <button id="createZoneButton" class="btn primary" type="button">Create Zone</button>
+            <div id="zoneCreateMessage" class="form-message"></div>
+            <div id="zonesTableWrap" class="table-wrap" style="margin-top:14px"></div>
           </section>
+
           <section class="card">
-            <div class="card-head"><h3>Counting Teams</h3><span>Client + Medvika allocation</span></div>
-            <div id="teamsTableWrap" class="table-wrap"></div>
+            <div class="card-head"><h3>Counting Teams</h3><span>Create team login before allocation</span></div>
+            <div class="form-grid">
+              <label>Team Name *
+                <input id="newTeamName" type="text" placeholder="Team 1">
+              </label>
+              <label>Assigned Zone *
+                <select id="newTeamZone"></select>
+              </label>
+              <label>Team Login Code *
+                <input id="newTeamLoginCode" type="text" placeholder="T01-Z1">
+              </label>
+              <label>PIN *
+                <input id="newTeamPin" type="password" inputmode="numeric" placeholder="4+ digits">
+              </label>
+            </div>
+            <label style="display:flex;gap:8px;align-items:center;margin:10px 0">
+              <input id="newTeamAllowUnlisted" type="checkbox" checked style="width:auto">
+              Allow unlisted physical items
+            </label>
+            <button id="createTeamButton" class="btn primary" type="button">Create Team & PIN</button>
+            <div id="teamCreateMessage" class="form-message"></div>
+            <div id="teamsTableWrap" class="table-wrap" style="margin-top:14px"></div>
           </section>
         </div>
+
         <section class="card" style="margin-top:16px">
-          <div class="card-head"><div><h3>Stock Allocation</h3><span>Assign imported Current Stock to a counting zone and team</span></div></div>
+          <div class="card-head">
+            <div><h3>Stock Allocation</h3><span>One Current Stock line can have only one active allocation</span></div>
+            <button id="repairAllocationButton" class="btn secondary" type="button">Repair Duplicate Allocations</button>
+          </div>
+          <p class="helper">
+            For separate teams, allocate A–M to one team and N–Z to another team.
+            Re-running the same range will replace that range's previous allocation instead of creating duplicates.
+          </p>
           <div class="form-grid">
             <label>Zone *<select id="allocationZone"></select></label>
             <label>Team *<select id="allocationTeam"></select></label>
-            <label>Allocation Method<select id="allocationMethod"><option value="unallocated">Only unallocated current stock</option><option value="all">All current stock (replace allocation)</option></select></label>
-            <label>Item name starts with<select id="allocationLetterRange"><option value="">All items</option><option value="A-M">A to M</option><option value="N-Z">N to Z</option></select></label>
+            <label>Allocation Action
+              <select id="allocationMethod">
+                <option value="unallocated">Only currently unallocated stock</option>
+                <option value="replace">Reassign / replace selected range</option>
+              </select>
+            </label>
+            <label>Item name starts with
+              <select id="allocationLetterRange">
+                <option value="">All items</option>
+                <option value="A-M">A to M</option>
+                <option value="N-Z">N to Z</option>
+              </select>
+            </label>
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button id="previewAllocationButton" class="btn secondary" type="button">Preview Allocation</button><button id="allocateStockButton" class="btn primary" type="button">Allocate Stock</button></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+            <button id="previewAllocationButton" class="btn secondary" type="button">Preview Allocation</button>
+            <button id="allocateStockButton" class="btn primary" type="button">Allocate Stock</button>
+          </div>
           <div id="allocationPreview" class="form-message" style="margin-top:10px"></div>
+          <div id="allocationSummaryWrap" class="table-wrap" style="margin-top:14px"></div>
         </section>
       </section>
 
-      
-      <section id="exceptionsView" class="view">
+<section id="exceptionsView" class="view">
         <section class="card">
           <div class="card-head">
             <div>
@@ -731,6 +785,6 @@
     </main>
   </div>
 
-  <script src="./audit.js?v=stockreg2"></script>
+  <script src="./audit.js?v=allocationteam2"></script>
 </body>
 </html>
