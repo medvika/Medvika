@@ -72,6 +72,22 @@
       </div>
     </div>
 
+
+    <div class="card data-controls-card">
+      <div class="section-head">
+        <div><span class="eyebrow">Audit Data Controls</span><h2>Counts & Allocations</h2></div>
+        <button id="reloadCustomerCounts" class="btn secondary" type="button">Reload</button>
+      </div>
+      <p class="muted">Delete an incorrect/test physical count without touching Current Stock. Allocations are controlled separately.</p>
+      <div class="data-control-actions">
+        <button id="clearAllCountsBtn" class="btn danger-soft" type="button">Clear All Physical Counts</button>
+        <button id="clearAllocationsBtn" class="btn danger-soft" type="button">Clear Stock Allocations</button>
+        <button id="resetCountingBtn" class="btn danger-btn" type="button">Reset Counts + Allocations</button>
+      </div>
+      <h3>Recent Physical Counts</h3>
+      <div id="customerRecentCounts"></div>
+    </div>
+
     <div class="card">
       <div class="section-head"><div><span class="eyebrow">Report</span><h2>Reconciliation Summary</h2></div><button id="exportCsvBtn" class="btn secondary">Export CSV</button></div>
       <div id="reconTable"></div>
@@ -184,4 +200,4 @@
 
 <p id="msg" class="muted"></p>
 </div><script src="./allocation.js?v=5"></script>
-<script src="./app.js?v=5"></script></body></html>
+<script src="./app.js?v=6"></script></body></html>

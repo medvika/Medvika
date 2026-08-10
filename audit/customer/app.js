@@ -7,20 +7,6 @@ const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
-function cleanQty(v){const n=Number(v);return Number.isFinite(n)?Number(n.toFixed(6)):(v??"—");}
-function qtyDisplay(v,packSize=null,packUom="Pack"){
- const n=Number(v),ps=Number(packSize);
- if(!Number.isFinite(n)) return v??"—";
- if(ps>0&&Number.isInteger(ps)){
-  const ru=n*ps;
-  if(Math.abs(ru-Math.round(ru))<1e-9){
-   const units=Math.round(ru),sign=units<0?"−":"",abs=Math.abs(units),packs=Math.floor(abs/ps),loose=abs%ps;
-   if(loose===0)return `${sign}${packs} ${packUom}${packs===1?"":"s"}`;
-   return `${sign}${packs} ${packUom}${packs===1?"":"s"} ${loose} Unit${loose===1?"":"s"}`;
-  }
- }
- return String(cleanQty(n));
-}
 function msg(t){const e=$("msg");if(e)e.textContent=t||"";}
 function authMsg(t){const e=$("authMsg");if(e)e.textContent=t||"";}
 function showAuth(){ $("authCard").hidden=false; $("workspace").hidden=true; $("logoutBtn").hidden=true; $("recoveryCard").hidden=true; }
@@ -130,7 +116,7 @@ $("createAuditConfirm").onclick=async()=>{
 };
 async function openAudit(id){
  currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id}; $("auditPanel").hidden=false;$("auditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
- await Promise.all([loadSummary(),loadZones(),loadTeams()]); if($("allocationPanel")) $("allocationPanel").hidden=false; if(window.stockAllocation) await window.stockAllocation.loadSummary(); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
+ await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts()]); if($("allocationPanel")) $("allocationPanel").hidden=false; if(window.stockAllocation) await window.stockAllocation.loadSummary(); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
 }
 async function loadSummary(){
  const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const r=data?.[0]||{};
@@ -153,8 +139,61 @@ $("addTeamBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb
 
 async function loadRecon(){
  const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}reconRows=data||[];
- $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>`<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(qtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${esc(qtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${esc(qtyDisplay(r.variance_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`).join("")}</tbody></table></div>`;
+ $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>`<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(r.system_qty)}</td><td>${esc(r.physical_qty)}</td><td>${esc(r.variance_qty)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`).join("")}</tbody></table></div>`;
 }
+
+function cleanDisplayQty(v){
+ const n=Number(v); return Number.isFinite(n)?String(Number(n.toFixed(6))):(v??"—");
+}
+async function loadCustomerRecentCounts(){
+ if(!currentAudit?.audit_id||!$("customerRecentCounts")) return;
+ $("customerRecentCounts").innerHTML='<p class="muted">Loading counts…</p>';
+ const {data,error}=await sb.rpc("medvika_customer_recent_counts",{p_audit_id:currentAudit.audit_id,p_limit:50});
+ if(error){$("customerRecentCounts").innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
+ const rows=data||[];
+ $("customerRecentCounts").innerHTML=rows.length?rows.map(r=>{
+   const variance=(r.system_qty===null||r.system_qty===undefined)?null:Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
+   return `<div class="count-control-row"><div><strong>${esc(r.item_name||"Item")}</strong><small> • ${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.counted_at||"")}</small><div class="qty-line">Physical ${esc(cleanDisplayQty(r.physical_qty))} · System ${esc(cleanDisplayQty(r.system_qty))}${variance===null?"":` · Variance ${esc(cleanDisplayQty(variance))}`}</div></div><button class="btn danger-soft count-delete" type="button" data-count-id="${r.id}">Delete Count</button></div>`;
+ }).join(""):'<p class="muted">No physical counts for this audit.</p>';
+ $("customerRecentCounts").querySelectorAll(".count-delete").forEach(b=>b.onclick=()=>deleteCustomerCount(b.dataset.countId));
+}
+async function deleteCustomerCount(id){
+ if(!currentAudit?.audit_id||!confirm("Delete this physical count? Current Stock and allocations remain unchanged.")) return;
+ const {error}=await sb.rpc("medvika_customer_delete_count",{p_audit_id:currentAudit.audit_id,p_count_id:Number(id)});
+ if(error){msg(error.message);return;}
+ msg("Physical count deleted.");
+ await Promise.all([loadCustomerRecentCounts(),loadSummary()]);
+}
+async function clearAllCustomerCounts(){
+ if(!currentAudit?.audit_id) return;
+ if(prompt("Type CLEAR COUNTS to delete all physical counts for this audit:")!=="CLEAR COUNTS") return;
+ const {data,error}=await sb.rpc("medvika_customer_clear_counts",{p_audit_id:currentAudit.audit_id});
+ if(error){msg(error.message);return;}
+ msg(`${data||0} physical count rows deleted.`);
+ await Promise.all([loadCustomerRecentCounts(),loadSummary()]);
+}
+async function clearCustomerAllocations(){
+ if(!currentAudit?.audit_id) return;
+ if(prompt("Type CLEAR ALLOCATIONS to remove all stock allocations for this audit:")!=="CLEAR ALLOCATIONS") return;
+ const {data,error}=await sb.rpc("medvika_customer_clear_allocations",{p_audit_id:currentAudit.audit_id});
+ if(error){msg(error.message);return;}
+ msg(`${data||0} stock allocations cleared.`);
+ if(window.stockAllocation) await window.stockAllocation.loadSummary();
+}
+async function resetCustomerCounting(){
+ if(!currentAudit?.audit_id) return;
+ if(prompt("Type RESET COUNTING to delete all physical counts AND allocations:")!=="RESET COUNTING") return;
+ const {data,error}=await sb.rpc("medvika_customer_reset_counting",{p_audit_id:currentAudit.audit_id});
+ if(error){msg(error.message);return;}
+ msg(`Counting reset. ${data?.deleted_counts||0} counts and ${data?.deleted_allocations||0} allocations removed.`);
+ await Promise.all([loadCustomerRecentCounts(),loadSummary()]);
+ if(window.stockAllocation) await window.stockAllocation.loadSummary();
+}
+$("reloadCustomerCounts")?.addEventListener("click",loadCustomerRecentCounts);
+$("clearAllCountsBtn")?.addEventListener("click",clearAllCustomerCounts);
+$("clearAllocationsBtn")?.addEventListener("click",clearCustomerAllocations);
+$("resetCountingBtn")?.addEventListener("click",resetCustomerCounting);
+
 $("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unparse(reconRows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Medvika_Reconciliation_${currentAudit.project_code||"Audit"}.csv`;a.click();};
 
 

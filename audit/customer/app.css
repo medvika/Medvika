@@ -29,3 +29,12 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px so
 
 .link-btn{background:transparent;color:var(--green);text-decoration:underline}
 .build-tag{display:block;margin-top:8px;color:#8aa0aa;font-size:9px}
+
+.data-control-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px}
+.danger-soft{background:#fff3f2!important;color:#a52d2d!important;border:1px solid #f0c2be!important}
+.danger-btn{background:#b42318!important;color:#fff!important;border:1px solid #b42318!important}
+.count-control-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #e7eef1}
+.count-control-row:last-child{border-bottom:0}
+.count-control-row small{color:#6f7f87}
+.qty-line{margin-top:4px;font-size:13px;color:#355665}
+@media(max-width:640px){.count-control-row{grid-template-columns:1fr}.count-delete,.data-control-actions .btn{width:100%}}
