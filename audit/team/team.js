@@ -24,41 +24,47 @@ function toNumber(v){
 
 function parsePharmacyQuantity(value,packSize=null){
   if(value===null||value===undefined||String(value).trim()==="") return null;
-
-  const direct=toNumber(value);
-  if(direct!==null) return direct;
-
   const ps=Number(packSize||0);
-  const raw=String(value).trim().toLowerCase()
-    .replace(/\+/g," ").replace(/,/g," ").replace(/\s+/g," ").trim();
-
-  let packQty=0,looseQty=0,found=false;
+  const raw=String(value).trim().toLowerCase().replace(/\+/g," ").replace(/,/g," ").replace(/\s+/g," ").trim();
+  const direct=toNumber(value);
+  if(direct!==null){
+    if(ps>0 && Math.abs(direct*ps-Math.round(direct*ps))>1e-9) return null;
+    return ps>0 ? Math.round(direct*ps)/ps : direct;
+  }
+  let packQty=0,looseQty=0,found=false,m;
   const tokenRe=/(\d+(?:\.\d+)?)\s*(strips?|packs?|boxes?|bottles?|vials?|amp(?:oules?)?|pieces?|pcs?|tabs?|tablets?|caps?|capsules?|units?)/gi;
-  let m;
   while((m=tokenRe.exec(raw))!==null){
     found=true;
     const qty=Number(m[1]),unit=m[2].toLowerCase();
     if(/^(strip|strips|pack|packs|box|boxes|bottle|bottles|vial|vials|amp|ampoule|ampoules)$/.test(unit)) packQty+=qty;
     else looseQty+=qty;
   }
-
   if(!found){
     const shortRe=/(\d+(?:\.\d+)?)\s*([sptcu])/gi;
     while((m=shortRe.exec(raw))!==null){
-      found=true;
-      const qty=Number(m[1]),unit=m[2].toLowerCase();
+      found=true; const qty=Number(m[1]),unit=m[2].toLowerCase();
       if(unit==="s"||unit==="p") packQty+=qty; else looseQty+=qty;
     }
   }
-
-  if(!found) return null;
+  if(!found || !Number.isInteger(looseQty)) return null;
   if(looseQty>0){
-    if(!(ps>0)) return null;
-    return packQty+(looseQty/ps);
+    if(!(ps>0) || !Number.isInteger(ps)) return null;
+    const units=packQty*ps+looseQty;
+    if(Math.abs(units-Math.round(units))>1e-9) return null;
+    return Math.round(units)/ps;
   }
+  if(ps>0 && Math.abs(packQty*ps-Math.round(packQty*ps))>1e-9) return null;
   return packQty;
 }
 
+function formatPharmacyQuantity(qty,packSize,packUom="Pack"){
+  const q=toNumber(qty),ps=toNumber(packSize);
+  if(q===null) return "—";
+  if(!(ps>0) || !Number.isInteger(ps)) return String(Number(q.toFixed(3)));
+  const units=Math.round(q*ps),packs=Math.floor(units/ps),loose=units%ps;
+  const u=String(packUom||"Pack").trim()||"Pack";
+  return loose===0 ? `${packs} ${u}${packs===1?"":"s"}` : `${packs} ${u}${packs===1?"":"s"} ${loose} Unit${loose===1?"":"s"}`;
+}
 function monthToDate(v){
   if(!v) return null;
   const [y,m]=v.split("-").map(Number);
@@ -172,7 +178,7 @@ function selectItem(r){
 
 function updateQtyPreview(){
   const qty=parsePharmacyQuantity($("physicalQty").value,toNumber($("packSize").value));
-  $("normalizedQty").textContent=qty===null?"—":Number(qty).toFixed(3);
+  $("normalizedQty").textContent=qty===null?"Invalid quantity":formatPharmacyQuantity(qty,toNumber($("packSize").value),$("packUom").value);
 }
 $("physicalQty").addEventListener("input",updateQtyPreview);
 $("packSize").addEventListener("input",updateQtyPreview);
@@ -182,7 +188,7 @@ $("countForm").addEventListener("submit",async e=>{
   const btn=$("saveCountButton");
   const qty=parsePharmacyQuantity($("physicalQty").value,toNumber($("packSize").value));
   if(qty===null){
-    toast("Quantity could not be converted. Add Pack Size when loose units are used.","error");
+    toast("Invalid quantity. Loose stock must resolve to a whole tablet/piece/unit. Example: 2Strip3Tablet.","error");
     return;
   }
   btn.disabled=true;btn.textContent="Saving...";
