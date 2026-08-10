@@ -3,20 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Medvika Audit Signup</title>
+  <title>Medvika Stock Audit — Free Pilot Signup</title>
   <link rel="stylesheet" href="./app.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .pilot-plan{
+      border:1px solid #bfe6ce;
+      background:linear-gradient(135deg,#f3fbf6,#eef8fb);
+      border-radius:18px;
+      padding:20px;
+      margin:16px 0 22px;
+    }
+    .pilot-plan-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+    .pilot-plan h3{margin:4px 0 5px;color:#0b3c5d}
+    .pilot-plan .free{font-size:24px;font-weight:800;color:#0b8f4d}
+    .pilot-pill{
+      display:inline-block;padding:5px 9px;border-radius:999px;background:#dff5e7;
+      color:#087a42;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase
+    }
+    .pilot-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:14px}
+    .pilot-features span{font-size:13px;color:#526774}
+    .pilot-features span:before{content:"✓";color:#0b8f4d;font-weight:800;margin-right:7px}
+    .paid-link{margin-top:12px;text-align:center;font-size:12px}
+    .success-box{
+      display:none;border:1px solid #bfe6ce;background:#f2fbf5;border-radius:14px;
+      padding:16px;margin-top:15px;color:#225a39;line-height:1.55
+    }
+    .success-box a{font-weight:700;color:#0b3c5d}
+    @media(max-width:600px){.pilot-features{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card hero">
       <img src="./logo.png?v=3" class="logo" alt="Medvika Healthcare Solutions">
-      <span class="eyebrow">Medvika Audit</span>
-      <h1>Start Your Stock Audit Workspace</h1>
-      <p class="muted">Submit your details and choose an audit access plan. Medvika will review your registration and contact you with payment details.</p>
+      <span class="eyebrow">Medvika Stock Audit</span>
+      <h1 id="pageTitle">Start Your Free Pilot Workspace</h1>
+      <p class="muted" id="pageIntro">
+        Create your account for Medvika's limited-period Stock Audit Pilot.
+        No package selection or online payment is required during the pilot.
+      </p>
     </div>
 
-    <div id="plans" class="plans"></div>
+    <div id="pilotPlan" class="pilot-plan">
+      <div class="pilot-plan-top">
+        <div>
+          <span class="pilot-pill">Limited-period pilot</span>
+          <h3>Free Pilot Access</h3>
+          <p class="muted" style="margin:0">Evaluate one complete self-managed pharmacy stock audit workflow.</p>
+        </div>
+        <div class="free">₹0</div>
+      </div>
+      <div class="pilot-features">
+        <span>1 audit project</span>
+        <span>Up to 2,000 stock lines</span>
+        <span>Current stock import</span>
+        <span>Smart quantity handling</span>
+        <span>Physical count workflow</span>
+        <span>Reconciliation included</span>
+        <span>Expiry / damage findings</span>
+        <span>Professional PDF report</span>
+      </div>
+    </div>
+
+    <div id="plans" class="plans" hidden></div>
 
     <div class="card">
       <form id="signupForm">
@@ -45,16 +95,34 @@
           <label>State
             <input id="state">
           </label>
-          <label class="span-2">Selected Plan
-            <select id="planCode" required>
+
+          <label id="paidPlanLabel" class="span-2" hidden>Selected Plan
+            <select id="planCode">
               <option value="">Loading plans...</option>
             </select>
           </label>
         </div>
 
-        <button id="submitBtn" class="btn primary" type="submit">Create Account & Submit Registration</button>
+        <input id="pilotPlanCode" type="hidden" value="FREE_PILOT">
+
+        <button id="submitBtn" class="btn primary" type="submit">Create Free Pilot Account</button>
         <p id="msg" class="muted"></p>
-        <p class="muted" style="font-size:13px">Your login is created securely in Supabase Auth. After Medvika verifies payment/activates access, use the same email and password in the Customer Portal.</p>
+
+        <div id="successBox" class="success-box">
+          <strong>Free Pilot registration received.</strong><br>
+          Your secure login and pilot request have been saved. Medvika will review and activate
+          your pilot access. Once activated, use the same email and password in the
+          <a href="../customer/">Customer Portal</a>.
+        </div>
+
+        <p id="pilotNote" class="muted" style="font-size:13px">
+          Free Pilot: 1 audit project, up to 2,000 stock lines. Medvika-managed professional
+          audits and larger projects are separate paid services.
+        </p>
+
+        <p class="paid-link">
+          <a href="?plans=1">View commercial audit packages</a>
+        </p>
       </form>
     </div>
   </div>
