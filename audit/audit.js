@@ -242,8 +242,12 @@ async function loadRecentCounts(){
     const physicalDisplay=pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack");
     const systemDisplay=(r.system_qty===null||r.system_qty===undefined)?"—":pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack");
     const varianceDisplay=(r.system_qty===null||r.system_qty===undefined)?"—":varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size);
-    return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(physicalDisplay)}</td><td>${esc(systemDisplay)}</td><td class="${cls}">${esc(varianceDisplay)}</td><td>${esc(r.count_status)}</td></tr>`;
-  }).join(""):'<tr><td colspan="7" class="empty">No count entries yet.</td></tr>';
+    return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(physicalDisplay)}</td><td>${esc(systemDisplay)}</td><td class="${cls}">${esc(varianceDisplay)}</td><td>${esc(r.count_status)}</td><td><button type="button" class="btn secondary admin-delete-count" data-id="${r.id}" data-item="${esc(r.item_name)}" data-batch="${esc(r.batch_no||"")}">Delete</button></td></tr>`;
+  }).join(""):'<tr><td colspan="8" class="empty">No count entries yet.</td></tr>';
+
+  $("recentCountBody").querySelectorAll(".admin-delete-count").forEach(btn=>{
+    btn.addEventListener("click",()=>deleteAdminCount(Number(btn.dataset.id),btn.dataset.item||"",btn.dataset.batch||""));
+  });
 
   $("mobileCountList").innerHTML=rows.length?rows.map(r=>{
     const physicalDisplay=pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack");
@@ -251,6 +255,104 @@ async function loadRecentCounts(){
     return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(physicalDisplay)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${varianceDisplay===null?"":` • Var: ${esc(varianceDisplay)}`}</p></div>`;
   }).join(""):'<div class="empty">No count entries yet.</div>';
 }
+
+async function deleteAdminCount(countId,itemName="",batchNo=""){
+  if(!currentAuditId||!countId) return;
+  const ok=window.confirm(
+    `Delete this physical count?\n\n${itemName}${batchNo?` • Batch ${batchNo}`:""}\n\n`+
+    `Current/System Stock and stock allocations will remain unchanged.`
+  );
+  if(!ok) return;
+
+  try{
+    // Remove any open recount generated for the same item/batch so the Exceptions page
+    // does not retain a stale recount after the source count is deleted.
+    let q=sb.from("medvika_audit_recounts").delete()
+      .eq("audit_id",currentAuditId)
+      .eq("item_name",itemName);
+    if(batchNo) q=q.eq("batch_no",batchNo);
+    await q;
+
+    const {error}=await sb.from("medvika_audit_count_lines")
+      .delete().eq("audit_id",currentAuditId).eq("id",countId);
+    if(error) throw error;
+
+    toast("Physical count deleted");
+    await Promise.all([loadDashboard(),loadRecentCounts(),loadExceptions(),loadReconciliation(),loadFinalReport()]);
+  }catch(err){
+    console.error("Delete count error:",err);
+    toast(err.message||"Unable to delete count","error");
+  }
+}
+
+async function clearAdminAllocations(){
+  if(!currentAuditId) return;
+  const label=await getCurrentAuditLabel();
+  const typed=window.prompt(
+    `Remove ALL stock allocations for ${label}?\n\nCurrent Stock and physical counts will remain.\n\nType CLEAR ALLOCATIONS to continue:`
+  );
+  if(String(typed||"").trim().toUpperCase()!=="CLEAR ALLOCATIONS"){
+    toast("Allocation reset cancelled");
+    return;
+  }
+
+  const btn=$("clearAdminAllocationsButton");
+  const msg=$("adminOpsMessage");
+  if(btn){btn.disabled=true;btn.textContent="Clearing...";}
+  try{
+    const {data,error,count}=await sb.from("medvika_audit_stock_allocations")
+      .delete({count:"exact"})
+      .eq("audit_id",currentAuditId)
+      .select("id");
+    if(error) throw error;
+    const n=Array.isArray(data)?data.length:(count||0);
+    if(msg) msg.textContent=`${n} stock allocation${n===1?"":"s"} cleared.`;
+    toast("Stock allocations cleared");
+  }catch(err){
+    if(msg) msg.textContent=err.message||"Unable to clear allocations.";
+    toast(err.message||"Unable to clear allocations","error");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="Clear Stock Allocations";}
+  }
+}
+
+async function setAdminAuditStatus(status){
+  if(!currentAuditId) return;
+  const label=await getCurrentAuditLabel();
+  const isClose=status==="closed";
+  const question=isClose
+    ? `Close / archive ${label}?\n\nThe audit data will be retained. The project status will become CLOSED.`
+    : `Re-open ${label}?\n\nThe project status will become IN PROGRESS.`;
+  if(!window.confirm(question)) return;
+
+  const btn=$(isClose?"closeAuditButton":"reopenAuditButton");
+  const msg=$("adminOpsMessage");
+  if(btn){btn.disabled=true;btn.textContent=isClose?"Closing...":"Re-opening...";}
+  try{
+    const {error}=await sb.from("medvika_audit_projects")
+      .update({status})
+      .eq("id",currentAuditId);
+    if(error) throw error;
+    if(msg) msg.textContent=isClose?"Audit closed/archived successfully.":"Audit re-opened successfully.";
+    toast(isClose?"Audit closed":"Audit re-opened");
+    await Promise.all([loadProjects(),loadProjectDetails(),loadDashboard(),loadFinalReport()]);
+    $("projectSelect").value=currentAuditId;
+  }catch(err){
+    if(msg) msg.textContent=err.message||"Unable to update audit status.";
+    toast(err.message||"Unable to update audit status","error");
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.textContent=isClose?"Close / Archive Audit":"Re-open Audit";
+    }
+  }
+}
+
+$("clearAdminAllocationsButton")?.addEventListener("click",clearAdminAllocations);
+$("reopenAuditButton")?.addEventListener("click",()=>setAdminAuditStatus("in_progress"));
+$("closeAuditButton")?.addEventListener("click",()=>setAdminAuditStatus("closed"));
+$("reloadAdminCountsButton")?.addEventListener("click",loadRecentCounts);
+
 
 function expiryMonthToDate(v){
   if(!v) return null;

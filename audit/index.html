@@ -114,7 +114,7 @@
           <div class="card-head"><h3>Recent Count Activity</h3><span id="recentActivityLabel">Latest entries</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Time</th><th>Item</th><th>Batch</th><th>Physical</th><th>System</th><th>Variance</th><th>Status</th></tr></thead>
+              <thead><tr><th>Time</th><th>Item</th><th>Batch</th><th>Physical</th><th>System</th><th>Variance</th><th>Status</th><th>Action</th></tr></thead>
               <tbody id="recentCountBody"></tbody>
             </table>
           </div>
@@ -431,7 +431,7 @@
                 <span>CSV or Excel · designed for 20,000+ current rows</span>
               </div>
             </div>
-            <p class="helper">Import the client's current stock before physical counting. The Smart Quantity Engine reads unambiguous pharmacy text such as <strong>2Strip10Tab</strong>, whole-pack quantities and smallest-unit stock. For plain decimals such as <strong>2.5</strong>, Medvika does not guess: choose once for the whole file whether the ERP means <strong>2 packs + 5 loose</strong> or <strong>2.5 true packs</strong>. Medvika then normalizes all rows automatically using Pack Size and shows a validation summary before import. <strong>No row-by-row correction is required.</strong> Purchase Rate is treated as Ex-GST cost.</p>
+            <p class="helper">Import the client's current stock before physical counting. Use one <strong>System Qty</strong> column. It accepts decimal quantities such as <strong>2.5</strong> and pharmacy-style quantities such as <strong>2Strip10Tab</strong>; Pack Size is used when loose units need conversion. The portal matches item code + batch, barcode + batch, then item name + batch. <strong>Purchase Rate is treated as Ex-GST cost.</strong> GST % is stored separately for reference and optional future GST-inclusive reporting.</p>
             <div class="import-options">
               <label>Import mode
                 <select id="systemImportMode">
@@ -454,7 +454,7 @@
                 <span>Match physical counts against system stock</span>
               </div>
             </div>
-            <p class="helper">Upload physical stock prepared in Excel/CSV. The same Smart Quantity Engine is used so one quantity rule can normalize the complete file. If an item/batch does not exist in current stock, it is flagged as <strong>Unlisted Excess</strong>.</p>
+            <p class="helper">Upload physical stock prepared in Excel/CSV. Use one <strong>Physical Qty</strong> column. It accepts decimal quantities such as <strong>2.5</strong> and pharmacy-style quantities such as <strong>2Strip10Tab</strong>. When loose units are included, <strong>Pack Size</strong> is used to convert them to decimal pack quantity automatically. If an item/batch does not exist in current stock, it is flagged as <strong>Unlisted Excess</strong>.</p>
             <div class="import-options">
               <label>Zone for imported counts
                 <select id="physicalImportZone"></select>
@@ -471,6 +471,39 @@
           </section>
         </div>
 
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h3>Admin Audit Operations</h3>
+              <span>Routine audit controls — no Supabase access required</span>
+            </div>
+          </div>
+          <p class="helper">
+            Use these controls for normal audit administration. They do not delete Current/System Stock unless you use the separate Imported Data Management section below.
+          </p>
+          <div class="delete-control-grid">
+            <div class="delete-control">
+              <strong>Stock Allocations</strong>
+              <span>Remove all medicine-to-team/zone allocations for the selected audit. Current Stock and physical counts stay intact.</span>
+              <button id="clearAdminAllocationsButton" type="button" class="btn secondary">Clear Stock Allocations</button>
+            </div>
+            <div class="delete-control">
+              <strong>Audit Lifecycle</strong>
+              <span>Close/archive a completed audit or reopen a closed audit for further work.</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button id="reopenAuditButton" type="button" class="btn secondary">Re-open Audit</button>
+                <button id="closeAuditButton" type="button" class="btn danger-btn">Close / Archive Audit</button>
+              </div>
+            </div>
+            <div class="delete-control">
+              <strong>Recent Count Cleanup</strong>
+              <span>Delete one incorrect/test count directly from Recent Count Activity using its Delete button. Current Stock and allocations remain.</span>
+              <button id="reloadAdminCountsButton" type="button" class="btn secondary">Reload Recent Counts</button>
+            </div>
+          </div>
+          <div id="adminOpsMessage" class="form-message"></div>
+        </section>
 
         <section class="card danger-zone-card">
           <div class="card-head">
@@ -514,6 +547,6 @@
     </main>
   </div>
 
-  <script src="./audit.js?v=qtyprofile3"></script>
+  <script src="./audit.js?v=admincontrols1"></script>
 </body>
 </html>
