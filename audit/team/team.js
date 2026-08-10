@@ -82,7 +82,7 @@ function showPortal(){
   login.style.display="none";
   portal.hidden=false;
   portal.style.display="block";
-  window.scrollTo({top:0,left:0,behavior:"auto"});
+  window.scrollTo({top:0,left:0,behavior:"instant"});
 }
 function showLogin(){
   const login=$("loginView"), portal=$("portal");
@@ -90,7 +90,7 @@ function showLogin(){
   portal.style.display="none";
   login.hidden=false;
   login.style.display="grid";
-  window.scrollTo({top:0,left:0,behavior:"auto"});
+  window.scrollTo({top:0,left:0,behavior:"instant"});
 }
 
 $("loginForm").addEventListener("submit",async e=>{
