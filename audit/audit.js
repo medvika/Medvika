@@ -238,18 +238,19 @@ async function createAdminZone(){
   const box=$("zoneCreateMessage");
   if(!name){ if(box) box.textContent="Enter Zone Name."; return; }
   try{
-    const next=(zones.length||0)+1;
-    const code=`Z${String(next).padStart(2,"0")}`;
-    const {error}=await sb.from("medvika_audit_zones").insert({
-      audit_id:currentAuditId,
-      zone_code:code,
-      zone_name:name,
-      category,
-      sequence_no:next,
-      status:"pending"
+    // Use the same controlled backend contract as the customer/admin portals.
+    // Direct INSERT is intentionally avoided because production RLS blocks it.
+    const project=projects.find(p=>p.id===currentAuditId);
+    if(!project?.client_id) throw new Error("Audit client could not be resolved. Refresh the audit and try again.");
+    const {error}=await sb.rpc("medvika_manage_zone",{
+      p_customer_id:project.client_id,
+      p_audit_id:currentAuditId,
+      p_zone_name:name,
+      p_category:category,
+      p_zone_id:null
     });
     if(error) throw error;
-    if(box) box.textContent=`${code} created successfully.`;
+    if(box) box.textContent=`${name} created successfully.`;
     $("newZoneName").value=""; $("newZoneCategory").value="";
     await loadZonesAndTeams();
   }catch(err){
@@ -2461,7 +2462,7 @@ async function loadFinalReport(){
   if(!currentAuditId || !$("reportView")) return;
 
   try{
-    const [projectRes,systemStock,counts,zoneRes,teamRes,allocationRes,signoff]=await Promise.all([
+    const [projectRes,systemStock,rawCounts,zoneRes,teamRes,allocationRes,signoff]=await Promise.all([
       sb.from("medvika_audit_projects")
         .select("*,medvika_audit_clients(client_name,business_name,contact_person)")
         .eq("id",currentAuditId).single(),
@@ -2479,7 +2480,7 @@ async function loadFinalReport(){
     if(allocationRes.error) console.warn("Allocation data could not load for zone completion chart:",allocationRes.error);
 
     const project=projectRes.data;
-    counts=enrichCountsWithRates(counts,systemStock);
+    const counts=enrichCountsWithRates(rawCounts,systemStock);
     const client=project.medvika_audit_clients?.business_name || project.medvika_audit_clients?.client_name || "Client";
     const recon=buildReportReconciliation(systemStock,counts);
 
