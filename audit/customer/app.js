@@ -137,9 +137,48 @@ async function loadTeams(){
 }
 $("addTeamBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb.rpc("medvika_create_customer_team",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_zone_id:$("teamZone").value,p_team_name:$("teamName").value,p_login_code:$("teamLoginCode").value,p_pin:$("teamPin").value,p_can_add_unlisted:$("allowUnlisted").checked});if(error){msg(error.message);return;}$("teamName").value="";$("teamLoginCode").value="";$("teamPin").value="";await loadTeams();};
 
+function toQtyNumber(v){
+  if(v===null||v===undefined||v==="") return null;
+  const n=Number(String(v).replace(/,/g,"").trim());
+  return Number.isFinite(n)?n:null;
+}
+function smallestUnitCount(qty,packSize){
+  const q=toQtyNumber(qty),ps=toQtyNumber(packSize);
+  if(q===null||!(ps>0)||!Number.isInteger(ps)) return null;
+  return Math.round(q*ps);
+}
+function pharmacyQtyDisplay(qty,packSize,packUom="Pack"){
+  const q=toQtyNumber(qty),ps=toQtyNumber(packSize);
+  if(q===null) return "—";
+  if(!(ps>0)||!Number.isInteger(ps)) return String(Number(q.toFixed(3)));
+  const units=Math.round(q*ps), abs=Math.abs(units);
+  const packs=Math.floor(abs/ps), loose=abs%ps, sign=units<0?"−":"";
+  const u=String(packUom||"Pack").trim()||"Pack";
+  if(packs===0&&loose>0) return `${sign}${loose} loose unit${loose===1?"":"s"}`;
+  if(loose===0) return `${sign}${packs} ${u}${packs===1?"":"s"}`;
+  return `${sign}${packs} ${u}${packs===1?"":"s"} + ${loose} loose`;
+}
+function varianceUnitDisplay(physicalQty,systemQty,packSize){
+  const p=smallestUnitCount(physicalQty,packSize),s=smallestUnitCount(systemQty,packSize);
+  if(p===null||s===null){
+    const a=toQtyNumber(physicalQty),b=toQtyNumber(systemQty);
+    if(a===null||b===null) return "—";
+    return String(Number((a-b).toFixed(3)));
+  }
+  const d=p-s;
+  if(d===0) return "0";
+  return `${d>0?"+":"−"}${Math.abs(d)} loose unit${Math.abs(d)===1?"":"s"}`;
+}
+
 async function loadRecon(){
  const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}reconRows=data||[];
- $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>`<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(r.system_qty)}</td><td>${esc(r.physical_qty)}</td><td>${esc(r.variance_qty)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`).join("")}</tbody></table></div>`;
+ $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>{
+    const ps=r.pack_size??null,u=r.pack_uom||"Pack";
+    const sys=pharmacyQtyDisplay(r.system_qty,ps,u);
+    const phy=pharmacyQtyDisplay(r.physical_qty,ps,u);
+    const variance=varianceUnitDisplay(r.physical_qty,r.system_qty,ps);
+    return `<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(sys)}</td><td>${esc(phy)}</td><td>${esc(variance)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`;
+  }).join("")}</tbody></table></div>`;
 }
 
 function cleanDisplayQty(v){
