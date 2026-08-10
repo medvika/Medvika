@@ -1,790 +1,350 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Medvika Stock Audit System</title>
-  <link rel="icon" href="./logo.png">
-  <link rel="stylesheet" href="./audit.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-<style>
-.executive-intelligence-card{overflow:hidden}
-.executive-score-wrap{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:center}
-.audit-score-hero{display:flex;align-items:center;gap:16px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eef9f6,#f8fbfc);border:1px solid #dbeceb}
-.score-ring{width:112px;height:112px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;background:conic-gradient(#0f8a78 0deg,#0f8a78 var(--scoredeg,0deg),#e6efef var(--scoredeg,0deg),#e6efef 360deg);position:relative;color:#15323d}
-.score-ring:before{content:"";position:absolute;width:86px;height:86px;border-radius:50%;background:white}
-.score-ring strong,.score-ring span{position:relative;z-index:1}
-.score-ring strong{font-size:30px;line-height:1}
-.score-ring span{font-size:12px;color:#6d7f84}
-.score-breakdown-grid{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:12px}
-.score-item{padding:14px;border:1px solid #e2ecee;border-radius:14px;background:#fff}
-.score-item span{display:block;color:#6d7f84;font-size:12px;margin-bottom:5px}
-.score-item strong{font-size:20px}
-.risk-positive{color:#087a5f}.risk-warn{color:#b76b00}.risk-negative{color:#b42318}
-.management-findings{display:grid;gap:10px}
-.finding-row{display:grid;grid-template-columns:90px 1fr;gap:12px;padding:14px;border:1px solid #e4ecee;border-radius:14px;background:#fff}
-.finding-priority{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-.finding-critical{color:#b42318}.finding-high{color:#b76b00}.finding-medium{color:#246a73}.finding-low{color:#087a5f}
-.finding-row h4{margin:0 0 4px}.finding-row p{margin:0;color:#60727a;font-size:13px}
-@media(max-width:900px){
- .executive-score-wrap{grid-template-columns:1fr}
- .score-breakdown-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-</style>
-
-
-<style>
-.mini-chart{display:grid;gap:12px;margin-top:10px}
-.chart-row{display:grid;grid-template-columns:minmax(110px,1.3fr) minmax(120px,3fr) auto;gap:10px;align-items:center}
-.chart-label{font-size:13px;color:#415d66}
-.chart-track{height:12px;border-radius:999px;background:#edf3f4;overflow:hidden}
-.chart-bar{height:100%;border-radius:999px;min-width:3px}
-.bar-shortage{background:#c0392b}.bar-excess{background:#d68b00}.bar-expired{background:#8e44ad}.bar-damaged{background:#d35400}.bar-near{background:#2b7a78}
-.chart-value{font-size:12px;font-weight:700;white-space:nowrap;color:#2d4650}
-.zone-chart-row{display:grid;grid-template-columns:minmax(110px,1.4fr) minmax(130px,3fr) 60px;gap:10px;align-items:center}
-.zone-progress-track{height:12px;border-radius:999px;background:#edf3f4;overflow:hidden}
-.zone-progress-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#0f8a78,#22aa90)}
-.zone-progress-bar.warn{background:linear-gradient(90deg,#d68b00,#f0b44d)}
-.zone-progress-bar.danger{background:linear-gradient(90deg,#b42318,#dc665d)}
-.chart-empty{padding:16px;border:1px dashed #ccdadd;border-radius:12px;color:#7b8d93;text-align:center}
-</style>
-
-<style>
-.stock-register-filters{grid-template-columns:2fr 1fr 130px;margin-bottom:14px}
-.stock-register-pager{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px}
-.stock-risk{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700}
-.stock-expired{background:#fde7e7;color:#a61b1b}.stock-near{background:#fff2d5;color:#986000}.stock-ok{background:#e7f6f1;color:#087a5f}
-.stock-no{color:#b42318;font-weight:700}.stock-yes{color:#087a5f;font-weight:700}
-@media(max-width:760px){.stock-register-filters{grid-template-columns:1fr}.stock-register-pager{justify-content:space-between}}
-</style></head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Medvika Audit Customer Portal</title>
+<link rel="icon" href="./logo.png">
+<link rel="stylesheet" href="./app.css?v=21">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+</head>
 <body>
-  <div id="toast" class="toast" aria-live="polite"></div>
+<div id="toastCustomer" class="customer-toast" aria-live="polite"></div>
 
-  <section id="loginView" class="login-view">
-    <div class="login-card">
-      <img src="./logo.png" alt="Medvika Healthcare Solutions" class="login-logo">
-      <span class="eyebrow">Secure Operations Portal</span>
-      <h1>Stock Audit System</h1>
-      <p>Private Medvika workspace for stock-count planning, live counting, verification and audit control.</p>
-      <form id="loginForm">
-        <label>Email
-          <input id="loginEmail" type="email" autocomplete="username" required placeholder="authorised email">
-        </label>
-        <label>Password
-          <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="password">
-        </label>
-        <button id="loginButton" type="submit" class="btn primary">Sign in</button>
-        <div id="loginMessage" class="form-message"></div>
-      </form>
+<section id="authCard" class="auth-shell">
+  <div class="auth-card">
+    <img src="./logo.png" class="auth-logo" alt="Medvika Healthcare Solutions">
+    <span class="eyebrow">Secure Customer Workspace</span>
+    <h1>Medvika Stock Audit Portal</h1>
+    <p class="muted">Manage your pharmacy audit, counting teams, stock allocation and reconciliation from one secure workspace.</p>
+    <div class="grid auth-grid">
+      <label>Email<input id="email" type="email" autocomplete="username" placeholder="Registered email"></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" placeholder="Password"></label>
     </div>
-  </section>
-
-  <div id="appShell" class="app-shell" hidden>
-    <aside class="sidebar">
-      <div class="brand-wrap">
-        <img src="./logo.png" alt="Medvika" class="brand-logo">
-        <div>
-          <strong>Stock Audit</strong>
-          <span>Operations System</span>
-        </div>
-      </div>
-      <nav class="nav">
-        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
-        <button class="nav-btn" data-view="count">Physical Count</button>
-        <button class="nav-btn" data-view="zones">Zones & Teams</button>
-        <button class="nav-btn" data-view="exceptions">Exceptions</button>
-        <button class="nav-btn" data-view="reconciliation">Reconciliation</button>
-        <button class="nav-btn" data-view="report">Final Report</button>
-        <button class="nav-btn" data-view="imports">Imports</button>
-        <button class="nav-btn" data-view="stockRegister">Current Stock</button>
-      </nav>
-      <div class="sidebar-footer">
-        <div id="signedInAs" class="signed-in"></div>
-        <button id="signOutButton" class="btn ghost">Sign out</button>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <span class="eyebrow">Medvika Healthcare Solutions</span>
-          <h2 id="viewTitle">Audit Dashboard</h2>
-        </div>
-        <div class="topbar-actions">
-          <select id="projectSelect" aria-label="Select audit project"></select>
-          <button id="refreshButton" class="btn secondary">Refresh</button>
-        </div>
-      </header>
-
-      <section id="dashboardView" class="view active">
-        <div class="project-hero">
-          <div>
-            <span id="projectCode" class="project-code">—</span>
-            <h3 id="projectName">Loading project…</h3>
-            <p id="projectMeta">—</p>
-          </div>
-          <span id="projectStatus" class="status-pill">—</span>
-        </div>
-
-        <div class="kpi-grid">
-          <article class="kpi"><span>Count Lines</span><strong id="kpiCount">0</strong><small>item + batch rows</small></article>
-          <article class="kpi"><span>Verified</span><strong id="kpiVerified">0</strong><small>verified lines</small></article>
-          <article class="kpi warning"><span>Recount</span><strong id="kpiRecount">0</strong><small>needs attention</small></article>
-          <article class="kpi danger"><span>Variance</span><strong id="kpiVariance">0</strong><small>system mismatch</small></article>
-          <article class="kpi danger"><span>Unlisted Excess</span><strong id="kpiExcess">0</strong><small>not in current stock</small></article>
-          <article class="kpi amber"><span>Expiry Flags</span><strong id="kpiExpiry">0</strong><small>expired + near expiry</small></article>
-          <article class="kpi"><span>Progress</span><strong id="kpiProgress">0%</strong><small>vs expected running items</small></article>
-        </div>
-
-        <div class="two-col">
-          <section class="card">
-            <div class="card-head"><h3>Zone Progress</h3><span>Live status</span></div>
-            <div id="zoneProgress" class="zone-list"></div>
-          </section>
-          <section class="card">
-            <div class="card-head"><h3>Audit Controls</h3><span>At a glance</span></div>
-            <div class="control-grid">
-              <div><span>Stock freeze</span><strong id="stockFreeze">—</strong></div>
-              <div><span>Batch-wise</span><strong id="batchWise">—</strong></div>
-              <div><span>Expiry-wise</span><strong id="expiryWise">—</strong></div>
-              <div><span>Client staff</span><strong id="clientStaff">—</strong></div>
-              <div><span>Medvika team</span><strong id="medvikaTeam">—</strong></div>
-              <div><span>Expected items</span><strong id="expectedItems">—</strong></div>
-              <div><span>Near-expiry rule</span><strong id="nearExpiryRule">—</strong></div>
-            </div>
-          </section>
-        </div>
-
-        <section class="card">
-          <div class="card-head"><h3>Recent Count Activity</h3><span id="recentActivityLabel">Latest entries</span></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Time</th><th>Item</th><th>Batch</th><th>Physical</th><th>System</th><th>Variance</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody id="recentCountBody"></tbody>
-            </table>
-          </div>
-        </section>
-      </section>
-
-      <section id="countView" class="view">
-        <div class="count-layout">
-          <section class="card sticky-form">
-            <div class="card-head">
-              <div><h3>New Physical Count</h3><span>One row = one item + one batch</span></div>
-            </div>
-            <form id="countForm" class="count-form">
-              <div class="form-grid">
-                <label>Zone *
-                  <select id="countZone" required></select>
-                </label>
-                <label>Team *
-                  <select id="countTeam" required></select>
-                </label>
-                <label class="span-2">Item / Product Name *
-                  <input id="itemName" type="text" required autocomplete="off" placeholder="e.g. Dolo 650">
-                </label>
-                <label>Item Code
-                  <input id="itemCode" type="text" autocomplete="off">
-                </label>
-                <label>Barcode
-                  <input id="barcode" type="text" inputmode="numeric" autocomplete="off">
-                </label>
-                <label>Batch No.
-                  <input id="batchNo" type="text" autocomplete="off">
-                </label>
-                <label>Expiry Date
-                  <input id="expiryDate" type="month">
-                </label>
-                <label>Pack / UOM
-                  <input id="packUom" type="text" placeholder="Strip / Bottle / Piece">
-                </label>
-                <label>Pack Size
-                  <input id="packSize" type="number" step="0.001" min="0" inputmode="decimal" placeholder="e.g. 10 tablets / strip">
-                </label>
-                <label>Full Pack Qty
-                  <input id="fullPackQty" type="number" step="0.001" min="0" inputmode="decimal" placeholder="Optional">
-                </label>
-                <label>Loose Qty
-                  <input id="looseQty" type="number" step="0.001" min="0" inputmode="decimal" placeholder="Optional loose units">
-                </label>
-                <label>Quantity Basis
-                  <select id="qtyBasis">
-                    <option value="decimal">Decimal quantity supplied</option>
-                    <option value="pack_loose">Pack + loose entry</option>
-                    <option value="base_unit">Base units</option>
-                  </select>
-                </label>
-                <div class="span-2 qty-preview" id="qtyPreview">
-                  <strong>Calculated Physical Qty:</strong> <span id="calculatedPhysicalQty">—</span>
-                </div>
-                <label>Physical Qty *
-                  <input id="physicalQty" type="number" step="0.001" min="0" required inputmode="decimal">
-                </label>
-                <label>System Qty
-                  <input id="systemQty" type="number" step="0.001" min="0" inputmode="decimal">
-                </label>
-                <label>Condition
-                  <select id="condition">
-                    <option value="saleable">Saleable</option>
-                    <option value="near_expiry">Near Expiry</option>
-                    <option value="expired">Expired</option>
-                    <option value="damaged">Damaged</option>
-                    <option value="other">Other</option>
-                  </select>
-                </label>
-                <label>Counted By
-                  <input id="countedBy" type="text" placeholder="Staff name">
-                </label>
-                <label class="span-2">Remarks
-                  <textarea id="remarks" rows="2" placeholder="Optional note"></textarea>
-                </label>
-              </div>
-              <button id="saveCountButton" type="submit" class="btn primary large">Save Count</button>
-              <p class="microcopy">Tip: keep the item name field focused after every save for faster mobile counting.</p>
-            </form>
-          </section>
-
-          <section class="card">
-            <div class="card-head"><h3>Latest Entries</h3><button id="reloadCountsButton" class="text-btn" type="button">Reload</button></div>
-            <div id="mobileCountList" class="mobile-count-list"></div>
-          </section>
-        </div>
-      </section>
-
-      
-      <section id="zonesView" class="view">
-        <div class="two-col">
-          <section class="card">
-            <div class="card-head"><h3>Zones</h3><span>Create and manage counting areas</span></div>
-            <div class="form-grid" style="margin-bottom:12px">
-              <label>Zone Name *
-                <input id="newZoneName" type="text" placeholder="e.g. A to M / Rack 1">
-              </label>
-              <label>Category
-                <input id="newZoneCategory" type="text" placeholder="Medicine / General">
-              </label>
-            </div>
-            <button id="createZoneButton" class="btn primary" type="button">Create Zone</button>
-            <div id="zoneCreateMessage" class="form-message"></div>
-            <div id="zonesTableWrap" class="table-wrap" style="margin-top:14px"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-head"><h3>Counting Teams</h3><span>Create team login before allocation</span></div>
-            <div class="form-grid">
-              <label>Team Name *
-                <input id="newTeamName" type="text" placeholder="Team 1">
-              </label>
-              <label>Assigned Zone *
-                <select id="newTeamZone"></select>
-              </label>
-              <label>Team Login Code *
-                <input id="newTeamLoginCode" type="text" placeholder="T01-Z1">
-              </label>
-              <label>PIN *
-                <input id="newTeamPin" type="password" inputmode="numeric" placeholder="4+ digits">
-              </label>
-            </div>
-            <label style="display:flex;gap:8px;align-items:center;margin:10px 0">
-              <input id="newTeamAllowUnlisted" type="checkbox" checked style="width:auto">
-              Allow unlisted physical items
-            </label>
-            <button id="createTeamButton" class="btn primary" type="button">Create Team & PIN</button>
-            <div id="teamCreateMessage" class="form-message"></div>
-            <div id="teamsTableWrap" class="table-wrap" style="margin-top:14px"></div>
-          </section>
-        </div>
-
-        <section class="card" style="margin-top:16px">
-          <div class="card-head">
-            <div><h3>Stock Allocation</h3><span>One Current Stock line can have only one active allocation</span></div>
-            <button id="repairAllocationButton" class="btn secondary" type="button">Repair Duplicate Allocations</button>
-          </div>
-          <p class="helper">
-            For separate teams, allocate A–M to one team and N–Z to another team.
-            Re-running the same range will replace that range's previous allocation instead of creating duplicates.
-          </p>
-          <div class="form-grid">
-            <label>Zone *<select id="allocationZone"></select></label>
-            <label>Team *<select id="allocationTeam"></select></label>
-            <label>Allocation Action
-              <select id="allocationMethod">
-                <option value="unallocated">Only currently unallocated stock</option>
-                <option value="replace">Reassign / replace selected range</option>
-              </select>
-            </label>
-            <label>Item name starts with
-              <select id="allocationLetterRange">
-                <option value="">All items</option>
-                <option value="A-M">A to M</option>
-                <option value="N-Z">N to Z</option>
-              </select>
-            </label>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-            <button id="previewAllocationButton" class="btn secondary" type="button">Preview Allocation</button>
-            <button id="allocateStockButton" class="btn primary" type="button">Allocate Stock</button>
-          </div>
-          <div id="allocationPreview" class="form-message" style="margin-top:10px"></div>
-          <div id="allocationSummaryWrap" class="table-wrap" style="margin-top:14px"></div>
-        </section>
-      </section>
-
-<section id="exceptionsView" class="view">
-        <section class="card">
-          <div class="card-head">
-            <div>
-              <h3>Expiry Classification Rule</h3>
-              <span>Automatically classifies stock from expiry date</span>
-            </div>
-          </div>
-          <div class="expiry-rule-row">
-            <label>Near-expiry window
-              <select id="expiryRuleDays">
-                <option value="30">30 days</option>
-                <option value="60">60 days</option>
-                <option value="90">90 days</option>
-                <option value="120">120 days</option>
-                <option value="180">180 days</option>
-                <option value="270">270 days</option>
-                <option value="365">365 days</option>
-              </select>
-            </label>
-            <button id="saveExpiryRuleButton" type="button" class="btn secondary">Save Rule</button>
-            <span class="helper">Expired = expiry date before audit date. Damaged stock must be marked during physical inspection or provided in the physical import file.</span>
-          </div>
-        </section>
-
-        <div class="two-col">
-          <section class="card">
-            <div class="card-head"><h3>Recount / Variance</h3><span>Open exceptions</span></div>
-            <div id="recountWrap" class="table-wrap"></div>
-          </section>
-          <section class="card">
-            <div class="card-head"><h3>Expiry / Damage</h3><span>Flagged count lines</span></div>
-            <div id="expiryWrap" class="table-wrap"></div>
-          </section>
-        </div>
-      </section>
-
-
-      <section id="reconciliationView" class="view">
-        <section class="card reconciliation-card">
-          <div class="card-head recon-head">
-            <div>
-              <h3>Complete Stock Reconciliation</h3>
-              <span>System stock vs physical stock · item + batch level</span>
-            </div>
-            <div class="recon-actions">
-              <button id="exportReconCsvButton" class="btn secondary" type="button">Export CSV</button>
-              <button id="exportReconExcelButton" class="btn primary" type="button">Export Excel</button>
-            </div>
-          </div>
-
-          <div class="recon-summary" id="reconSummary"></div>
-
-          <div class="recon-toolbar">
-            <label class="recon-search">
-              <span>Search</span>
-              <input id="reconSearch" type="search" placeholder="Item, code, batch...">
-            </label>
-            <label>
-              <span>Status</span>
-              <select id="reconStatusFilter">
-                <option value="all">All</option>
-                <option value="matched">Matched</option>
-                <option value="excess">Excess</option>
-                <option value="short">Short</option>
-                <option value="missing">Missing</option>
-                <option value="unlisted">Unlisted Excess</option>
-                <option value="recount">Recount</option>
-              </select>
-            </label>
-            <label>
-              <span>Category</span>
-              <select id="reconCategoryFilter">
-                <option value="all">All categories</option>
-              </select>
-            </label>
-            <label>
-              <span>Condition</span>
-              <select id="reconConditionFilter">
-                <option value="all">All conditions</option>
-                <option value="saleable">Saleable</option>
-                <option value="near_expiry">Near Expiry</option>
-                <option value="expired">Expired</option>
-                <option value="damaged">Damaged</option>
-              </select>
-            </label>
-            <button id="reloadReconButton" class="btn secondary" type="button">Reload</button>
-          </div>
-
-          <div class="table-wrap reconciliation-table-wrap">
-            <table class="reconciliation-table">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Item</th>
-                  <th>Code</th>
-                  <th>Batch</th>
-                  <th>Category</th>
-                  <th>Expiry</th>
-                  <th>Condition</th>
-                  <th>Purchase Rate<br>Ex-GST</th>
-                  <th>GST %</th>
-                  <th>System Qty</th>
-                  <th>Physical Qty</th>
-                  <th>Variance</th>
-                  <th>System Value</th>
-                  <th>Physical Value</th>
-                  <th>Variance Value</th>
-                  <th>Recount</th>
-                </tr>
-              </thead>
-              <tbody id="reconBody"></tbody>
-            </table>
-          </div>
-          <div id="reconFooter" class="recon-footer"></div>
-        </section>
-      </section>
-
-
-      <section id="reportView" class="view">
-        <section class="report-cover card">
-          <div class="report-brand">
-            <img src="./logo.png" alt="Medvika" class="report-logo">
-            <div>
-              <span class="eyebrow">Medvika Healthcare Solutions</span>
-              <h3>Stock Audit - Final Report</h3>
-              <p id="reportProjectMeta">Loading audit details...</p>
-            </div>
-            <span id="reportProjectStatus" class="status-pill">—</span>
-          </div>
-
-          <div class="report-actions">
-            <button id="refreshReportButton" type="button" class="btn secondary">Refresh Report</button>
-            <button id="exportReportExcelButton" type="button" class="btn secondary">Export Report Excel</button>
-            <button id="exportReportPdfButton" type="button" class="btn primary">Generate Client PDF</button>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <div><h3>Executive Audit Summary</h3><span>System stock vs physical stock</span></div>
-          </div>
-          <div id="reportReconSummary" class="report-stat-grid"></div>
-        </section>
-
-        <section class="card executive-intelligence-card">
-          <div class="card-head">
-            <div>
-              <h3>Executive Audit Scorecard</h3>
-              <span>Management-level view of audit quality and inventory risk</span>
-            </div>
-          </div>
-          <div class="executive-score-wrap">
-            <div class="audit-score-hero">
-              <div class="score-ring">
-                <strong id="auditHealthScore">—</strong>
-                <span>/100</span>
-              </div>
-              <div>
-                <span class="eyebrow">Audit Health</span>
-                <h4 id="auditHealthLabel">Calculating…</h4>
-                <p id="auditHealthNarrative" class="helper">Based on accuracy, execution completion and inventory risk.</p>
-              </div>
-            </div>
-            <div id="auditScoreBreakdown" class="score-breakdown-grid"></div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <div>
-              <h3>Financial Risk Dashboard</h3>
-              <span>Ex-GST inventory exposure and material risk concentration</span>
-            </div>
-          </div>
-          <div id="financialRiskCards" class="report-stat-grid"></div>
-          <div class="two-col" style="margin-top:16px">
-            <div>
-              <h4>Top Shortage Risks</h4>
-              <div id="topShortageRiskTable" class="table-wrap report-small-table"></div>
-            </div>
-            <div>
-              <h4>Top Excess Risks</h4>
-              <div id="topExcessRiskTable" class="table-wrap report-small-table"></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <div>
-              <h3>Management Findings & Recommended Actions</h3>
-              <span>Auto-generated from reconciliation, expiry, damage and execution data</span>
-            </div>
-          </div>
-          <div id="managementFindings" class="management-findings"></div>
-        </section>
-
-        <div class="two-col">
-          <section class="card">
-            <div class="card-head"><h3>Current Stock Expiry Exposure</h3><span>Based on book/system stock expiry</span></div>
-            <div id="reportSystemExpiry" class="report-stat-grid compact"></div>
-            <div id="reportSystemExpiryTable" class="table-wrap report-small-table"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-head"><h3>Physical Condition Findings</h3><span>Based on stock physically found</span></div>
-            <div id="reportPhysicalCondition" class="report-stat-grid compact"></div>
-            <div id="reportConditionTable" class="table-wrap report-small-table"></div>
-          </section>
-        </div>
-
-        <section class="card">
-          <div class="card-head">
-            <div><h3>Visual Risk Overview</h3><span>Management-ready financial exposure and audit execution charts</span></div>
-          </div>
-          <div class="two-col">
-            <div>
-              <h4>Inventory Risk by Value</h4>
-              <div id="financialImpactChart" class="mini-chart"></div>
-            </div>
-            <div>
-              <h4>Zone Completion</h4>
-              <div id="zoneCompletionChart" class="mini-chart"></div>
-            </div>
-          </div>
-        </section>
-
-        <div class="two-col">
-          <section class="card">
-            <div class="card-head"><h3>Zone / Team Completion</h3><span>Execution status</span></div>
-            <div id="reportZoneTable" class="table-wrap"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-head"><h3>Audit Sign-off Details</h3><span>Used in the client PDF</span></div>
-            <div class="report-form-grid">
-              <label>Medvika Audit Lead
-                <input id="reportLeadName" type="text" placeholder="Audit Lead">
-              </label>
-              <label>Client Representative
-                <input id="reportClientRep" type="text" placeholder="Client representative">
-              </label>
-              <label class="span-2">Medvika Observations
-                <textarea id="reportMedvikaRemarks" rows="5" placeholder="Key audit observations, control gaps and recommendations"></textarea>
-              </label>
-              <label class="span-2">Client Remarks
-                <textarea id="reportClientRemarks" rows="3" placeholder="Optional client remarks"></textarea>
-              </label>
-            </div>
-            <button id="saveReportRemarksButton" type="button" class="btn secondary">Save Report Details</button>
-          </section>
-        </div>
-
-        <section class="card">
-          <div class="card-head">
-            <div><h3>Material Exceptions</h3><span>All non-matched reconciliation items</span></div>
-          </div>
-          <div id="reportExceptionTable" class="table-wrap report-exception-table"></div>
-        </section>
-
-        <section class="card">
-          <div class="report-note">
-            <strong>Reporting basis:</strong>
-            Full item-and-batch reconciliation remains available through the Reconciliation Excel/CSV export.
-            The client PDF focuses on executive summary, material exceptions, expiry/damage findings,
-            audit execution status and management observations.
-          </div>
-        </section>
-      </section>
-
-      
-      <section id="stockRegisterView" class="view">
-        <section class="card">
-          <div class="card-head">
-            <div>
-              <h3>Current Stock Register</h3>
-              <span>Verify imported inventory without opening Supabase</span>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button id="refreshStockRegister" class="btn secondary" type="button">Refresh</button>
-              <button id="exportStockRegister" class="btn primary" type="button">Export CSV</button>
-            </div>
-          </div>
-
-          <div class="report-stat-grid compact" style="margin-bottom:14px">
-            <div class="report-stat"><span>Total Stock Lines</span><strong id="stockRegTotal">0</strong></div>
-            <div class="report-stat"><span>Unallocated</span><strong id="stockRegUnallocated">0</strong></div>
-            <div class="report-stat"><span>Missing Rate</span><strong id="stockRegMissingRate">0</strong></div>
-            <div class="report-stat"><span>Expiry Risk</span><strong id="stockRegExpiryRisk">0</strong></div>
-          </div>
-
-          <div class="import-options stock-register-filters">
-            <label>Search
-              <input id="stockRegSearch" type="search" placeholder="Medicine, code, barcode or batch">
-            </label>
-            <label>Filter
-              <select id="stockRegRisk">
-                <option value="">All stock</option>
-                <option value="unallocated">Unallocated</option>
-                <option value="missing_rate">Missing purchase rate</option>
-                <option value="expired">Expired</option>
-                <option value="near_expiry">Near expiry</option>
-              </select>
-            </label>
-            <label>Rows
-              <select id="stockRegPageSize">
-                <option value="50">50</option>
-                <option value="100" selected>100</option>
-                <option value="250">250</option>
-              </select>
-            </label>
-          </div>
-
-          <div id="stockRegStatus" class="form-message"></div>
-          <div id="stockRegisterTable" class="table-wrap"></div>
-          <div class="stock-register-pager">
-            <button id="stockRegPrev" class="btn secondary" type="button">Previous</button>
-            <span id="stockRegPageInfo">Page 1</span>
-            <button id="stockRegNext" class="btn secondary" type="button">Next</button>
-          </div>
-        </section>
-      </section>
-
-<section id="importsView" class="view">
-        <div class="import-grid">
-          <section class="card">
-            <div class="card-head">
-              <div>
-                <h3>1. System Stock / Current Inventory Import</h3>
-                <span>CSV or Excel · designed for 20,000+ current rows</span>
-              </div>
-            </div>
-            <p class="helper">Import the client's current stock before physical counting. Use one <strong>System Qty</strong> column. It accepts decimal quantities such as <strong>2.5</strong> and pharmacy-style quantities such as <strong>2Strip10Tab</strong>; Pack Size is used when loose units need conversion. The portal matches item code + batch, barcode + batch, then item name + batch. <strong>Purchase Rate is treated as Ex-GST cost.</strong> GST % is stored separately for reference and optional future GST-inclusive reporting.</p>
-            <div class="import-options">
-              <label>Import mode
-                <select id="systemImportMode">
-                  <option value="replace">Replace current project stock</option>
-                  <option value="append">Append to existing stock</option>
-                </select>
-              </label>
-              <label>Choose CSV / Excel
-                <input id="systemStockFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
-              </label>
-            </div>
-            <button id="previewSystemButton" class="btn secondary" type="button">Preview & Map Columns</button>
-            <div id="systemImportArea"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-head">
-              <div>
-                <h3>2. Physical Quantity Import</h3>
-                <span>Match physical counts against system stock</span>
-              </div>
-            </div>
-            <p class="helper">Upload physical stock prepared in Excel/CSV. Use one <strong>Physical Qty</strong> column. It accepts decimal quantities such as <strong>2.5</strong> and pharmacy-style quantities such as <strong>2Strip10Tab</strong>. When loose units are included, <strong>Pack Size</strong> is used to convert them to decimal pack quantity automatically. If an item/batch does not exist in current stock, it is flagged as <strong>Unlisted Excess</strong>.</p>
-            <div class="import-options">
-              <label>Zone for imported counts
-                <select id="physicalImportZone"></select>
-              </label>
-              <label>Team for imported counts
-                <select id="physicalImportTeam"></select>
-              </label>
-              <label>Choose CSV / Excel
-                <input id="physicalCountFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
-              </label>
-            </div>
-            <button id="previewPhysicalButton" class="btn secondary" type="button">Preview & Match</button>
-            <div id="physicalImportArea"></div>
-          </section>
-        </div>
-
-
-        <section class="card">
-          <div class="card-head">
-            <div>
-              <h3>Admin Audit Operations</h3>
-              <span>Routine audit controls — no Supabase access required</span>
-            </div>
-          </div>
-          <p class="helper">
-            Use these controls for normal audit administration. They do not delete Current/System Stock unless you use the separate Imported Data Management section below.
-          </p>
-          <div class="delete-control-grid">
-            <div class="delete-control">
-              <strong>Stock Allocations</strong>
-              <span>Remove all medicine-to-team/zone allocations for the selected audit. Current Stock and physical counts stay intact.</span>
-              <button id="clearAdminAllocationsButton" type="button" class="btn secondary">Clear Stock Allocations</button>
-            </div>
-            <div class="delete-control">
-              <strong>Audit Lifecycle</strong>
-              <span>Close/archive a completed audit or reopen a closed audit for further work.</span>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button id="reopenAuditButton" type="button" class="btn secondary">Re-open Audit</button>
-                <button id="closeAuditButton" type="button" class="btn danger-btn">Close / Archive Audit</button>
-              </div>
-            </div>
-            <div class="delete-control">
-              <strong>Recent Count Cleanup</strong>
-              <span>Delete one incorrect/test count directly from Recent Count Activity using its Delete button. Current Stock and allocations remain.</span>
-              <button id="reloadAdminCountsButton" type="button" class="btn secondary">Reload Recent Counts</button>
-            </div>
-          </div>
-          <div id="adminOpsMessage" class="form-message"></div>
-        </section>
-
-        <section class="card danger-zone-card">
-          <div class="card-head">
-            <div>
-              <h3>Imported Data Management</h3>
-              <span>Applies only to the currently selected audit project</span>
-            </div>
-          </div>
-          <p class="helper">
-            Use these controls only when a wrong file was imported or while resetting test data.
-            Client, audit project, zones and teams are not deleted.
-          </p>
-          <div class="delete-control-grid">
-            <div class="delete-control">
-              <strong>Physical Count Data</strong>
-              <span>Deletes physical count rows, recounts and physical-import history. Current/System Stock is retained.</span>
-              <button id="deletePhysicalDataButton" type="button" class="btn danger-btn">Delete Physical Count Data</button>
-            </div>
-
-            <div class="delete-control">
-              <strong>Current/System Stock Data</strong>
-              <span>Deletes imported current-stock master and its import history. Physical counts must be deleted first.</span>
-              <button id="deleteSystemDataButton" type="button" class="btn danger-btn">Delete Current Stock Data</button>
-            </div>
-
-            <div class="delete-control reset-control">
-              <strong>Reset Audit Imported Data</strong>
-              <span>Deletes both Current/System Stock and Physical Count data for this audit while keeping the audit project, zones and teams.</span>
-              <button id="resetAuditDataButton" type="button" class="btn danger-btn strong-danger">Reset Imported Audit Data</button>
-            </div>
-          </div>
-          <div id="deleteDataMessage" class="form-message"></div>
-        </section>
-
-        <section class="card">
-          <div class="card-head"><h3>Import History</h3><button id="reloadImportsButton" class="text-btn" type="button">Reload</button></div>
-          <div id="importHistoryWrap" class="table-wrap"></div>
-        </section>
-      </section>
-
-    </main>
+    <div class="actions">
+      <button id="loginBtn" class="btn primary" type="button">Sign In</button>
+      <a class="btn secondary" href="../signup/" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">New Customer Signup</a>
+      <button id="forgotBtn" class="btn link-btn" type="button">Forgot Password?</button>
+    </div>
+    <p id="authMsg" class="muted"></p>
   </div>
+</section>
 
-  <script src="./audit.js?v=12"></script>
+<section id="recoveryCard" class="auth-shell" hidden>
+  <div class="auth-card">
+    <img src="./logo.png" class="auth-logo" alt="Medvika">
+    <span class="eyebrow">Account Recovery</span>
+    <h2>Set New Password</h2>
+    <div class="grid auth-grid">
+      <label>New Password<input id="newPassword" type="password" minlength="6"></label>
+      <label>Confirm Password<input id="confirmPassword" type="password" minlength="6"></label>
+    </div>
+    <div class="actions">
+      <button id="savePasswordBtn" class="btn primary" type="button">Save New Password</button>
+      <button id="cancelRecoveryBtn" class="btn secondary" type="button">Cancel</button>
+    </div>
+    <p id="recoveryMsg" class="muted"></p>
+  </div>
+</section>
+
+<div id="workspace" class="portal-shell" hidden>
+  <aside class="portal-sidebar">
+    <div class="portal-brand">
+      <img src="./logo.png" alt="Medvika">
+      <div><strong>Stock Audit</strong><span>Customer Portal</span></div>
+    </div>
+
+    <nav class="portal-nav" aria-label="Customer audit navigation">
+      <button class="portal-nav-btn active" data-customer-view="dashboard">Dashboard</button>
+      <button class="portal-nav-btn" data-customer-view="setup">Teams & Zones</button>
+      <button class="portal-nav-btn" data-customer-view="stock">Stock Allocation</button>
+      <button class="portal-nav-btn" data-customer-view="imports">Imports</button>
+      <button class="portal-nav-btn" data-customer-view="currentStock">Current Stock</button>
+      <button class="portal-nav-btn" data-customer-view="counts">Physical Counts</button>
+      <button class="portal-nav-btn" data-customer-view="reconciliation">Reconciliation</button>
+      <button class="portal-nav-btn" data-customer-view="report">Final Report</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span id="sidebarAccess">Secure access</span>
+      <button id="logoutBtn" class="btn sidebar-signout" hidden>Sign out</button>
+    </div>
+  </aside>
+
+  <main class="portal-main">
+    <header class="portal-header">
+      <div>
+        <span class="eyebrow">Medvika Healthcare Solutions</span>
+        <h1 id="customerViewTitle">Audit Dashboard</h1>
+      </div>
+      <div class="portal-header-actions">
+        <select id="customerAuditSelect" aria-label="Selected audit">
+          <option value="">Select audit</option>
+        </select>
+        <a href="/audit/team/" target="_blank" rel="noopener" class="btn secondary">Open Team Portal</a>
+      </div>
+    </header>
+
+    <div id="accessBanner" class="access-strip"></div>
+
+    <section id="dashboardView" class="customer-view active">
+      <div class="section-toolbar">
+        <div><span class="eyebrow">My Workspace</span><h2>Audits</h2></div>
+        <button id="newAuditBtn" type="button" class="btn primary">Create Audit</button>
+      </div>
+      <div id="auditList" class="audit-list"></div>
+
+      <div id="auditPanel" hidden>
+        <section class="hero-card">
+          <div>
+            <span class="eyebrow">Selected Audit</span>
+            <h2 id="auditTitle">—</h2>
+            <p class="muted">Live audit progress and key findings.</p>
+          </div>
+          <button class="btn secondary customer-go" data-go="setup">Manage Setup</button>
+        </section>
+        <div id="summaryGrid" class="summary-grid dashboard-kpis"></div>
+
+        <div class="dashboard-grid">
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Next Steps</span><h3>Audit Workflow</h3></div></div>
+            <div class="workflow-list">
+              <button class="workflow-step customer-go" data-go="setup"><strong>1. Teams & Zones</strong><span>Create counting areas and secure team logins.</span></button>
+              <button class="workflow-step customer-go" data-go="imports"><strong>2. Import Current Stock</strong><span>Upload and map CSV / Excel stock data.</span></button>
+              <button class="workflow-step customer-go" data-go="currentStock"><strong>3. Verify Current Stock</strong><span>Confirm item, batch, expiry, quantity and valuation inputs.</span></button>
+              <button class="workflow-step customer-go" data-go="stock"><strong>4. Allocate Stock</strong><span>Assign current stock to the correct zone and counting team.</span></button>
+              <button class="workflow-step customer-go" data-go="counts"><strong>5. Physical Counting</strong><span>Track submitted counts and correct test entries.</span></button>
+              <button class="workflow-step customer-go" data-go="reconciliation"><strong>6. Reconciliation</strong><span>Review missing, short and excess inventory.</span></button>
+              <button class="workflow-step customer-go" data-go="report"><strong>7. Final Report</strong><span>Review the client-safe summary and export results.</span></button>
+            </div>
+          </section>
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Audit Guidance</span><h3>Before Counting</h3></div></div>
+            <div class="guidance-list">
+              <p>✓ Freeze stock movement during the physical count.</p>
+              <p>✓ Verify team allocation before counters begin.</p>
+              <p>✓ Count batch and expiry separately where applicable.</p>
+              <p>✓ Review shortages/excesses before final sign-off.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="setupView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Audit Setup</span><h2>Teams & Zones</h2><p>Create controlled counting zones and team credentials before allocating stock.</p></div>
+      <div class="grid-two">
+        <section class="card">
+          <div class="section-head"><div><h3>Zones</h3><span class="muted">Counting areas / sections</span></div></div>
+          <div class="grid"><label>Zone Name<input id="zoneName" placeholder="A to M / Rack 1"></label><label>Category<input id="zoneCategory" placeholder="Medicine"></label></div>
+          <button id="addZoneBtn" type="button" class="btn primary">Add Zone</button>
+          <div id="zoneList" class="spaced-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head"><div><h3>Counting Teams</h3><span class="muted">Secure counting access</span></div></div>
+          <div class="grid">
+            <label>Team Name<input id="teamName" placeholder="Team 1"></label>
+            <label>Zone<select id="teamZone"></select></label>
+            <label>Team Login Code<input id="teamLoginCode" placeholder="T01-Z1"></label>
+            <label>PIN<input id="teamPin" type="password" inputmode="numeric" placeholder="4+ digits"></label>
+          </div>
+          <label class="check-line"><input id="allowUnlisted" type="checkbox" checked> Allow unlisted physical items</label>
+          <button id="addTeamBtn" type="button" class="btn primary">Create Team & PIN</button>
+          <div id="teamList" class="spaced-list"></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="stockView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Work Allocation</span><h2>Stock Allocation</h2><p>Assign Current Stock to zones and counting teams. Preview only shows the eligible line count, keeping this page compact like the admin workspace.</p></div>
+
+      <section id="allocationPanel" class="card admin-like-card">
+        <div class="section-head">
+          <div><h3>Allocate Current Stock</h3><span class="muted">One Current Stock line should have one active allocation.</span></div>
+          <button id="reloadAllocation" type="button" class="btn secondary">Reload Summary</button>
+        </div>
+        <div class="allocation-grid allocation-grid-admin">
+          <label>Zone *<select id="allocationZone"></select></label>
+          <label>Team *<select id="allocationTeam"></select></label>
+          <label>Allocation Method<select id="allocationMode">
+            <option value="alphabet">Alphabetical Item Name Range</option>
+            <option value="category">Category</option>
+            <option value="manufacturer">Manufacturer</option>
+            <option value="item_code_range">Item Code Range</option>
+            <option value="unallocated">All Currently Unallocated</option>
+            <option value="all">All Current Stock</option>
+          </select></label>
+          <label id="allocationValue1Label">From<input id="allocationValue1" placeholder="A"></label>
+          <label id="allocationValue2Label">To<input id="allocationValue2" placeholder="M"></label>
+        </div>
+        <div class="allocation-actions">
+          <button id="previewAllocation" class="btn secondary">Preview Allocation</button>
+          <button id="applyAllocation" class="btn primary">Allocate Stock</button>
+        </div>
+        <div id="allocationPreview" class="allocation-status muted">Select Zone, Team and a rule, then preview before allocating.</div>
+      </section>
+
+      <section class="card admin-like-card">
+        <div class="section-head"><div><h3>Allocation Summary</h3><span class="muted">Current active allocation by zone and team.</span></div></div>
+        <div id="allocationSummary" class="table-wrap allocation-summary-wrap"></div>
+      </section>
+    </section>
+
+    <section id="importsView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Stock Preparation</span><h2>Imports</h2><p>Import Current/System Stock here. Physical Count file is optional when teams count through the Team Portal.</p></div>
+      <section id="unifiedImportPanel" class="card admin-like-card">
+        <div class="section-head">
+          <div><span class="eyebrow">Single Source of Truth</span><h3>Stock Imports</h3></div>
+          <button id="reloadUnifiedImports" type="button" class="btn secondary">Reload History</button>
+        </div>
+        <div class="grid-two import-grid-admin">
+          <div class="import-box">
+            <h3>1. Current / System Stock</h3>
+            <label>Import Mode<select id="unifiedSystemMode"><option value="replace">Replace Current Stock</option><option value="append">Append to Current Stock</option></select></label>
+            <label>Choose CSV / Excel<input id="unifiedSystemFile" type="file" accept=".csv,.xlsx,.xls"></label>
+            <button id="previewUnifiedSystem" type="button" class="btn secondary">Preview & Map Columns</button>
+            <div id="unifiedSystemArea"></div>
+          </div>
+          <div class="import-box">
+            <h3>2. Physical Count File <span class="muted">(Optional)</span></h3>
+            <label>Import Mode<select id="unifiedPhysicalMode"><option value="append">Add to Existing Physical Counts</option><option value="replace">Replace Existing Physical Counts</option></select></label>
+            <div class="grid"><label>Zone<select id="unifiedPhysicalZone"></select></label><label>Team<select id="unifiedPhysicalTeam"></select></label></div>
+            <label>Choose CSV / Excel<input id="unifiedPhysicalFile" type="file" accept=".csv,.xlsx,.xls"></label>
+            <button id="previewUnifiedPhysical" type="button" class="btn secondary">Preview & Match</button>
+            <div id="unifiedPhysicalArea"></div>
+          </div>
+        </div>
+      </section>
+      <section class="card admin-like-card">
+        <div class="section-head"><div><h3>Import History</h3><span class="muted">Recent Current Stock and Physical Count imports. Individual test/wrong imports can be removed here.</span></div></div>
+        <div id="unifiedImportHistory" class="table-wrap import-history-wrap"></div>
+      </section>
+
+      <section class="card data-controls-card">
+        <div class="section-head"><div><span class="eyebrow">Audit Data Controls</span><h3>Delete / Reset Imported Data</h3><span class="muted">These controls affect only the selected audit. Audit project, zones and teams are retained.</span></div></div>
+        <div class="data-control-actions">
+          <button id="deletePhysicalDataButton" class="btn danger-soft" type="button">Delete Physical Count Data</button>
+          <button id="deleteSystemDataButton" class="btn danger-soft" type="button">Delete Current Stock Data</button>
+          <button id="resetAuditDataButton" class="btn danger-btn" type="button">Reset Imported Audit Data</button>
+        </div>
+        <p id="deleteDataMessage" class="muted"></p>
+      </section>
+    </section>
+
+    <section id="currentStockView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Current Inventory</span><h2>Current Stock Register</h2><p>Read-only view of the stock imported for this audit. Verify item, batch, expiry, quantity and valuation inputs before physical counting.</p></div>
+      <section class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">System Stock</span><h3>Imported Stock Lines</h3></div>
+          <div class="report-actions">
+            <button id="reloadCurrentStock" class="btn secondary" type="button">Reload</button>
+            <button id="exportCurrentStock" class="btn secondary" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="summary-grid stock-register-kpis">
+          <div class="stat"><span>Total Lines</span><strong id="currentStockTotal">0</strong></div>
+          <div class="stat"><span>Total Qty</span><strong id="currentStockQty">0</strong></div>
+          <div class="stat"><span>Expired</span><strong id="currentStockExpired">0</strong></div>
+          <div class="stat"><span>Near Expiry</span><strong id="currentStockNear">0</strong></div>
+        </div>
+        <div class="recon-tools">
+          <input id="currentStockSearch" type="search" placeholder="Search item, code, barcode or batch">
+          <select id="currentStockRisk">
+            <option value="">All stock</option>
+            <option value="expired">Expired</option>
+            <option value="near">Near expiry (180 days)</option>
+            <option value="missing_rate">Missing purchase rate</option>
+          </select>
+          <select id="currentStockPageSize">
+            <option value="25">25 rows</option><option value="50" selected>50 rows</option><option value="100">100 rows</option>
+          </select>
+        </div>
+        <p id="currentStockStatus" class="muted">Select an audit to load current stock.</p>
+        <div id="currentStockTable"></div>
+        <div class="pager">
+          <button id="currentStockPrev" class="btn secondary" type="button">Previous</button>
+          <span id="currentStockPageInfo">Page 1</span>
+          <button id="currentStockNext" class="btn secondary" type="button">Next</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="countsView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Physical Counting</span><h2>Count Activity & Controls</h2><p>Review submitted counts and remove incorrect/test entries without changing Current Stock.</p></div>
+      <section class="card data-controls-card">
+        <div class="section-head">
+          <div><span class="eyebrow">Audit Data Controls</span><h3>Counts & Allocations</h3></div>
+          <button id="reloadCustomerCounts" class="btn secondary" type="button">Reload</button>
+        </div>
+        <div class="data-control-actions">
+          <button id="clearAllCountsBtn" class="btn danger-soft" type="button">Clear All Physical Counts</button>
+          <button id="clearAllocationsBtn" class="btn danger-soft" type="button">Clear Stock Allocations</button>
+          <button id="resetCountingBtn" class="btn danger-btn" type="button">Reset Counts + Allocations</button>
+        </div>
+        <h3>Recent Physical Counts</h3>
+        <div id="customerRecentCounts"></div>
+      </section>
+    </section>
+
+    <section id="reconciliationView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Reconciliation</span><h2>Inventory Differences</h2><p>Search and review differences without rendering the entire stock file on one screen.</p></div>
+      <section class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">Material Reconciliation</span><h3>Findings</h3></div>
+          <button id="exportCsvBtn" class="btn secondary">Export Full CSV</button>
+        </div>
+        <div class="recon-tools">
+          <input id="reconSearch" type="search" placeholder="Search item, batch or finding">
+          <select id="reconFindingFilter">
+            <option value="">All findings</option><option value="Matched">Matched</option><option value="Short">Short</option><option value="Excess">Excess</option><option value="Missing">Missing</option><option value="Unlisted">Unlisted</option>
+          </select>
+        </div>
+        <div id="reconTable"></div>
+        <div class="pager">
+          <button id="reconPrev" class="btn secondary" type="button">Previous</button>
+          <span id="reconPageInfo">Page 1</span>
+          <button id="reconNext" class="btn secondary" type="button">Next</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="reportView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Final Report</span><h2>Customer Audit Report</h2><p>Executive summary for client review. Full item-level detail remains available as CSV.</p></div>
+      <section class="card" id="customerFinalReport">
+        <div class="section-head">
+          <div><span class="eyebrow">Client-safe Report</span><h3>Audit Summary</h3></div>
+          <div class="report-actions">
+            <button id="generateCustomerReportPdfBtn" class="btn primary" type="button">Generate Client PDF</button>
+            <button id="exportCustomerReportBtn" class="btn secondary" type="button">Export Full Report CSV</button>
+          </div>
+        </div>
+        <div id="customerReportBody"><p class="muted">Select an audit to load the report.</p></div>
+      </section>
+    </section>
+
+    <p id="msg" class="portal-message"></p>
+  </main>
+</div>
+
+<div id="modal" class="modal" hidden><div class="modal-card">
+  <h3>Create New Audit</h3>
+  <div class="grid">
+    <label>Audit Name<input id="newAuditName" placeholder="Main Store Stock Audit"></label>
+    <label>Location<input id="newAuditLocation"></label>
+    <label>Audit Date<input id="newAuditDate" type="date"></label>
+    <label>Expected Running Items<input id="newAuditItems" type="number" value="20000"></label>
+  </div>
+  <div class="actions"><button id="cancelModal" type="button" class="btn secondary">Cancel</button><button id="createAuditConfirm" type="button" class="btn primary">Create Audit</button></div>
+</div></div>
+
+<script src="./allocation.js?v=20"></script>
+<script src="./importer.js?v=30"></script>
+<script src="./app.js?v=31"></script>
 </body>
 </html>
