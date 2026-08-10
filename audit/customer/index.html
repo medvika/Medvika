@@ -220,8 +220,18 @@
         </div>
       </section>
       <section class="card admin-like-card">
-        <div class="section-head"><div><h3>Import History</h3><span class="muted">Recent Current Stock and Physical Count imports.</span></div></div>
+        <div class="section-head"><div><h3>Import History</h3><span class="muted">Recent Current Stock and Physical Count imports. Individual test/wrong imports can be removed here.</span></div></div>
         <div id="unifiedImportHistory" class="table-wrap import-history-wrap"></div>
+      </section>
+
+      <section class="card data-controls-card">
+        <div class="section-head"><div><span class="eyebrow">Audit Data Controls</span><h3>Delete / Reset Imported Data</h3><span class="muted">These controls affect only the selected audit. Audit project, zones and teams are retained.</span></div></div>
+        <div class="data-control-actions">
+          <button id="deletePhysicalDataButton" class="btn danger-soft" type="button">Delete Physical Count Data</button>
+          <button id="deleteSystemDataButton" class="btn danger-soft" type="button">Delete Current Stock Data</button>
+          <button id="resetAuditDataButton" class="btn danger-btn" type="button">Reset Imported Audit Data</button>
+        </div>
+        <p id="deleteDataMessage" class="muted"></p>
       </section>
     </section>
 
@@ -332,7 +342,7 @@
 </div></div>
 
 <script src="./allocation.js?v=20"></script>
-<script src="./importer.js?v=20"></script>
-<script src="./app.js?v=21"></script>
+<script src="./importer.js?v=30"></script>
+<script src="./app.js?v=30"></script>
 </body>
 </html>

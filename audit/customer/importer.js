@@ -224,12 +224,25 @@ function installUnifiedImporter(ctx){
     if(!$("unifiedImportHistory")||!getAuditId())return;
     const {data,error}=await sb.rpc("medvika_customer_import_history",{p_audit_id:getAuditId()});
     if(error){$("unifiedImportHistory").innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
-    const rs=data||[];$("unifiedImportHistory").innerHTML=rs.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Type</th><th>File</th><th>Rows</th><th>Inserted</th><th>Matched</th><th>Unlisted</th><th>Status</th></tr></thead><tbody>${rs.map(r=>`<tr><td>${esc(new Date(r.created_at).toLocaleString("en-IN"))}</td><td>${esc(r.import_type)}</td><td>${esc(r.file_name||"")}</td><td>${r.total_rows}</td><td>${r.inserted_rows}</td><td>${r.matched_rows}</td><td>${r.unmatched_rows}</td><td>${esc(r.status)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="muted">No imports yet.</p>';
+    const rs=data||[];$("unifiedImportHistory").innerHTML=rs.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Type</th><th>File</th><th>Rows</th><th>Inserted</th><th>Matched</th><th>Unlisted</th><th>Status</th><th>Action</th></tr></thead><tbody>${rs.map(r=>`<tr><td>${esc(new Date(r.created_at).toLocaleString("en-IN"))}</td><td>${esc(r.import_type)}</td><td>${esc(r.file_name||"")}</td><td>${r.total_rows}</td><td>${r.inserted_rows}</td><td>${r.matched_rows}</td><td>${r.unmatched_rows}</td><td>${esc(r.status)}</td><td><button class="btn danger-soft delete-import-job" type="button" data-job-id="${esc(r.id)}" data-import-type="${esc(r.import_type)}" data-file="${esc(r.file_name||"")}">Delete Import</button></td></tr>`).join("")}</tbody></table></div>`:'<p class="muted">No imports yet.</p>';
+    $("unifiedImportHistory").querySelectorAll(".delete-import-job").forEach(b=>b.onclick=async()=>{
+      const label=b.dataset.file||b.dataset.importType||"this import";
+      if(!confirm(`Delete ${label}?\n\nOnly rows created by this import job will be removed. This cannot be undone.`))return;
+      b.disabled=true;b.textContent="Deleting…";
+      try{
+        const {data,error}=await sb.rpc("medvika_customer_delete_import_job",{p_audit_id:getAuditId(),p_job_id:b.dataset.jobId});
+        if(error)throw error;
+        msg(`Import deleted: ${Number(data?.deleted_rows||0)} data rows removed.`);
+        await history(); if(reloadAfterImport)await reloadAfterImport();
+      }catch(e){msg(e.message);b.disabled=false;b.textContent="Delete Import";}
+    });
   }
 
   $("previewUnifiedSystem")?.addEventListener("click",async()=>{try{sysRows=await parse($("unifiedSystemFile").files[0]);render($("unifiedSystemArea"),sysRows,"system");}catch(e){msg(e.message);}});
   $("previewUnifiedPhysical")?.addEventListener("click",async()=>{try{phyRows=await parse($("unifiedPhysicalFile").files[0]);render($("unifiedPhysicalArea"),phyRows,"physical");}catch(e){msg(e.message);}});
   $("reloadUnifiedImports")?.addEventListener("click",history);
 
-  return {history};
+  const api={history};
+  window.customerImporter=api;
+  return api;
 }

@@ -119,3 +119,12 @@ th{background:#0b4968;color:#fff;position:sticky;top:0;z-index:1}
 .smart-qty-panel label{display:flex;flex-direction:column;gap:7px;color:#0f4f64}.smart-qty-panel select{width:100%}.smart-qty-panel>p,.smart-qty-panel>.qty-analysis{grid-column:1/-1;margin:0}
 .qty-check{padding:10px 12px;border-radius:10px;background:#e8f7ef;color:#17603c}.qty-check.error{background:#fff1f0;color:#a52a2a}.qty-preview{margin-top:10px;max-height:230px;overflow:auto}
 @media(max-width:720px){.smart-qty-panel{grid-template-columns:1fr}.smart-qty-panel>p,.smart-qty-panel>.qty-analysis{grid-column:1}.smart-qty-panel .btn{width:100%}}
+
+/* Customer audit destructive data controls */
+.data-controls-card .data-control-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.btn.danger-soft{background:#fff5f5;color:#b42318;border:1px solid #f3b7b2}
+.btn.danger-soft:hover{background:#fee4e2}
+.btn.danger-btn{background:#b42318;color:#fff;border:1px solid #b42318}
+.btn.danger-btn:hover{background:#912018}
+.import-history-wrap .delete-import-job{white-space:nowrap;padding:8px 12px}
+@media(max-width:700px){.data-control-actions .btn{width:100%}}

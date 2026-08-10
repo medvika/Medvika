@@ -412,3 +412,57 @@ function exportCustomerReport(){
 }
 $("printCustomerReportBtn")?.addEventListener("click",()=>window.print());
 $("exportCustomerReportBtn")?.addEventListener("click",exportCustomerReport);
+
+// ============================================================
+// CUSTOMER IMPORTED DATA DELETE / RESET CONTROLS
+// Uses owner-checked SECURITY DEFINER RPCs from the companion SQL.
+// ============================================================
+async function refreshCustomerAuditAfterDataChange(){
+  try{
+    if(typeof loadSummary==="function") await loadSummary();
+    if(typeof loadCustomerCurrentStock==="function") await loadCustomerCurrentStock();
+    if(typeof loadCustomerRecentCounts==="function") await loadCustomerRecentCounts();
+    if(typeof loadRecon==="function") await loadRecon();
+    if(typeof loadCustomerFinalReport==="function") await loadCustomerFinalReport();
+    if(window.customerImporter?.history) await window.customerImporter.history();
+    if(window.stockAllocation?.loadSummary) await window.stockAllocation.loadSummary();
+  }catch(e){ console.warn("Refresh after data change",e); }
+}
+function setDeleteDataMessage(t){const el=$("deleteDataMessage");if(el)el.textContent=t||"";}
+async function customerDeletePhysicalAuditData(){
+  if(!currentAudit?.audit_id)return;
+  if(!confirm("Delete ALL physical count data for this audit?\n\nPhysical counts, recount/expiry review records and physical-import history will be removed. Current Stock remains.\n\nThis cannot be undone."))return;
+  const b=$("deletePhysicalDataButton"); if(b){b.disabled=true;b.textContent="Deleting…";} setDeleteDataMessage("");
+  try{
+    const {data,error}=await sb.rpc("medvika_customer_delete_physical_audit_data",{p_audit_id:currentAudit.audit_id});
+    if(error)throw error;
+    setDeleteDataMessage(`Physical data deleted: ${Number(data?.deleted_counts||0)} count rows, ${Number(data?.deleted_imports||0)} import jobs.`);
+    msg("Physical count data deleted."); await refreshCustomerAuditAfterDataChange();
+  }catch(e){setDeleteDataMessage(e.message);msg(e.message);}finally{if(b){b.disabled=false;b.textContent="Delete Physical Count Data";}}
+}
+async function customerDeleteSystemAuditData(){
+  if(!currentAudit?.audit_id)return;
+  if(!confirm("Delete ALL Current Stock data for this audit?\n\nThis removes the imported stock master and Current Stock import history. Physical Counts must be deleted first.\n\nThis cannot be undone."))return;
+  const b=$("deleteSystemDataButton"); if(b){b.disabled=true;b.textContent="Deleting…";} setDeleteDataMessage("");
+  try{
+    const {data,error}=await sb.rpc("medvika_customer_delete_system_audit_data",{p_audit_id:currentAudit.audit_id});
+    if(error)throw error;
+    setDeleteDataMessage(`Current Stock deleted: ${Number(data?.deleted_stock||0)} rows, ${Number(data?.deleted_imports||0)} import jobs.`);
+    msg("Current Stock data deleted."); await refreshCustomerAuditAfterDataChange();
+  }catch(e){setDeleteDataMessage(e.message);msg(e.message);}finally{if(b){b.disabled=false;b.textContent="Delete Current Stock Data";}}
+}
+async function customerResetImportedAuditData(){
+  if(!currentAudit?.audit_id)return;
+  if(!confirm("RESET ALL IMPORTED AUDIT DATA?\n\nThis removes Current Stock, Physical Counts, allocations, recount/expiry review records and import history.\n\nAudit project, zones and teams remain."))return;
+  if(String(prompt("For safety, type RESET to continue:")||"").trim().toUpperCase()!=="RESET"){setDeleteDataMessage("Reset cancelled.");return;}
+  const b=$("resetAuditDataButton"); if(b){b.disabled=true;b.textContent="Resetting…";} setDeleteDataMessage("");
+  try{
+    const {data,error}=await sb.rpc("medvika_customer_reset_imported_audit_data",{p_audit_id:currentAudit.audit_id});
+    if(error)throw error;
+    setDeleteDataMessage(`Audit data reset: ${Number(data?.deleted_stock||0)} stock rows, ${Number(data?.deleted_counts||0)} counts, ${Number(data?.deleted_allocations||0)} allocations, ${Number(data?.deleted_imports||0)} imports.`);
+    msg("Imported audit data reset."); await refreshCustomerAuditAfterDataChange();
+  }catch(e){setDeleteDataMessage(e.message);msg(e.message);}finally{if(b){b.disabled=false;b.textContent="Reset Imported Audit Data";}}
+}
+$("deletePhysicalDataButton")?.addEventListener("click",customerDeletePhysicalAuditData);
+$("deleteSystemDataButton")?.addEventListener("click",customerDeleteSystemAuditData);
+$("resetAuditDataButton")?.addEventListener("click",customerResetImportedAuditData);
