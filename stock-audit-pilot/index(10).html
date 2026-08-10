@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Free Pharmacy Stock Audit Pilot | Medvika Healthcare Solutions</title>
+  <meta name="description" content="Join Medvika's limited free pharmacy stock audit pilot. Import current stock, manage counting teams, reconcile physical vs system stock, review expiry and damage risks, and generate a professional audit report.">
+  <meta name="keywords" content="pharmacy stock audit, pharmacy inventory audit, stock reconciliation, pharmacy audit software, Medvika stock audit, pharmacy inventory verification">
+  <meta name="author" content="Medvika Healthcare Solutions">
+  <meta name="robots" content="index, follow">
+
+  <link rel="canonical" href="https://medvika.co.in/stock-audit-pilot/">
+  <link rel="icon" type="image/png" href="../logo.png">
+  <link rel="stylesheet" href="../css/style.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Free Pharmacy Stock Audit Pilot | Medvika">
+  <meta property="og:description" content="Test Medvika's structured stock audit workflow with a limited free pilot.">
+  <meta property="og:url" content="https://medvika.co.in/stock-audit-pilot/">
+  <meta property="og:site_name" content="Medvika Healthcare Solutions">
+  <meta property="og:image" content="https://medvika.co.in/logo.png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Free Pharmacy Stock Audit Pilot | Medvika">
+  <meta name="twitter:description" content="Structured pharmacy stock verification, reconciliation and audit reporting.">
+
+  <meta name="theme-color" content="#0f766e">
+
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Service",
+    "name":"Medvika Stock Audit Pilot",
+    "provider":{
+      "@type":"Organization",
+      "name":"Medvika Healthcare Solutions",
+      "url":"https://medvika.co.in/",
+      "logo":"https://medvika.co.in/logo.png"
+    },
+    "serviceType":"Pharmacy Stock Audit Pilot",
+    "areaServed":{
+      "@type":"Country",
+      "name":"India"
+    },
+    "description":"A limited-period self-managed pharmacy stock audit pilot for current-stock import, physical counting, reconciliation, expiry and damage review, and professional audit reporting.",
+    "url":"https://medvika.co.in/stock-audit-pilot/"
+  }
+  </script>
+
+  <style>
+    :root{
+      --mva-navy:#0b3c5d;
+      --mva-navy2:#0d5b7b;
+      --mva-green:#0b8f4d;
+      --mva-green2:#10a65d;
+      --mva-text:#1d2b36;
+      --mva-muted:#657884;
+      --mva-bg:#f4f8fb;
+      --mva-card:#ffffff;
+      --mva-border:#dbe6ec;
+      --mva-warn:#fff7df;
+      --mva-warn-border:#f4d77b;
+    }
+
+    body{
+      background:#fff;
+      color:var(--mva-text);
+    }
+
+    .pilot-hero{
+      padding:84px 20px 72px;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(11,143,77,.13), transparent 28%),
+        linear-gradient(135deg,#f7fbfd 0%,#edf6f8 100%);
+      border-bottom:1px solid #e4edf2;
+    }
+
+    .pilot-wrap{
+      max-width:1180px;
+      margin:0 auto;
+    }
+
+    .pilot-hero-grid{
+      display:grid;
+      grid-template-columns:1.08fr .92fr;
+      gap:42px;
+      align-items:center;
+    }
+
+    .pilot-eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:9px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#e9f8ef;
+      color:#087a42;
+      font-weight:700;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-bottom:18px;
+    }
+
+    .pilot-hero h1{
+      margin:0 0 18px;
+      font-size:clamp(38px,5vw,64px);
+      line-height:1.06;
+      color:var(--mva-navy);
+    }
+
+    .pilot-hero h1 span{
+      display:block;
+      color:var(--mva-green);
+    }
+
+    .pilot-lead{
+      margin:0 0 28px;
+      font-size:18px;
+      line-height:1.72;
+      color:var(--mva-muted);
+      max-width:720px;
+    }
+
+    .pilot-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-bottom:22px;
+    }
+
+    .pilot-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      min-height:50px;
+      padding:0 22px;
+      border-radius:12px;
+      font-weight:700;
+      text-decoration:none !important;
+      transition:.2s ease;
+    }
+
+    .pilot-btn-primary{
+      background:var(--mva-green);
+      color:#fff !important;
+      box-shadow:0 10px 28px rgba(11,143,77,.22);
+    }
+
+    .pilot-btn-primary:hover{
+      background:var(--mva-green2);
+      transform:translateY(-1px);
+    }
+
+    .pilot-btn-secondary{
+      border:1px solid #c9d9e2;
+      color:var(--mva-navy) !important;
+      background:#fff;
+    }
+
+    .pilot-btn-secondary:hover{
+      background:#f8fbfc;
+      border-color:#a8beca;
+    }
+
+    .pilot-trust-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 18px;
+      color:#60727e;
+      font-size:13px;
+    }
+
+    .pilot-trust-row span{
+      display:flex;
+      gap:7px;
+      align-items:center;
+    }
+
+    .pilot-trust-row i{
+      color:var(--mva-green);
+    }
+
+    .pilot-side-card{
+      background:linear-gradient(155deg,var(--mva-navy) 0%,#0c516f 62%,#08603f 120%);
+      color:#fff;
+      border-radius:26px;
+      padding:34px;
+      box-shadow:0 24px 55px rgba(11,60,93,.18);
+    }
+
+    .pilot-side-card .tag{
+      display:inline-block;
+      padding:7px 10px;
+      border:1px solid rgba(255,255,255,.34);
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:#dff8e9;
+      margin-bottom:14px;
+    }
+
+    .pilot-side-card h2{
+      margin:0 0 8px;
+      color:#fff;
+      font-size:28px;
+    }
+
+    .pilot-side-card p{
+      margin:0 0 22px;
+      color:rgba(255,255,255,.8);
+      line-height:1.6;
+    }
+
+    .pilot-limit-list{
+      display:grid;
+      gap:0;
+    }
+
+    .pilot-limit-row{
+      display:flex;
+      justify-content:space-between;
+      gap:20px;
+      padding:13px 0;
+      border-bottom:1px solid rgba(255,255,255,.14);
+      font-size:14px;
+    }
+
+    .pilot-limit-row span{
+      color:rgba(255,255,255,.72);
+    }
+
+    .pilot-limit-row strong{
+      text-align:right;
+      color:#fff;
+    }
+
+    .pilot-section{
+      padding:72px 20px;
+    }
+
+    .pilot-section.alt{
+      background:var(--mva-bg);
+    }
+
+    .pilot-section-head{
+      max-width:760px;
+      margin:0 auto 34px;
+      text-align:center;
+    }
+
+    .pilot-section-head .small{
+      display:block;
+      color:var(--mva-green);
+      text-transform:uppercase;
+      font-weight:700;
+      letter-spacing:.08em;
+      font-size:12px;
+      margin-bottom:8px;
+    }
+
+    .pilot-section-head h2{
+      margin:0 0 12px;
+      color:var(--mva-navy);
+      font-size:36px;
+      line-height:1.18;
+    }
+
+    .pilot-section-head p{
+      color:var(--mva-muted);
+      line-height:1.7;
+      margin:0;
+    }
+
+    .pilot-feature-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:18px;
+    }
+
+    .pilot-feature-card{
+      background:#fff;
+      border:1px solid var(--mva-border);
+      border-radius:18px;
+      padding:24px;
+      box-shadow:0 10px 30px rgba(11,60,93,.06);
+    }
+
+    .pilot-feature-icon{
+      width:48px;
+      height:48px;
+      border-radius:13px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#eaf7ef;
+      color:var(--mva-green);
+      font-size:21px;
+      margin-bottom:16px;
+    }
+
+    .pilot-feature-card h3{
+      margin:0 0 8px;
+      color:var(--mva-navy);
+      font-size:18px;
+    }
+
+    .pilot-feature-card p{
+      margin:0;
+      color:var(--mva-muted);
+      font-size:14px;
+      line-height:1.62;
+    }
+
+    .pilot-process{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:14px;
+    }
+
+    .pilot-step{
+      position:relative;
+      padding:20px 16px;
+      border:1px solid var(--mva-border);
+      border-radius:16px;
+      background:#fff;
+      min-height:158px;
+    }
+
+    .pilot-step .num{
+      display:inline-flex;
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      align-items:center;
+      justify-content:center;
+      background:var(--mva-navy);
+      color:#fff;
+      font-weight:700;
+      margin-bottom:12px;
+    }
+
+    .pilot-step h3{
+      margin:0 0 6px;
+      color:var(--mva-navy);
+      font-size:16px;
+    }
+
+    .pilot-step p{
+      margin:0;
+      color:var(--mva-muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .pilot-who-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:18px;
+    }
+
+    .pilot-who{
+      background:#fff;
+      border:1px solid var(--mva-border);
+      border-radius:18px;
+      padding:24px;
+    }
+
+    .pilot-who i{
+      color:var(--mva-green);
+      font-size:26px;
+      margin-bottom:14px;
+    }
+
+    .pilot-who h3{
+      margin:0 0 8px;
+      color:var(--mva-navy);
+    }
+
+    .pilot-who p{
+      margin:0;
+      color:var(--mva-muted);
+      line-height:1.62;
+      font-size:14px;
+    }
+
+    .pilot-note-card{
+      margin-top:28px;
+      padding:20px 22px;
+      border:1px solid var(--mva-warn-border);
+      background:var(--mva-warn);
+      border-radius:15px;
+      color:#6e591d;
+      line-height:1.6;
+      font-size:14px;
+    }
+
+    .pilot-note-card strong{
+      color:#5c4711;
+    }
+
+    .pilot-two-col{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:22px;
+    }
+
+    .pilot-included,
+    .pilot-paid{
+      border-radius:20px;
+      padding:28px;
+      border:1px solid var(--mva-border);
+      background:#fff;
+    }
+
+    .pilot-paid{
+      background:linear-gradient(180deg,#f9fcfd,#f2f7fa);
+    }
+
+    .pilot-included h3,
+    .pilot-paid h3{
+      margin:0 0 14px;
+      color:var(--mva-navy);
+      font-size:22px;
+    }
+
+    .pilot-check-list{
+      display:grid;
+      gap:11px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .pilot-check-list li{
+      display:flex;
+      gap:10px;
+      color:#536773;
+      line-height:1.55;
+      font-size:14px;
+    }
+
+    .pilot-check-list i{
+      margin-top:3px;
+      color:var(--mva-green);
+    }
+
+    .pilot-final-cta{
+      padding:72px 20px;
+      background:linear-gradient(135deg,#0b3c5d 0%,#0c5675 58%,#087046 120%);
+      color:#fff;
+    }
+
+    .pilot-final-inner{
+      max-width:980px;
+      margin:0 auto;
+      text-align:center;
+    }
+
+    .pilot-final-inner h2{
+      margin:0 0 12px;
+      font-size:38px;
+      color:#fff;
+    }
+
+    .pilot-final-inner p{
+      margin:0 auto 24px;
+      max-width:730px;
+      color:rgba(255,255,255,.82);
+      line-height:1.7;
+    }
+
+    .pilot-final-inner .pilot-btn-secondary{
+      color:#fff !important;
+      background:transparent;
+      border-color:rgba(255,255,255,.45);
+    }
+
+    .pilot-disclaimer{
+      margin-top:18px;
+      color:rgba(255,255,255,.68);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    @media (max-width:1050px){
+      .pilot-feature-grid{grid-template-columns:repeat(2,1fr)}
+      .pilot-process{grid-template-columns:repeat(3,1fr)}
+    }
+
+    @media (max-width:860px){
+      .pilot-hero-grid,
+      .pilot-two-col{
+        grid-template-columns:1fr;
+      }
+      .pilot-who-grid{grid-template-columns:1fr}
+    }
+
+    @media (max-width:640px){
+      .pilot-hero{padding:58px 16px 50px}
+      .pilot-section{padding:54px 16px}
+      .pilot-feature-grid,
+      .pilot-process{
+        grid-template-columns:1fr;
+      }
+      .pilot-actions{
+        flex-direction:column;
+      }
+      .pilot-btn{
+        width:100%;
+      }
+      .pilot-side-card{padding:26px 22px}
+      .pilot-section-head h2{font-size:30px}
+      .pilot-final-inner h2{font-size:31px}
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="container nav-container">
+    <a href="/" class="logo" aria-label="Medvika Healthcare Solutions home">
+      <img src="../logo.png" alt="Medvika Healthcare Solutions">
+    </a>
+
+    <button
+      class="menu-toggle"
+      id="menuToggle"
+      type="button"
+      onclick="toggleMenu()"
+      aria-label="Open navigation menu"
+      aria-expanded="false"
+      aria-controls="mainNavigation"
+    >
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="navbar" id="mainNavigation" aria-label="Primary navigation">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#services">Services</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/resources/">Resources</a></li>
+        <li><a href="/careers/">Careers</a></li>
+        <li><a href="/#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <a href="/audit/signup/" class="quote-btn">Start Free Pilot</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="pilot-hero">
+    <div class="pilot-wrap pilot-hero-grid">
+      <div>
+        <div class="pilot-eyebrow">
+          <i class="fa-solid fa-flask"></i>
+          Free Pilot Access · Limited Period
+        </div>
+
+        <h1>
+          A Smarter Way to
+          <span>Audit Pharmacy Stock.</span>
+        </h1>
+
+        <p class="pilot-lead">
+          Medvika's Stock Audit Portal brings current-stock import, team-based physical counting,
+          smart pack-and-loose quantity handling, reconciliation, expiry and damage review, and
+          professional audit reporting into one structured workflow.
+        </p>
+
+        <div class="pilot-actions">
+          <a href="/audit/signup/" class="pilot-btn pilot-btn-primary">
+            Start Free Stock Audit
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+
+          <a href="/audit/customer/" class="pilot-btn pilot-btn-secondary">
+            Existing Customer Login
+          </a>
+        </div>
+
+        <div class="pilot-trust-row">
+          <span><i class="fa-solid fa-check-circle"></i> Self-managed pilot</span>
+          <span><i class="fa-solid fa-check-circle"></i> Professional PDF report</span>
+          <span><i class="fa-solid fa-check-circle"></i> Designed for pharmacy operations</span>
+        </div>
+      </div>
+
+      <aside class="pilot-side-card">
+        <div class="tag">Pilot Plan</div>
+        <h2>What you can test free</h2>
+        <p>
+          Use the portal on one pharmacy audit project and evaluate the complete workflow before
+          choosing a larger or Medvika-managed engagement.
+        </p>
+
+        <div class="pilot-limit-list">
+          <div class="pilot-limit-row">
+            <span>Audit projects</span>
+            <strong>1 project</strong>
+          </div>
+          <div class="pilot-limit-row">
+            <span>Stock volume</span>
+            <strong>Up to 2,000 lines</strong>
+          </div>
+          <div class="pilot-limit-row">
+            <span>Physical counting</span>
+            <strong>Included</strong>
+          </div>
+          <div class="pilot-limit-row">
+            <span>Reconciliation</span>
+            <strong>Included</strong>
+          </div>
+          <div class="pilot-limit-row">
+            <span>PDF audit report</span>
+            <strong>Included</strong>
+          </div>
+          <div class="pilot-limit-row">
+            <span>Availability</span>
+            <strong>Limited period</strong>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="pilot-section">
+    <div class="pilot-wrap">
+      <div class="pilot-section-head">
+        <span class="small">What the portal does</span>
+        <h2>From system stock to final audit report</h2>
+        <p>
+          The pilot is built around a practical pharmacy stock-verification workflow rather than a
+          generic spreadsheet or simple counting form.
+        </p>
+      </div>
+
+      <div class="pilot-feature-grid">
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-file-excel"></i></div>
+          <h3>Current Stock Import</h3>
+          <p>Upload current stock from Excel or CSV and map item, batch, pack, quantity, rate and expiry data.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+          <h3>Smart Quantity Handling</h3>
+          <p>Interpret pharmacy pack-and-loose quantities and keep reconciliation based on normalized stock units.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-people-group"></i></div>
+          <h3>Teams & Zones</h3>
+          <p>Create controlled counting zones and teams before allocating stock for physical verification.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+          <h3>Physical Counting</h3>
+          <p>Record physical stock, batch and expiry information while flagging recount and condition issues.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+          <h3>Reconciliation</h3>
+          <p>Compare system and physical stock to identify matched, excess, short and missing inventory.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-calendar-triangle-exclamation"></i></div>
+          <h3>Expiry & Damage Review</h3>
+          <p>Surface expired, near-expiry and damaged stock findings for management attention.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+          <h3>Financial Variance</h3>
+          <p>Review shortage, excess and inventory exposure using purchase-rate based valuation where available.</p>
+        </article>
+
+        <article class="pilot-feature-card">
+          <div class="pilot-feature-icon"><i class="fa-solid fa-file-pdf"></i></div>
+          <h3>Professional PDF Report</h3>
+          <p>Generate a structured Medvika audit report with reconciliation, risk, expiry and completion findings.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="pilot-section alt">
+    <div class="pilot-wrap">
+      <div class="pilot-section-head">
+        <span class="small">How it works</span>
+        <h2>A controlled six-step audit workflow</h2>
+        <p>
+          Each stage feeds the next so the final reconciliation is built from the same audit dataset.
+        </p>
+      </div>
+
+      <div class="pilot-process">
+        <article class="pilot-step">
+          <div class="num">1</div>
+          <h3>Create Audit</h3>
+          <p>Set up the pharmacy audit project and basic audit requirements.</p>
+        </article>
+
+        <article class="pilot-step">
+          <div class="num">2</div>
+          <h3>Import Stock</h3>
+          <p>Upload system/current stock and validate quantity interpretation.</p>
+        </article>
+
+        <article class="pilot-step">
+          <div class="num">3</div>
+          <h3>Allocate Teams</h3>
+          <p>Define zones, create counting teams and allocate stock lines.</p>
+        </article>
+
+        <article class="pilot-step">
+          <div class="num">4</div>
+          <h3>Count Physically</h3>
+          <p>Enter or import physical counts with batch, expiry and condition details.</p>
+        </article>
+
+        <article class="pilot-step">
+          <div class="num">5</div>
+          <h3>Reconcile</h3>
+          <p>Review system versus physical quantity and material variances.</p>
+        </article>
+
+        <article class="pilot-step">
+          <div class="num">6</div>
+          <h3>Generate Report</h3>
+          <p>Produce a professional audit report for management review.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="pilot-section">
+    <div class="pilot-wrap">
+      <div class="pilot-section-head">
+        <span class="small">Who should use it</span>
+        <h2>Built for pharmacy inventory verification</h2>
+        <p>
+          The pilot is intended for businesses that want a more structured way to verify stock and
+          understand inventory differences.
+        </p>
+      </div>
+
+      <div class="pilot-who-grid">
+        <article class="pilot-who">
+          <i class="fa-solid fa-store"></i>
+          <h3>Independent Pharmacies</h3>
+          <p>For pharmacy owners who want to verify current stock, identify shortages and improve inventory control.</p>
+        </article>
+
+        <article class="pilot-who">
+          <i class="fa-solid fa-store-slash"></i>
+          <h3>Multi-Store Operators</h3>
+          <p>For operators who need a repeatable audit workflow before expanding to larger multi-location reviews.</p>
+        </article>
+
+        <article class="pilot-who">
+          <i class="fa-solid fa-hospital"></i>
+          <h3>Hospital Pharmacies</h3>
+          <p>For pharmacy teams that need batch-wise, expiry-wise and structured physical stock verification.</p>
+        </article>
+      </div>
+
+      <div class="pilot-note-card">
+        <strong>Important:</strong> The free pilot is a self-managed product evaluation. It is not a substitute
+        for Medvika's professional on-site or managed stock-audit service.
+      </div>
+    </div>
+  </section>
+
+  <section class="pilot-section alt">
+    <div class="pilot-wrap">
+      <div class="pilot-section-head">
+        <span class="small">Free pilot vs professional service</span>
+        <h2>Choose the level of support you need</h2>
+      </div>
+
+      <div class="pilot-two-col">
+        <div class="pilot-included">
+          <h3>Free Pilot Access</h3>
+          <ul class="pilot-check-list">
+            <li><i class="fa-solid fa-check"></i><span>1 self-managed audit project</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Up to 2,000 stock lines during the pilot</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Current-stock and physical-count workflow</span></li>
+            <li><i class="fa-solid fa-check"></i><span>System vs physical reconciliation</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Expiry and condition findings</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Professional audit PDF generation</span></li>
+          </ul>
+        </div>
+
+        <div class="pilot-paid">
+          <h3>Medvika-Managed Audit</h3>
+          <ul class="pilot-check-list">
+            <li><i class="fa-solid fa-check"></i><span>Audit planning and execution support</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Larger stock volumes and complex projects</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Team supervision or Medvika manpower options</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Structured reconciliation and management reporting</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Operational observations and recommendations</span></li>
+            <li><i class="fa-solid fa-check"></i><span>Commercial engagement based on project scope</span></li>
+          </ul>
+
+          <div style="margin-top:20px">
+            <a href="/#contact" class="pilot-btn pilot-btn-secondary">
+              Request Professional Audit
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pilot-final-cta">
+    <div class="pilot-final-inner">
+      <h2>Ready to test the Medvika Stock Audit Portal?</h2>
+      <p>
+        Create your pilot account, run one structured audit project and evaluate the complete
+        stock-verification workflow with your own pharmacy data.
+      </p>
+
+      <div class="pilot-actions" style="justify-content:center">
+        <a href="/audit/signup/" class="pilot-btn pilot-btn-primary">
+          Start Free Stock Audit
+          <i class="fa-solid fa-arrow-right"></i>
+        </a>
+
+        <a href="/#contact" class="pilot-btn pilot-btn-secondary">
+          Talk to Medvika
+        </a>
+      </div>
+
+      <div class="pilot-disclaimer">
+        Free pilot access is limited and may be modified or withdrawn as the product evolves.
+        Usage limits and eligibility conditions may apply.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer footer-v3">
+  <div class="container footer-container">
+    <div class="footer-column">
+      <img src="../logo.png" alt="Medvika Healthcare Solutions" class="footer-logo">
+      <p>
+        Medvika Healthcare Solutions provides professional pharmacy setup,
+        audits, healthcare consulting and business growth support across India.
+      </p>
+    </div>
+
+    <div class="footer-column">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#services">Services</a></li>
+        <li><a href="/resources/">Resources</a></li>
+        <li><a href="/careers/">Careers</a></li>
+        <li><a href="/blog/">Blog</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-column">
+      <h3>Services</h3>
+      <ul>
+        <li><a href="/services/pharmacy-setup.html">Pharmacy Setup</a></li>
+        <li><a href="/services/pharmacy-audit.html">Pharmacy Audit</a></li>
+        <li><a href="/services/business-growth.html">Business Growth</a></li>
+        <li><a href="/services/healthcare-consultation.html">Healthcare Consultation</a></li>
+        <li><a href="/company-profile.html">Corporate Profile</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-column">
+      <h3>Contact</h3>
+      <p>📍 Dehradun, Uttarakhand</p>
+      <p>📞 +91 89798 41035</p>
+      <p>✉ info@medvika.co.in</p>
+      <a href="https://wa.me/918979841035" class="footer-whatsapp" target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2026 Medvika Healthcare Solutions. All Rights Reserved.</p>
+    <div class="footer-legal">
+      <a href="/pages/privacy-policy.html">Privacy Policy</a>
+      <a href="/pages/terms.html">Terms & Conditions</a>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/main.js" defer></script>
+<script src="../js/v3-effects.js" defer></script>
+
+</body>
+</html>
