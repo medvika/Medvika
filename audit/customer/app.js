@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 
 async function loadAudits(){
  const {data,error}=await sb.rpc("medvika_customer_audits",{p_customer_id:customerId});if(error){msg(error.message);return;}audits=data||[];
- $("auditList").innerHTML=audits.length?audits.map(a=>`<div class="audit-row"><div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br><small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div><div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="../?audit=${encodeURIComponent(a.audit_id)}">Open Audit Workspace</a></div></div>`).join(""):'<p class="muted">No audits yet.</p>';
+ $("auditList").innerHTML=audits.length?audits.map(a=>`<div class="audit-row"><div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br><small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div><div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="/audit/?audit=${encodeURIComponent(a.audit_id)}" target="_blank" rel="noopener">Open Audit Workspace</a></div></div>`).join(""):'<p class="muted">No audits yet.</p>';
  document.querySelectorAll(".open-audit").forEach(b=>b.onclick=()=>openAudit(b.dataset.id));
 }
 $("newAuditBtn").onclick=()=>{$("modal").hidden=false;};

@@ -1,12 +1,12 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Medvika Audit Customer Workspace</title>
-<link rel="stylesheet" href="./app.css">
+<link rel="stylesheet" href="./app.css?v=11">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-</head>
+<style>.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}</style></head>
 <body><div class="wrap">
-<div class="card top"><img src="./logo.png" class="logo"><div><span class="eyebrow">Customer Workspace</span><h1>Medvika Audit Dashboard</h1></div><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
+<div class="card top"><img src="./logo.png" class="logo"><div><span class="eyebrow">Customer Workspace</span><h1>Medvika Audit Dashboard</h1></div><div class="top-actions"><a class="btn secondary role-dashboard-link" href="/audit/customer/">Dashboard</a><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div></div>
 
 <div id="authCard" class="card">
   <h2>Customer Login</h2>
@@ -46,7 +46,7 @@
   </div>
 
   <div id="auditPanel" hidden>
-    <div class="card"><div class="section-head"><div><span class="eyebrow">Selected Audit</span><h2 id="auditTitle">—</h2></div><a href="../team/" class="btn secondary">Open Team Portal</a></div>
+    <div class="card"><div class="section-head"><div><span class="eyebrow">Selected Audit</span><h2 id="auditTitle">—</h2></div><a href="/audit/team/" target="_blank" rel="noopener" class="btn secondary">Open Team Portal</a></div>
       <div id="summaryGrid" class="summary-grid"></div>
     </div>
 
@@ -200,4 +200,4 @@
 
 <p id="msg" class="muted"></p>
 </div><script src="./allocation.js?v=5"></script>
-<script src="./app.js?v=6"></script></body></html>
+<script src="./app.js?v=11"></script></body></html>
