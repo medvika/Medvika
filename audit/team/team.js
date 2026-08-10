@@ -77,12 +77,20 @@ function dateToMonth(v){
 }
 
 function showPortal(){
-  $("loginView").hidden=true;
-  $("portal").hidden=false;
+  const login=$("loginView"), portal=$("portal");
+  login.hidden=true;
+  login.style.display="none";
+  portal.hidden=false;
+  portal.style.display="block";
+  window.scrollTo({top:0,left:0,behavior:"auto"});
 }
 function showLogin(){
-  $("portal").hidden=true;
-  $("loginView").hidden=false;
+  const login=$("loginView"), portal=$("portal");
+  portal.hidden=true;
+  portal.style.display="none";
+  login.hidden=false;
+  login.style.display="grid";
+  window.scrollTo({top:0,left:0,behavior:"auto"});
 }
 
 $("loginForm").addEventListener("submit",async e=>{
