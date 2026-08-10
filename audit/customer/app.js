@@ -6,6 +6,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
 let customerView="dashboard",reconPage=1,reconPageSize=25;
+let currentStockRows=[],currentStockFiltered=[],currentStockPage=1;
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
 function msg(t){const e=$("msg");if(e)e.textContent=t||"";}
@@ -71,13 +72,14 @@ async function savePassword(){
 }
 
 
-const customerTitles={dashboard:"Audit Dashboard",setup:"Teams & Zones",stock:"Stock & Allocation",counts:"Physical Counts",reconciliation:"Reconciliation",report:"Final Report"};
+const customerTitles={dashboard:"Audit Dashboard",setup:"Teams & Zones",stock:"Stock & Allocation",currentStock:"Current Stock Register",counts:"Physical Counts",reconciliation:"Reconciliation",report:"Final Report"};
 function setCustomerView(view){
  customerView=customerTitles[view]?view:"dashboard";
  document.querySelectorAll(".customer-view").forEach(x=>x.classList.toggle("active",x.id===customerView+"View"));
  document.querySelectorAll(".portal-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.customerView===customerView));
  if($("customerViewTitle")) $("customerViewTitle").textContent=customerTitles[customerView];
  if(customerView==="reconciliation"&&currentAudit) renderReconPage();
+ if(customerView==="currentStock"&&currentAudit) loadCustomerCurrentStock();
  if(customerView==="report"&&currentAudit) renderCustomerReport();
  window.scrollTo({top:0,left:0,behavior:"auto"});
 }
@@ -144,7 +146,7 @@ async function openAudit(id){
  if($("customerAuditSelect")) $("customerAuditSelect").value=String(id);
  if($("allocationPanel")) $("allocationPanel").hidden=false;
  if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=false;
- await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts(),loadRecon()]);
+ await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts(),loadRecon(),loadCustomerCurrentStock()]);
  if(window.stockAllocation) await window.stockAllocation.loadSummary();
  if(typeof loadUnifiedImportHistory==="function") try{await loadUnifiedImportHistory();}catch(e){}
 }
@@ -231,6 +233,61 @@ async function loadRecon(){
 function cleanDisplayQty(v){
  const n=Number(v); return Number.isFinite(n)?String(Number(n.toFixed(6))):(v??"—");
 }
+
+function customerStockExpiryState(expiry){
+ if(!expiry)return "ok";
+ const d=new Date(`${expiry}T00:00:00`); if(Number.isNaN(d.getTime()))return "ok";
+ const today=new Date();today.setHours(0,0,0,0);const near=new Date(today);near.setDate(near.getDate()+180);
+ return d<today?"expired":d<=near?"near":"ok";
+}
+function customerStockMoney(v){const n=Number(v);return Number.isFinite(n)?`₹${n.toFixed(2)}`:"—";}
+async function fetchCustomerCurrentStock(){
+ if(!currentAudit?.audit_id)return [];
+ const all=[];let from=0,size=1000;
+ while(true){
+   const {data,error}=await sb.from("medvika_audit_system_stock")
+    .select("id,item_code,barcode,item_name,batch_no,expiry_date,pack_uom,category,system_qty,mrp,purchase_rate,gst_percent,pack_size,qty_basis")
+    .eq("audit_id",currentAudit.audit_id).range(from,from+size-1);
+   if(error){
+     const {data:fallback,error:fallbackError}=await sb.rpc("medvika_allocation_candidates",{p_audit_id:currentAudit.audit_id,p_mode:"all",p_value1:null,p_value2:null,p_limit:5000});
+     if(fallbackError)throw error;
+     return (fallback||[]).map(r=>({id:r.stock_id,item_code:r.item_code,barcode:r.barcode,item_name:r.item_name,batch_no:r.batch_no,expiry_date:r.expiry_date,pack_uom:r.pack_uom,category:r.category,system_qty:r.system_qty,mrp:r.mrp,purchase_rate:r.purchase_rate,gst_percent:r.gst_percent,pack_size:r.pack_size,manufacturer:r.manufacturer,_limited:true}));
+   }
+   all.push(...(data||[]));if(!data||data.length<size)break;from+=size;
+ }
+ return all;
+}
+async function loadCustomerCurrentStock(){
+ if(!currentAudit?.audit_id||!$("currentStockTable"))return;
+ $("currentStockStatus").textContent="Loading current stock…";
+ try{
+   currentStockRows=(await fetchCustomerCurrentStock()).map(r=>({...r,_risk:customerStockExpiryState(r.expiry_date)}));currentStockPage=1;renderCustomerCurrentStock();
+   const limited=currentStockRows.some(r=>r._limited);
+   $("currentStockStatus").textContent=`${currentStockRows.length.toLocaleString("en-IN")} current-stock lines loaded${limited?" (fallback view; maximum 5,000 lines).":"."}`;
+ }catch(e){
+   console.error("Customer current stock:",e);$("currentStockStatus").textContent=e.message||"Unable to load current stock.";
+ }
+}
+function renderCustomerCurrentStock(){
+ if(!$("currentStockTable"))return;
+ const term=String($("currentStockSearch")?.value||"").trim().toLowerCase();const risk=$("currentStockRisk")?.value||"";const size=Math.max(1,Number($("currentStockPageSize")?.value||50));
+ currentStockFiltered=currentStockRows.filter(r=>{
+   const hay=[r.item_name,r.item_code,r.barcode,r.batch_no,r.category,r.manufacturer].map(v=>String(v||"").toLowerCase()).join(" ");
+   if(term&&!hay.includes(term))return false;
+   if(risk==="expired"&&r._risk!=="expired")return false;if(risk==="near"&&r._risk!=="near")return false;if(risk==="missing_rate"&&Number.isFinite(Number(r.purchase_rate)))return false;return true;
+ });
+ const pages=Math.max(1,Math.ceil(currentStockFiltered.length/size));currentStockPage=Math.max(1,Math.min(currentStockPage,pages));const rows=currentStockFiltered.slice((currentStockPage-1)*size,currentStockPage*size);
+ $("currentStockTotal").textContent=currentStockRows.length.toLocaleString("en-IN");
+ const qty=currentStockRows.reduce((s,r)=>s+(Number.isFinite(Number(r.system_qty))?Number(r.system_qty):0),0);$("currentStockQty").textContent=Number(qty.toFixed(2)).toLocaleString("en-IN");
+ $("currentStockExpired").textContent=currentStockRows.filter(r=>r._risk==="expired").length.toLocaleString("en-IN");$("currentStockNear").textContent=currentStockRows.filter(r=>r._risk==="near").length.toLocaleString("en-IN");
+ $("currentStockTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Item</th><th>Code</th><th>Batch</th><th>Expiry</th><th>System Qty</th><th>Pack</th><th>Purchase Rate</th><th>MRP</th><th>GST</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.item_name||"")}</td><td>${esc(r.item_code||"")}</td><td>${esc(r.batch_no||"")}</td><td>${esc(r.expiry_date||"—")}${r._risk!=="ok"?`<br><small>${r._risk==="expired"?"Expired":"Near expiry"}</small>`:""}</td><td>${esc(cleanDisplayQty(r.system_qty))}</td><td>${esc(r.pack_size||"—")} ${esc(r.pack_uom||"")}</td><td>${customerStockMoney(r.purchase_rate)}</td><td>${customerStockMoney(r.mrp)}</td><td>${r.gst_percent??"—"}${r.gst_percent!==null&&r.gst_percent!==undefined?"%":""}</td></tr>`).join("")||'<tr><td colspan="9">No stock rows match this filter.</td></tr>'}</tbody></table></div>`;
+ $("currentStockPageInfo").textContent=`Page ${currentStockPage} of ${pages} • ${currentStockFiltered.length.toLocaleString("en-IN")} rows`;$("currentStockPrev").disabled=currentStockPage<=1;$("currentStockNext").disabled=currentStockPage>=pages;
+}
+function exportCustomerCurrentStock(){
+ if(!currentStockRows.length)return;const rows=currentStockFiltered.length?currentStockFiltered:currentStockRows;const csv=Papa.unparse(rows.map(r=>({Item:r.item_name,ItemCode:r.item_code,Barcode:r.barcode,Batch:r.batch_no,Expiry:r.expiry_date,SystemQty:r.system_qty,PackSize:r.pack_size,PackUOM:r.pack_uom,PurchaseRate:r.purchase_rate,MRP:r.mrp,GST:r.gst_percent,Category:r.category})));const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`Medvika_Current_Stock_${currentAudit?.project_code||"Audit"}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$("reloadCurrentStock")?.addEventListener("click",loadCustomerCurrentStock);$("exportCurrentStock")?.addEventListener("click",exportCustomerCurrentStock);$("currentStockSearch")?.addEventListener("input",()=>{currentStockPage=1;renderCustomerCurrentStock();});$("currentStockRisk")?.addEventListener("change",()=>{currentStockPage=1;renderCustomerCurrentStock();});$("currentStockPageSize")?.addEventListener("change",()=>{currentStockPage=1;renderCustomerCurrentStock();});$("currentStockPrev")?.addEventListener("click",()=>{currentStockPage--;renderCustomerCurrentStock();});$("currentStockNext")?.addEventListener("click",()=>{currentStockPage++;renderCustomerCurrentStock();});
+
 async function loadCustomerRecentCounts(){
  if(!currentAudit?.audit_id||!$("customerRecentCounts")) return;
  $("customerRecentCounts").innerHTML='<p class="muted">Loading counts…</p>';

@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Medvika Audit Customer Portal</title>
 <link rel="icon" href="./logo.png">
-<link rel="stylesheet" href="./app.css?v=20">
+<link rel="stylesheet" href="./app.css?v=21">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -60,6 +60,7 @@
       <button class="portal-nav-btn active" data-customer-view="dashboard">Dashboard</button>
       <button class="portal-nav-btn" data-customer-view="setup">Teams & Zones</button>
       <button class="portal-nav-btn" data-customer-view="stock">Stock & Allocation</button>
+      <button class="portal-nav-btn" data-customer-view="currentStock">Current Stock</button>
       <button class="portal-nav-btn" data-customer-view="counts">Physical Counts</button>
       <button class="portal-nav-btn" data-customer-view="reconciliation">Reconciliation</button>
       <button class="portal-nav-btn" data-customer-view="report">Final Report</button>
@@ -111,9 +112,10 @@
             <div class="workflow-list">
               <button class="workflow-step customer-go" data-go="setup"><strong>1. Teams & Zones</strong><span>Create counting areas and secure team logins.</span></button>
               <button class="workflow-step customer-go" data-go="stock"><strong>2. Stock & Allocation</strong><span>Import stock and allocate it to counting teams.</span></button>
-              <button class="workflow-step customer-go" data-go="counts"><strong>3. Physical Counting</strong><span>Track submitted counts and correct test entries.</span></button>
-              <button class="workflow-step customer-go" data-go="reconciliation"><strong>4. Reconciliation</strong><span>Review missing, short and excess inventory.</span></button>
-              <button class="workflow-step customer-go" data-go="report"><strong>5. Final Report</strong><span>Review the client-safe summary and export results.</span></button>
+              <button class="workflow-step customer-go" data-go="currentStock"><strong>3. Verify Current Stock</strong><span>Confirm imported item, batch, expiry, quantity and rate data before counting.</span></button>
+              <button class="workflow-step customer-go" data-go="counts"><strong>4. Physical Counting</strong><span>Track submitted counts and correct test entries.</span></button>
+              <button class="workflow-step customer-go" data-go="reconciliation"><strong>5. Reconciliation</strong><span>Review missing, short and excess inventory.</span></button>
+              <button class="workflow-step customer-go" data-go="report"><strong>6. Final Report</strong><span>Review the client-safe summary and export results.</span></button>
             </div>
           </section>
           <section class="card">
@@ -211,6 +213,45 @@
       </section>
     </section>
 
+
+    <section id="currentStockView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Current Inventory</span><h2>Current Stock Register</h2><p>Read-only view of the stock imported for this audit. Verify item, batch, expiry, quantity and valuation inputs before physical counting.</p></div>
+      <section class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">System Stock</span><h3>Imported Stock Lines</h3></div>
+          <div class="report-actions">
+            <button id="reloadCurrentStock" class="btn secondary" type="button">Reload</button>
+            <button id="exportCurrentStock" class="btn secondary" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="summary-grid stock-register-kpis">
+          <div class="stat"><span>Total Lines</span><strong id="currentStockTotal">0</strong></div>
+          <div class="stat"><span>Total Qty</span><strong id="currentStockQty">0</strong></div>
+          <div class="stat"><span>Expired</span><strong id="currentStockExpired">0</strong></div>
+          <div class="stat"><span>Near Expiry</span><strong id="currentStockNear">0</strong></div>
+        </div>
+        <div class="recon-tools">
+          <input id="currentStockSearch" type="search" placeholder="Search item, code, barcode or batch">
+          <select id="currentStockRisk">
+            <option value="">All stock</option>
+            <option value="expired">Expired</option>
+            <option value="near">Near expiry (180 days)</option>
+            <option value="missing_rate">Missing purchase rate</option>
+          </select>
+          <select id="currentStockPageSize">
+            <option value="25">25 rows</option><option value="50" selected>50 rows</option><option value="100">100 rows</option>
+          </select>
+        </div>
+        <p id="currentStockStatus" class="muted">Select an audit to load current stock.</p>
+        <div id="currentStockTable"></div>
+        <div class="pager">
+          <button id="currentStockPrev" class="btn secondary" type="button">Previous</button>
+          <span id="currentStockPageInfo">Page 1</span>
+          <button id="currentStockNext" class="btn secondary" type="button">Next</button>
+        </div>
+      </section>
+    </section>
+
     <section id="countsView" class="customer-view">
       <div class="page-intro"><span class="eyebrow">Physical Counting</span><h2>Count Activity & Controls</h2><p>Review submitted counts and remove incorrect/test entries without changing Current Stock.</p></div>
       <section class="card data-controls-card">
@@ -281,6 +322,6 @@
 
 <script src="./allocation.js?v=20"></script>
 <script src="./importer.js?v=20"></script>
-<script src="./app.js?v=20"></script>
+<script src="./app.js?v=21"></script>
 </body>
 </html>
