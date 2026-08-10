@@ -2381,6 +2381,7 @@ function renderManagementFindings(data,scores){
   const expiredLines=Number(se.expired_lines||0);
   const nearLines=Number(se.near_lines||0);
   const damagedLines=recon.filter(r=>r.condition==="damaged").length;
+  const unvaluedLines=Number(fin.unvaluedLines||0);
 
   if(unvaluedLines>0){
     findings.push({
