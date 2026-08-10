@@ -75,7 +75,7 @@ async function savePassword(){
 }
 
 
-const customerTitles={dashboard:"Audit Dashboard",setup:"Teams & Zones",stock:"Stock & Allocation",currentStock:"Current Stock Register",counts:"Physical Counts",reconciliation:"Reconciliation",report:"Final Report"};
+const customerTitles={dashboard:"Audit Dashboard",setup:"Teams & Zones",stock:"Stock Allocation",imports:"Imports",currentStock:"Current Stock Register",counts:"Physical Counts",reconciliation:"Reconciliation",report:"Final Report"};
 function setCustomerView(view){
  customerView=customerTitles[view]?view:"dashboard";
  document.querySelectorAll(".customer-view").forEach(x=>x.classList.toggle("active",x.id===customerView+"View"));

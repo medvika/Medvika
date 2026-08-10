@@ -60,7 +60,8 @@
     <nav class="portal-nav" aria-label="Customer audit navigation">
       <button class="portal-nav-btn active" data-customer-view="dashboard">Dashboard</button>
       <button class="portal-nav-btn" data-customer-view="setup">Teams & Zones</button>
-      <button class="portal-nav-btn" data-customer-view="stock">Stock & Allocation</button>
+      <button class="portal-nav-btn" data-customer-view="stock">Stock Allocation</button>
+      <button class="portal-nav-btn" data-customer-view="imports">Imports</button>
       <button class="portal-nav-btn" data-customer-view="currentStock">Current Stock</button>
       <button class="portal-nav-btn" data-customer-view="counts">Physical Counts</button>
       <button class="portal-nav-btn" data-customer-view="reconciliation">Reconciliation</button>
@@ -112,11 +113,12 @@
             <div class="section-head"><div><span class="eyebrow">Next Steps</span><h3>Audit Workflow</h3></div></div>
             <div class="workflow-list">
               <button class="workflow-step customer-go" data-go="setup"><strong>1. Teams & Zones</strong><span>Create counting areas and secure team logins.</span></button>
-              <button class="workflow-step customer-go" data-go="stock"><strong>2. Stock & Allocation</strong><span>Import stock and allocate it to counting teams.</span></button>
-              <button class="workflow-step customer-go" data-go="currentStock"><strong>3. Verify Current Stock</strong><span>Confirm imported item, batch, expiry, quantity and rate data before counting.</span></button>
-              <button class="workflow-step customer-go" data-go="counts"><strong>4. Physical Counting</strong><span>Track submitted counts and correct test entries.</span></button>
-              <button class="workflow-step customer-go" data-go="reconciliation"><strong>5. Reconciliation</strong><span>Review missing, short and excess inventory.</span></button>
-              <button class="workflow-step customer-go" data-go="report"><strong>6. Final Report</strong><span>Review the client-safe summary and export results.</span></button>
+              <button class="workflow-step customer-go" data-go="imports"><strong>2. Import Current Stock</strong><span>Upload and map CSV / Excel stock data.</span></button>
+              <button class="workflow-step customer-go" data-go="currentStock"><strong>3. Verify Current Stock</strong><span>Confirm item, batch, expiry, quantity and valuation inputs.</span></button>
+              <button class="workflow-step customer-go" data-go="stock"><strong>4. Allocate Stock</strong><span>Assign current stock to the correct zone and counting team.</span></button>
+              <button class="workflow-step customer-go" data-go="counts"><strong>5. Physical Counting</strong><span>Track submitted counts and correct test entries.</span></button>
+              <button class="workflow-step customer-go" data-go="reconciliation"><strong>6. Reconciliation</strong><span>Review missing, short and excess inventory.</span></button>
+              <button class="workflow-step customer-go" data-go="report"><strong>7. Final Report</strong><span>Review the client-safe summary and export results.</span></button>
             </div>
           </section>
           <section class="card">
@@ -158,15 +160,48 @@
     </section>
 
     <section id="stockView" class="customer-view">
-      <div class="page-intro"><span class="eyebrow">Stock Preparation</span><h2>Stock & Allocation</h2><p>Import Current/System Stock and allocate each line to the correct zone and team.</p></div>
+      <div class="page-intro"><span class="eyebrow">Work Allocation</span><h2>Stock Allocation</h2><p>Assign Current Stock to zones and counting teams. Preview only shows the eligible line count, keeping this page compact like the admin workspace.</p></div>
 
-      <section id="unifiedImportPanel" class="card">
+      <section id="allocationPanel" class="card admin-like-card">
+        <div class="section-head">
+          <div><h3>Allocate Current Stock</h3><span class="muted">One Current Stock line should have one active allocation.</span></div>
+          <button id="reloadAllocation" type="button" class="btn secondary">Reload Summary</button>
+        </div>
+        <div class="allocation-grid allocation-grid-admin">
+          <label>Zone *<select id="allocationZone"></select></label>
+          <label>Team *<select id="allocationTeam"></select></label>
+          <label>Allocation Method<select id="allocationMode">
+            <option value="alphabet">Alphabetical Item Name Range</option>
+            <option value="category">Category</option>
+            <option value="manufacturer">Manufacturer</option>
+            <option value="item_code_range">Item Code Range</option>
+            <option value="unallocated">All Currently Unallocated</option>
+            <option value="all">All Current Stock</option>
+          </select></label>
+          <label id="allocationValue1Label">From<input id="allocationValue1" placeholder="A"></label>
+          <label id="allocationValue2Label">To<input id="allocationValue2" placeholder="M"></label>
+        </div>
+        <div class="allocation-actions">
+          <button id="previewAllocation" class="btn secondary">Preview Allocation</button>
+          <button id="applyAllocation" class="btn primary">Allocate Stock</button>
+        </div>
+        <div id="allocationPreview" class="allocation-status muted">Select Zone, Team and a rule, then preview before allocating.</div>
+      </section>
+
+      <section class="card admin-like-card">
+        <div class="section-head"><div><h3>Allocation Summary</h3><span class="muted">Current active allocation by zone and team.</span></div></div>
+        <div id="allocationSummary" class="table-wrap allocation-summary-wrap"></div>
+      </section>
+    </section>
+
+    <section id="importsView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Stock Preparation</span><h2>Imports</h2><p>Import Current/System Stock here. Physical Count file is optional when teams count through the Team Portal.</p></div>
+      <section id="unifiedImportPanel" class="card admin-like-card">
         <div class="section-head">
           <div><span class="eyebrow">Single Source of Truth</span><h3>Stock Imports</h3></div>
           <button id="reloadUnifiedImports" type="button" class="btn secondary">Reload History</button>
         </div>
-        <p class="muted">Import Current/System Stock once. Physical Count file is optional when teams count through the Team Portal.</p>
-        <div class="grid-two">
+        <div class="grid-two import-grid-admin">
           <div class="import-box">
             <h3>1. Current / System Stock</h3>
             <label>Import Mode<select id="unifiedSystemMode"><option value="replace">Replace Current Stock</option><option value="append">Append to Current Stock</option></select></label>
@@ -183,37 +218,12 @@
             <div id="unifiedPhysicalArea"></div>
           </div>
         </div>
-        <h3>Import History</h3><div id="unifiedImportHistory"></div>
       </section>
-
-      <section id="allocationPanel" class="card">
-        <div class="section-head">
-          <div><span class="eyebrow">Work Allocation</span><h3>Allocate Stock to Zones / Teams</h3></div>
-          <button id="reloadAllocation" type="button" class="btn secondary">Reload</button>
-        </div>
-        <div class="allocation-grid">
-          <label>Zone<select id="allocationZone"></select></label>
-          <label>Team<select id="allocationTeam"></select></label>
-          <label>Allocation Method<select id="allocationMode">
-            <option value="alphabet">Alphabetical Item Name Range</option>
-            <option value="category">Category</option>
-            <option value="manufacturer">Manufacturer</option>
-            <option value="item_code_range">Item Code Range</option>
-            <option value="unallocated">All Currently Unallocated</option>
-            <option value="all">All Current Stock</option>
-          </select></label>
-          <label id="allocationValue1Label">From<input id="allocationValue1" placeholder="A"></label>
-          <label id="allocationValue2Label">To<input id="allocationValue2" placeholder="M"></label>
-        </div>
-        <div class="allocation-actions">
-          <button id="previewAllocation" class="btn secondary">Preview Items</button>
-          <button id="applyAllocation" class="btn primary">Allocate Matching Items</button>
-        </div>
-        <div id="allocationPreview"></div>
-        <h3>Allocation Summary</h3><div id="allocationSummary"></div>
+      <section class="card admin-like-card">
+        <div class="section-head"><div><h3>Import History</h3><span class="muted">Recent Current Stock and Physical Count imports.</span></div></div>
+        <div id="unifiedImportHistory" class="table-wrap import-history-wrap"></div>
       </section>
     </section>
-
 
     <section id="currentStockView" class="customer-view">
       <div class="page-intro"><span class="eyebrow">Current Inventory</span><h2>Current Stock Register</h2><p>Read-only view of the stock imported for this audit. Verify item, batch, expiry, quantity and valuation inputs before physical counting.</p></div>
