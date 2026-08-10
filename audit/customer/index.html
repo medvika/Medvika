@@ -1,7 +1,7 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Medvika Audit Customer Workspace</title>
-<link rel="stylesheet" href="./app.css?v=13">
+<link rel="stylesheet" href="./app.css?v=14">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}</style></head>
@@ -91,6 +91,17 @@
     <div class="card">
       <div class="section-head"><div><span class="eyebrow">Report</span><h2>Reconciliation Summary</h2></div><button id="exportCsvBtn" class="btn secondary">Export CSV</button></div>
       <div id="reconTable"></div>
+    </div>
+    <div class="card" id="customerFinalReport">
+      <div class="section-head">
+        <div><span class="eyebrow">Final Report</span><h2>Customer Audit Report</h2>
+        <p class="muted">Client-safe audit report for the selected project.</p></div>
+        <div class="report-actions">
+          <button id="printCustomerReportBtn" class="btn primary" type="button">Download / Print PDF</button>
+          <button id="exportCustomerReportBtn" class="btn secondary" type="button">Export Report CSV</button>
+        </div>
+      </div>
+      <div id="customerReportBody"><p class="muted">Select an audit to load the report.</p></div>
     </div>
   </div>
 </div>
@@ -200,4 +211,4 @@
 
 <p id="msg" class="muted"></p>
 </div><script src="./allocation.js?v=5"></script>
-<script src="./app.js?v=13"></script></body></html>
+<script src="./app.js?v=14"></script></body></html>

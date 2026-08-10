@@ -120,7 +120,7 @@ $("createAuditConfirm").onclick=async()=>{
 };
 async function openAudit(id){
  currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id}; $("auditPanel").hidden=false;$("auditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
- await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts()]); if($("allocationPanel")) $("allocationPanel").hidden=false; if(window.stockAllocation) await window.stockAllocation.loadSummary(); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
+ await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts(),loadRecon()]); if($("allocationPanel")) $("allocationPanel").hidden=false; if(window.stockAllocation) await window.stockAllocation.loadSummary(); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
 }
 async function loadSummary(){
  const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const r=data?.[0]||{};
@@ -183,6 +183,7 @@ async function loadRecon(){
     const variance=varianceUnitDisplay(r.physical_qty,r.system_qty,ps);
     return `<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(sys)}</td><td>${esc(phy)}</td><td>${esc(variance)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`;
   }).join("")}</tbody></table></div>`;
+ renderCustomerReport();
 }
 
 function cleanDisplayQty(v){
@@ -246,3 +247,46 @@ $("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unpars
 
 
 window.stockAllocation=installStockAllocation({sb,esc,msg,getAuditId:()=>currentAudit?.audit_id||null});
+
+
+// ===== Customer report v1.4 =====
+function crN(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function crMoney(v){const n=Number(v);return Number.isFinite(n)?`₹${n.toFixed(2)}`:"—"}
+function crCsv(v){return `"${String(v??"").replace(/"/g,'""')}"`}
+function renderCustomerReport(){
+ const body=$("customerReportBody"); if(!body||!currentAudit)return;
+ const rows=reconRows||[];
+ const matched=rows.filter(r=>String(r.finding||"").toLowerCase().includes("match")).length;
+ const short=rows.filter(r=>crN(r.physical_qty)<crN(r.system_qty)).length;
+ const excess=rows.filter(r=>crN(r.physical_qty)>crN(r.system_qty)).length;
+ const damaged=rows.filter(r=>String(r.condition||"").toLowerCase().includes("damag")).length;
+ const expired=rows.filter(r=>String(r.condition||"").toLowerCase().includes("expired")).length;
+ const near=rows.filter(r=>String(r.condition||"").toLowerCase().includes("near")).length;
+ const net=rows.reduce((s,r)=>s+crN(r.variance_value),0);
+ const detail=rows.slice(0,500).map(r=>{
+   const ps=r.pack_size??null,u=r.pack_uom||"Pack";
+   return `<tr><td>${esc(r.finding||"")}</td><td>${esc(r.item_name||"")}</td><td>${esc(r.batch_no||"")}</td><td>${esc(pharmacyQtyDisplay(r.system_qty,ps,u))}</td><td>${esc(pharmacyQtyDisplay(r.physical_qty,ps,u))}</td><td>${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,ps))}</td><td>${crMoney(r.variance_value)}</td><td>${esc(r.condition||"")}</td></tr>`;
+ }).join("");
+ body.innerHTML=`
+ <div class="report-project"><strong>${esc(currentAudit.project_code||"")} — ${esc(currentAudit.project_name||"Audit")}</strong><span>${esc(currentAudit.location||"")} ${currentAudit.audit_date?" • "+esc(currentAudit.audit_date):""} • ${esc(currentAudit.status||"")}</span></div>
+ <div class="customer-report-grid">
+  <div class="customer-report-kpi"><small>Reconciled Lines</small><strong>${rows.length}</strong></div>
+  <div class="customer-report-kpi"><small>Matched</small><strong>${matched}</strong></div>
+  <div class="customer-report-kpi"><small>Short</small><strong>${short}</strong></div>
+  <div class="customer-report-kpi"><small>Excess</small><strong>${excess}</strong></div>
+  <div class="customer-report-kpi"><small>Expired</small><strong>${expired}</strong></div>
+  <div class="customer-report-kpi"><small>Near Expiry / Damaged</small><strong>${near} / ${damaged}</strong></div>
+ </div>
+ <div class="report-value"><span>Net Inventory Variance Value</span><strong>${crMoney(net)}</strong></div>
+ <div class="table-wrap"><table class="customer-report-table"><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${detail||'<tr><td colspan="8">No reconciliation findings yet.</td></tr>'}</tbody></table></div>
+ <p class="muted report-foot">Generated from the selected Medvika audit workspace. Final values depend on completed physical counting and reconciliation.</p>`;
+}
+function exportCustomerReport(){
+ if(!currentAudit)return;
+ const head=["Finding","Item","Batch","System Qty","Physical Qty","Variance","Purchase Rate Ex-GST","Variance Value","Condition"];
+ const data=[head,...(reconRows||[]).map(r=>[r.finding,r.item_name,r.batch_no,r.system_qty,r.physical_qty,crN(r.physical_qty)-crN(r.system_qty),r.purchase_rate,r.variance_value,r.condition])];
+ const csv=data.map(row=>row.map(crCsv).join(",")).join("\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`Medvika_Final_Report_${currentAudit.project_code||"Audit"}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$("printCustomerReportBtn")?.addEventListener("click",()=>window.print());
+$("exportCustomerReportBtn")?.addEventListener("click",exportCustomerReport);
