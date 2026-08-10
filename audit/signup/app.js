@@ -67,35 +67,69 @@ $("signupForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const btn=$("submitBtn");
   const plan=$("planCode").value;
-  if(!plan){
-    $("msg").textContent="Please select a plan.";
-    return;
-  }
+  const fullName=$("fullName").value.trim();
+  const businessName=$("businessName").value.trim();
+  const email=$("email").value.trim().toLowerCase();
+  const mobile=$("mobile").value.trim();
+  const password=$("password").value;
+  const confirmPassword=$("confirmPassword").value;
+
+  if(!plan){ $("msg").textContent="Please select a plan."; return; }
+  if(!email){ $("msg").textContent="Enter a valid email address."; return; }
+  if(!password || password.length<6){ $("msg").textContent="Password must be at least 6 characters."; return; }
+  if(password!==confirmPassword){ $("msg").textContent="Passwords do not match."; return; }
 
   btn.disabled=true;
-  btn.textContent="Submitting...";
-  $("msg").textContent="";
+  btn.textContent="Creating account...";
+  $("msg").textContent="Creating your secure login...";
 
-  const {data,error}=await sb.rpc("medvika_audit_submit_signup",{
-    p_full_name:$("fullName").value.trim(),
-    p_business_name:$("businessName").value.trim(),
-    p_email:$("email").value.trim(),
-    p_mobile:$("mobile").value.trim(),
-    p_city:$("city").value.trim(),
-    p_state:$("state").value.trim(),
-    p_plan_code:plan
-  });
+  try{
+    // 1) Create the Supabase Auth user automatically. This removes the old
+    // manual step of creating a user in Supabase Authentication.
+    const {data:authData,error:authError}=await sb.auth.signUp({
+      email,
+      password,
+      options:{
+        emailRedirectTo:location.origin+"/audit/customer/",
+        data:{
+          full_name:fullName,
+          business_name:businessName,
+          mobile,
+          source:"medvika_audit_signup"
+        }
+      }
+    });
+    if(authError) throw authError;
 
-  if(error){
-    console.error(error);
-    $("msg").textContent=error.message;
+    btn.textContent="Saving registration...";
+    $("msg").textContent="Login created. Saving audit registration...";
+
+    // 2) Save the commercial/signup request in the audit tables.
+    const {data:signupId,error:signupError}=await sb.rpc("medvika_audit_submit_signup",{
+      p_full_name:fullName,
+      p_business_name:businessName,
+      p_email:email,
+      p_mobile:mobile,
+      p_city:$("city").value.trim(),
+      p_state:$("state").value.trim(),
+      p_plan_code:plan
+    });
+    if(signupError) throw signupError;
+
+    sessionStorage.setItem("medvika_signup_id",signupId);
+    if(authData?.user?.id) sessionStorage.setItem("medvika_auth_user_id",authData.user.id);
+    location.href="../payment/?signup="+encodeURIComponent(signupId);
+  }catch(err){
+    console.error("Audit signup error:",err);
+    const text=String(err?.message||err||"Unable to complete signup.");
+    if(/already registered|already exists|user already/i.test(text)){
+      $("msg").textContent="This email already has a login. Use Customer Portal Sign In/Forgot Password, or use another email.";
+    }else{
+      $("msg").textContent=text;
+    }
     btn.disabled=false;
-    btn.textContent="Submit Registration";
-    return;
+    btn.textContent="Create Account & Submit Registration";
   }
-
-  sessionStorage.setItem("medvika_signup_id",data);
-  location.href="../payment/?signup="+encodeURIComponent(data);
 });
 
 loadPlans();

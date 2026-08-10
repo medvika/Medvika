@@ -33,6 +33,12 @@
           <label>Mobile
             <input id="mobile" required inputmode="tel" autocomplete="tel">
           </label>
+          <label>Password
+            <input id="password" type="password" required minlength="6" autocomplete="new-password" placeholder="Minimum 6 characters">
+          </label>
+          <label>Confirm Password
+            <input id="confirmPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="Re-enter password">
+          </label>
           <label>City
             <input id="city">
           </label>
@@ -46,8 +52,9 @@
           </label>
         </div>
 
-        <button id="submitBtn" class="btn primary" type="submit">Submit Registration</button>
+        <button id="submitBtn" class="btn primary" type="submit">Create Account & Submit Registration</button>
         <p id="msg" class="muted"></p>
+        <p class="muted" style="font-size:13px">Your login is created securely in Supabase Auth. After Medvika verifies payment/activates access, use the same email and password in the Customer Portal.</p>
       </form>
     </div>
   </div>
