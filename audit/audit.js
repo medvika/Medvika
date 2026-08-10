@@ -210,6 +210,8 @@ async function loadZonesAndTeams(){
   $("countTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
   if($("physicalImportZone")) $("physicalImportZone").innerHTML='<option value="">Select zone</option>'+zones.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
   if($("physicalImportTeam")) $("physicalImportTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
+  if($("allocationZone")) $("allocationZone").innerHTML='<option value="">Select zone</option>'+zones.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
+  if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">Select team</option>'+teams.map(t=>`<option value="${t.id}">${esc(t.team_code)} — ${esc(t.team_name||"Counting Team")}</option>`).join("");
 
   $("zoneProgress").innerHTML=zones.length?zones.map(z=>`<div class="zone-row"><div><strong>${esc(z.zone_code)} — ${esc(z.zone_name)}</strong><br><span>${esc(z.category||"General")}</span></div><span class="zone-state">${esc(z.status)}</span></div>`).join(""):'<div class="empty">No zones configured.</div>';
 
@@ -222,6 +224,69 @@ async function loadZonesAndTeams(){
     teams.map(t=>[t.team_code,t.client_team_lead||"—",t.counter_1||"—",t.counter_2||"—",t.system_entry_person||"—",t.medvika_supervisor||"—"])
   );
 }
+
+
+async function getAllocationCandidates(){
+  if(!currentAuditId) return [];
+  const stock=await fetchAllSystemStock();
+  const method=$("allocationMethod")?.value||"unallocated";
+  const range=$("allocationLetterRange")?.value||"";
+  let rows=stock||[];
+  if(range){
+    rows=rows.filter(r=>{
+      const c=String(r.item_name||"").trim().charAt(0).toUpperCase();
+      return range==="A-M" ? (c>="A"&&c<="M") : (c>="N"&&c<="Z");
+    });
+  }
+  if(method==="unallocated" && rows.length){
+    const {data,error}=await sb.from("medvika_audit_stock_allocations")
+      .select("system_stock_id").eq("audit_id",currentAuditId).eq("active",true);
+    if(error) throw error;
+    const allocated=new Set((data||[]).map(a=>String(a.system_stock_id)));
+    rows=rows.filter(r=>!allocated.has(String(r.id)));
+  }
+  return rows;
+}
+
+async function previewStockAllocation(){
+  const box=$("allocationPreview");
+  try{
+    if(!$("allocationZone")?.value || !$("allocationTeam")?.value) throw new Error("Select both Zone and Team.");
+    const rows=await getAllocationCandidates();
+    const zone=zones.find(z=>String(z.id)===String($("allocationZone").value));
+    const team=teams.find(t=>String(t.id)===String($("allocationTeam").value));
+    if(box) box.textContent=`${fmtNum(rows.length)} current-stock lines ready → ${zone?.zone_code||"Zone"} / ${team?.team_code||"Team"}.`;
+  }catch(err){ if(box) box.textContent=err.message; toast(err.message,"error"); }
+}
+
+async function allocateCurrentStock(){
+  const zoneId=$("allocationZone")?.value, teamId=$("allocationTeam")?.value;
+  const box=$("allocationPreview"), btn=$("allocateStockButton");
+  if(!zoneId||!teamId){ toast("Select both Zone and Team.","error"); return; }
+  try{
+    btn.disabled=true; btn.textContent="Allocating…";
+    const rows=await getAllocationCandidates();
+    if(!rows.length){ if(box) box.textContent="No eligible current-stock lines to allocate."; return; }
+    const ids=rows.map(r=>r.id);
+    // Replace allocation for selected rows when requested; this prevents duplicate/stale assignments.
+    if($("allocationMethod")?.value==="all"){
+      for(let i=0;i<ids.length;i+=500){
+        const {error}=await sb.from("medvika_audit_stock_allocations").delete()
+          .eq("audit_id",currentAuditId).in("system_stock_id",ids.slice(i,i+500));
+        if(error) throw error;
+      }
+    }
+    const records=rows.map(r=>({audit_id:currentAuditId,system_stock_id:r.id,zone_id:zoneId,team_id:teamId,active:true}));
+    const inserted=await insertChunks("medvika_audit_stock_allocations",records);
+    if(box) box.textContent=`Allocated ${fmtNum(inserted)} stock lines successfully.`;
+    toast(`${fmtNum(inserted)} stock lines allocated`);
+    await Promise.all([loadStockRegister(),loadFinalReport()]);
+  }catch(err){ console.error("Stock allocation:",err); if(box) box.textContent=err.message||"Allocation failed."; toast(err.message||"Allocation failed","error"); }
+  finally{ btn.disabled=false; btn.textContent="Allocate Stock"; }
+}
+
+$("previewAllocationButton")?.addEventListener("click",previewStockAllocation);
+$("allocateStockButton")?.addEventListener("click",allocateCurrentStock);
 
 function tableHtml(headers,rows){
   if(!rows.length) return '<div class="empty">No records yet.</div>';

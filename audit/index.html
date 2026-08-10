@@ -268,6 +268,17 @@
             <div id="teamsTableWrap" class="table-wrap"></div>
           </section>
         </div>
+        <section class="card" style="margin-top:16px">
+          <div class="card-head"><div><h3>Stock Allocation</h3><span>Assign imported Current Stock to a counting zone and team</span></div></div>
+          <div class="form-grid">
+            <label>Zone *<select id="allocationZone"></select></label>
+            <label>Team *<select id="allocationTeam"></select></label>
+            <label>Allocation Method<select id="allocationMethod"><option value="unallocated">Only unallocated current stock</option><option value="all">All current stock (replace allocation)</option></select></label>
+            <label>Item name starts with<select id="allocationLetterRange"><option value="">All items</option><option value="A-M">A to M</option><option value="N-Z">N to Z</option></select></label>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button id="previewAllocationButton" class="btn secondary" type="button">Preview Allocation</button><button id="allocateStockButton" class="btn primary" type="button">Allocate Stock</button></div>
+          <div id="allocationPreview" class="form-message" style="margin-top:10px"></div>
+        </section>
       </section>
 
       
