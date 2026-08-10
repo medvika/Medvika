@@ -7,6 +7,20 @@ const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+function cleanQty(v){const n=Number(v);return Number.isFinite(n)?Number(n.toFixed(6)):(v??"—");}
+function qtyDisplay(v,packSize=null,packUom="Pack"){
+ const n=Number(v),ps=Number(packSize);
+ if(!Number.isFinite(n)) return v??"—";
+ if(ps>0&&Number.isInteger(ps)){
+  const ru=n*ps;
+  if(Math.abs(ru-Math.round(ru))<1e-9){
+   const units=Math.round(ru),sign=units<0?"−":"",abs=Math.abs(units),packs=Math.floor(abs/ps),loose=abs%ps;
+   if(loose===0)return `${sign}${packs} ${packUom}${packs===1?"":"s"}`;
+   return `${sign}${packs} ${packUom}${packs===1?"":"s"} ${loose} Unit${loose===1?"":"s"}`;
+  }
+ }
+ return String(cleanQty(n));
+}
 function msg(t){const e=$("msg");if(e)e.textContent=t||"";}
 function authMsg(t){const e=$("authMsg");if(e)e.textContent=t||"";}
 function showAuth(){ $("authCard").hidden=false; $("workspace").hidden=true; $("logoutBtn").hidden=true; $("recoveryCard").hidden=true; }
@@ -139,7 +153,7 @@ $("addTeamBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb
 
 async function loadRecon(){
  const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}reconRows=data||[];
- $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>`<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(r.system_qty)}</td><td>${esc(r.physical_qty)}</td><td>${esc(r.variance_qty)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`).join("")}</tbody></table></div>`;
+ $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>`<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(qtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${esc(qtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${esc(qtyDisplay(r.variance_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`).join("")}</tbody></table></div>`;
 }
 $("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unparse(reconRows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Medvika_Reconciliation_${currentAudit.project_code||"Audit"}.csv`;a.click();};
 
