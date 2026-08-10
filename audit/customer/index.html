@@ -10,6 +10,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <div id="toastCustomer" class="customer-toast" aria-live="polite"></div>
@@ -318,7 +320,7 @@
         <div class="section-head">
           <div><span class="eyebrow">Client-safe Report</span><h3>Audit Summary</h3></div>
           <div class="report-actions">
-            <button id="printCustomerReportBtn" class="btn primary" type="button">Download / Print PDF</button>
+            <button id="generateCustomerReportPdfBtn" class="btn primary" type="button">Generate Client PDF</button>
             <button id="exportCustomerReportBtn" class="btn secondary" type="button">Export Full Report CSV</button>
           </div>
         </div>
@@ -343,6 +345,6 @@
 
 <script src="./allocation.js?v=20"></script>
 <script src="./importer.js?v=30"></script>
-<script src="./app.js?v=30"></script>
+<script src="./app.js?v=31"></script>
 </body>
 </html>

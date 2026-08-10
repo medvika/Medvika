@@ -5,6 +5,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 });
 const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
+let customerZones=[],customerTeams=[];
 let customerView="dashboard",reconPage=1,reconPageSize=25;
 let currentStockRows=[],currentStockFiltered=[],currentStockPage=1;
 
@@ -158,14 +159,14 @@ async function loadSummary(){
  $("summaryGrid").innerHTML=[["Count Lines",r.total_count_lines],["Variance",r.variance_lines],["Expired",r.expired_lines],["Near Expiry",r.near_expiry_lines],["Damaged",r.damaged_lines],["Progress",(Number(r.progress_percent||0).toFixed(1)+"%")]].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]??0}</strong></div>`).join("");
 }
 async function loadZones(){
- const {data,error}=await sb.rpc("medvika_customer_zones",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[];
+ const {data,error}=await sb.rpc("medvika_customer_zones",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; customerZones=rows;
  $("zoneList").innerHTML=rows.map(z=>`<div class="item-row"><div><strong>${esc(z.zone_code)} — ${esc(z.zone_name)}</strong><br><small>${esc(z.category||"")}</small></div></div>`).join("")||'<p class="muted">No zones.</p>';
  $("teamZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("allocationZone")) $("allocationZone").innerHTML='<option value="">-- No Zone --</option>'+rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("unifiedPhysicalZone")) $("unifiedPhysicalZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
 }
 $("addZoneBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb.rpc("medvika_manage_zone",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_zone_name:$("zoneName").value,p_category:$("zoneCategory").value,p_zone_id:null});if(error){msg(error.message);return;}$("zoneName").value="";$("zoneCategory").value="";await loadZones();};
 
 async function loadTeams(){
- const {data,error}=await sb.rpc("medvika_customer_teams",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">-- No Team --</option>'+rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
+ const {data,error}=await sb.rpc("medvika_customer_teams",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; customerTeams=rows; if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">-- No Team --</option>'+rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
  $("teamList").innerHTML=rows.map(t=>`<div class="item-row"><div><strong>${esc(t.team_code)} — ${esc(t.team_name||"")}</strong><br><small>${esc(t.zone_code||"")} ${esc(t.zone_name||"")} • Login ${esc(t.login_code||"—")}</small></div><button class="btn secondary reset-pin" data-id="${t.team_id}">Reset PIN</button></div>`).join("")||'<p class="muted">No teams.</p>';
  if($("unifiedPhysicalTeam")) $("unifiedPhysicalTeam").innerHTML=rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
  document.querySelectorAll(".reset-pin").forEach(b=>b.onclick=async()=>{const pin=prompt("Enter new PIN (4+ digits):");if(!pin)return;const {error}=await sb.rpc("medvika_reset_customer_team_pin",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_team_id:b.dataset.id,p_new_pin:pin});msg(error?error.message:"PIN reset successfully.");});
@@ -410,7 +411,85 @@ function exportCustomerReport(){
  const csv=data.map(row=>row.map(crCsv).join(",")).join("\n");
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`Medvika_Final_Report_${currentAudit.project_code||"Audit"}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
-$("printCustomerReportBtn")?.addEventListener("click",()=>window.print());
+async function customerLogoDataUrl(){
+ try{
+  const res=await fetch("./logo.png"); const blob=await res.blob();
+  return await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(blob);});
+ }catch(e){return null;}
+}
+function crSafePdf(v){return String(v??"").replace(/[^\x20-\x7E]/g," ");}
+function crPdfMoney(v){const n=Number(v);return Number.isFinite(n)?`INR ${n.toFixed(2)}`:"-";}
+function crExpiryState(expiry){
+ if(!expiry)return "ok"; const d=new Date(`${expiry}T00:00:00`); if(Number.isNaN(d.getTime()))return "ok";
+ const t=new Date();t.setHours(0,0,0,0);const n=new Date(t);n.setDate(n.getDate()+180);return d<t?"expired":d<=n?"near":"ok";
+}
+async function generateCustomerReportPdf(){
+ if(!currentAudit){msg("Select an audit first.");return;}
+ if(!window.jspdf?.jsPDF){msg("PDF library not loaded.");return;}
+ if(!reconRows.length){await loadRecon();}
+ if(!currentStockRows.length){await loadCustomerCurrentStock();}
+ const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+ const navy=[11,60,93],green=[11,143,77],dark=[29,43,54],grey=[102,117,128],pageW=210,margin=15;
+ let y=15;
+ const logo=await customerLogoDataUrl();
+ const header=async(first=false)=>{
+  if(logo){try{doc.addImage(logo,"PNG",margin,9,43,13);}catch(e){}}
+  doc.setTextColor(...navy);doc.setFont("helvetica","bold");doc.setFontSize(first?16:10);
+  doc.text(first?"STOCK AUDIT - FINAL REPORT":"MEDVIKA HEALTHCARE SOLUTIONS",first?margin+49:margin,first?16:12);
+  if(first){doc.setFontSize(8);doc.setTextColor(...green);doc.text("Independent verification | Inventory control | Actionable reporting",margin+49,21);}
+  doc.setDrawColor(215,225,231);doc.line(margin,27,pageW-margin,27);y=33;
+ };
+ const addTitle=(title)=>{doc.setTextColor(...navy);doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(title,margin,y);y+=3;};
+ const ensure=(limit=235)=>{if(y>limit){doc.addPage();y=33;return true;}return false;};
+ await header(true);
+ doc.autoTable({startY:y,head:[["Engagement","Details"]],body:[
+  ["Project",currentAudit.project_code||""],["Audit",currentAudit.project_name||""],["Audit Date",currentAudit.audit_date||""],["Location",currentAudit.location||""],["Status",String(currentAudit.status||"").replaceAll("_"," ")]
+ ],theme:"grid",styles:{fontSize:8,cellPadding:2.2},headStyles:{fillColor:navy,textColor:[255,255,255]},columnStyles:{0:{fontStyle:"bold",cellWidth:35}}});
+ y=doc.lastAutoTable.finalY+7;
+ const rows=reconRows||[];
+ const matched=rows.filter(r=>String(r.finding||"").toLowerCase().includes("match")).length;
+ const short=rows.filter(r=>crN(r.physical_qty)<crN(r.system_qty)).length;
+ const excess=rows.filter(r=>crN(r.physical_qty)>crN(r.system_qty)).length;
+ const missing=rows.filter(r=>String(r.finding||"").toLowerCase().includes("missing")).length;
+ const unlisted=rows.filter(r=>String(r.finding||"").toLowerCase().includes("unlisted")).length;
+ const damaged=rows.filter(r=>String(r.condition||"").toLowerCase().includes("damag")).length;
+ const expired=rows.filter(r=>String(r.condition||"").toLowerCase().includes("expired")).length;
+ const near=rows.filter(r=>String(r.condition||"").toLowerCase().includes("near")).length;
+ const shortageLoss=rows.filter(r=>crN(r.physical_qty)<crN(r.system_qty)).reduce((s,r)=>s+Math.abs(crN(r.variance_value)),0);
+ const excessValue=rows.filter(r=>crN(r.physical_qty)>crN(r.system_qty)).reduce((s,r)=>s+Math.abs(crN(r.variance_value)),0);
+ const net=rows.reduce((s,r)=>s+crN(r.variance_value),0);
+ const systemStockValue=currentStockRows.reduce((s,r)=>s+crN(r.system_qty)*crN(r.purchase_rate),0);
+ const expiredStock=currentStockRows.filter(r=>crExpiryState(r.expiry_date)==="expired");
+ const nearStock=currentStockRows.filter(r=>crExpiryState(r.expiry_date)==="near");
+ const expiredValue=expiredStock.reduce((s,r)=>s+crN(r.system_qty)*crN(r.purchase_rate),0);
+ const nearValue=nearStock.reduce((s,r)=>s+crN(r.system_qty)*crN(r.purchase_rate),0);
+ addTitle("Executive Summary");
+ doc.autoTable({startY:y,head:[["Metric","Value","Metric","Value"]],body:[
+  ["Reconciled Lines",rows.length,"Matched",matched],["Short",short,"Excess",excess],["Missing",missing,"Unlisted",unlisted],
+  ["Damaged Lines",damaged,"Expired Lines",expired],["Near Expiry Lines",near,"Current Stock Lines",currentStockRows.length],
+  ["Shortage Loss Ex-GST",crPdfMoney(shortageLoss),"Excess Value Ex-GST",crPdfMoney(excessValue)],
+  ["Net Inventory Variance",crPdfMoney(net),"System Stock Value",crPdfMoney(systemStockValue)],
+  ["Expired Stock Exposure",crPdfMoney(expiredValue),"Near Expiry Exposure",crPdfMoney(nearValue)]
+ ],theme:"grid",styles:{fontSize:8,cellPadding:2},headStyles:{fillColor:green,textColor:[255,255,255]}});y=doc.lastAutoTable.finalY+7;
+ if(ensure()){await header(false);} addTitle("Material Reconciliation Exceptions");
+ const exceptions=rows.filter(r=>!String(r.finding||"").toLowerCase().includes("match"));
+ doc.autoTable({startY:y,head:[["Status","Item","Batch","System","Physical","Variance","Value"]],body:exceptions.map(r=>[
+  crSafePdf(r.finding||""),crSafePdf(r.item_name||""),crSafePdf(r.batch_no||"-"),crSafePdf(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack")),crSafePdf(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack")),crSafePdf(varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size)),crSafePdf(crPdfMoney(r.variance_value))
+ ]),theme:"striped",styles:{fontSize:6.7,cellPadding:1.4,overflow:"linebreak"},headStyles:{fillColor:navy,textColor:[255,255,255]},columnStyles:{1:{cellWidth:43},2:{cellWidth:23}},margin:{left:margin,right:margin,top:31,bottom:15}});y=doc.lastAutoTable.finalY+7;
+ if(ensure(225)){await header(false);} addTitle("Expiry & Condition Findings");
+ const findings=rows.filter(r=>["damaged","expired","near_expiry"].some(x=>String(r.condition||"").toLowerCase().includes(x.replace("_"," "))));
+ doc.autoTable({startY:y,head:[["Item","Batch","Expiry","Physical Qty","Condition"]],body:findings.map(r=>[crSafePdf(r.item_name||""),crSafePdf(r.batch_no||"-"),r.expiry_date||"-",crSafePdf(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack")),crSafePdf(r.condition||"")]),theme:"grid",styles:{fontSize:7,cellPadding:1.6},headStyles:{fillColor:green,textColor:[255,255,255]},margin:{left:margin,right:margin,top:31,bottom:15}});y=doc.lastAutoTable.finalY+7;
+ if(ensure(220)){await header(false);} addTitle("Current Stock Expiry Exposure");
+ doc.autoTable({startY:y,head:[["Item","Batch","Expiry","System Qty","Risk"]],body:[...expiredStock,...nearStock].slice(0,250).map(r=>[crSafePdf(r.item_name||""),crSafePdf(r.batch_no||"-"),r.expiry_date||"-",crSafePdf(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack")),crExpiryState(r.expiry_date)==="expired"?"Expired":"Near Expiry"]),theme:"grid",styles:{fontSize:7,cellPadding:1.5},headStyles:{fillColor:navy,textColor:[255,255,255]},margin:{left:margin,right:margin,top:31,bottom:15}});y=doc.lastAutoTable.finalY+7;
+ if(customerZones.length){if(ensure(220)){await header(false);} addTitle("Zone Completion / Setup");doc.autoTable({startY:y,head:[["Zone","Category","Status"]],body:customerZones.map(z=>[crSafePdf(`${z.zone_code||""} - ${z.zone_name||""}`),crSafePdf(z.category||"-"),crSafePdf(z.status||"-")]),theme:"grid",styles:{fontSize:7.5,cellPadding:1.8},headStyles:{fillColor:navy,textColor:[255,255,255]}});y=doc.lastAutoTable.finalY+7;}
+ if(ensure(225)){await header(false);} addTitle("Management Notes");
+ doc.setTextColor(...dark);doc.setFont("helvetica","normal");doc.setFontSize(8);
+ const notes=doc.splitTextToSize("This report is generated from the selected Medvika customer audit workspace. Quantities use the Smart Quantity normalization selected during import. Financial values use purchase rate excluding GST where available. Detailed item-and-batch reconciliation remains available in the CSV export.",180);doc.text(notes,margin,y);y+=notes.length*4+8;
+ doc.setDrawColor(215,225,231);doc.line(margin,y,pageW-margin,y);y+=9;doc.text("Medvika Authorised Signatory: __________________________",margin,y);doc.text("Client Representative: __________________________",110,y);
+ const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFontSize(7);doc.setTextColor(...grey);doc.text("Confidential - Medvika Healthcare Solutions",margin,290);doc.text(`Page ${i} of ${n}`,pageW-margin,290,{align:"right"});}
+ doc.save(`Medvika_Final_Audit_Report_${currentAudit.project_code||"Audit"}.pdf`);
+}
+$("generateCustomerReportPdfBtn")?.addEventListener("click",generateCustomerReportPdf);
 $("exportCustomerReportBtn")?.addEventListener("click",exportCustomerReport);
 
 // ============================================================
