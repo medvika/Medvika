@@ -113,3 +113,9 @@ th{background:#0b4968;color:#fff;position:sticky;top:0;z-index:1}
 #unifiedSystemArea .preview-table,#unifiedPhysicalArea .preview-table{max-height:260px}
 @media(max-width:1100px){.allocation-grid-admin{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.portal-main{padding:13px}.allocation-grid-admin{grid-template-columns:1fr}.allocation-summary-wrap,.import-history-wrap{max-height:52vh}}
+
+/* Smart Quantity Interpretation */
+.smart-qty-panel{margin:16px 0;padding:16px;border:1px solid #cfe5e7;border-radius:14px;background:#f7fbfb;display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:12px;align-items:end}
+.smart-qty-panel label{display:flex;flex-direction:column;gap:7px;color:#0f4f64}.smart-qty-panel select{width:100%}.smart-qty-panel>p,.smart-qty-panel>.qty-analysis{grid-column:1/-1;margin:0}
+.qty-check{padding:10px 12px;border-radius:10px;background:#e8f7ef;color:#17603c}.qty-check.error{background:#fff1f0;color:#a52a2a}.qty-preview{margin-top:10px;max-height:230px;overflow:auto}
+@media(max-width:720px){.smart-qty-panel{grid-template-columns:1fr}.smart-qty-panel>p,.smart-qty-panel>.qty-analysis{grid-column:1}.smart-qty-panel .btn{width:100%}}
