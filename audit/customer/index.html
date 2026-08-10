@@ -91,7 +91,7 @@
     <section id="dashboardView" class="customer-view active">
       <div class="section-toolbar">
         <div><span class="eyebrow">My Workspace</span><h2>Audits</h2></div>
-        <button id="newAuditBtn" class="btn primary">Create Audit</button>
+        <button id="newAuditBtn" type="button" class="btn primary">Create Audit</button>
       </div>
       <div id="auditList" class="audit-list"></div>
 
@@ -137,7 +137,7 @@
         <section class="card">
           <div class="section-head"><div><h3>Zones</h3><span class="muted">Counting areas / sections</span></div></div>
           <div class="grid"><label>Zone Name<input id="zoneName" placeholder="A to M / Rack 1"></label><label>Category<input id="zoneCategory" placeholder="Medicine"></label></div>
-          <button id="addZoneBtn" class="btn primary">Add Zone</button>
+          <button id="addZoneBtn" type="button" class="btn primary">Add Zone</button>
           <div id="zoneList" class="spaced-list"></div>
         </section>
 
@@ -150,7 +150,7 @@
             <label>PIN<input id="teamPin" type="password" inputmode="numeric" placeholder="4+ digits"></label>
           </div>
           <label class="check-line"><input id="allowUnlisted" type="checkbox" checked> Allow unlisted physical items</label>
-          <button id="addTeamBtn" class="btn primary">Create Team & PIN</button>
+          <button id="addTeamBtn" type="button" class="btn primary">Create Team & PIN</button>
           <div id="teamList" class="spaced-list"></div>
         </section>
       </div>
@@ -162,7 +162,7 @@
       <section id="unifiedImportPanel" class="card">
         <div class="section-head">
           <div><span class="eyebrow">Single Source of Truth</span><h3>Stock Imports</h3></div>
-          <button id="reloadUnifiedImports" class="btn secondary">Reload History</button>
+          <button id="reloadUnifiedImports" type="button" class="btn secondary">Reload History</button>
         </div>
         <p class="muted">Import Current/System Stock once. Physical Count file is optional when teams count through the Team Portal.</p>
         <div class="grid-two">
@@ -170,7 +170,7 @@
             <h3>1. Current / System Stock</h3>
             <label>Import Mode<select id="unifiedSystemMode"><option value="replace">Replace Current Stock</option><option value="append">Append to Current Stock</option></select></label>
             <label>Choose CSV / Excel<input id="unifiedSystemFile" type="file" accept=".csv,.xlsx,.xls"></label>
-            <button id="previewUnifiedSystem" class="btn secondary">Preview & Map Columns</button>
+            <button id="previewUnifiedSystem" type="button" class="btn secondary">Preview & Map Columns</button>
             <div id="unifiedSystemArea"></div>
           </div>
           <div class="import-box">
@@ -178,7 +178,7 @@
             <label>Import Mode<select id="unifiedPhysicalMode"><option value="append">Add to Existing Physical Counts</option><option value="replace">Replace Existing Physical Counts</option></select></label>
             <div class="grid"><label>Zone<select id="unifiedPhysicalZone"></select></label><label>Team<select id="unifiedPhysicalTeam"></select></label></div>
             <label>Choose CSV / Excel<input id="unifiedPhysicalFile" type="file" accept=".csv,.xlsx,.xls"></label>
-            <button id="previewUnifiedPhysical" class="btn secondary">Preview & Match</button>
+            <button id="previewUnifiedPhysical" type="button" class="btn secondary">Preview & Match</button>
             <div id="unifiedPhysicalArea"></div>
           </div>
         </div>
@@ -188,7 +188,7 @@
       <section id="allocationPanel" class="card">
         <div class="section-head">
           <div><span class="eyebrow">Work Allocation</span><h3>Allocate Stock to Zones / Teams</h3></div>
-          <button id="reloadAllocation" class="btn secondary">Reload</button>
+          <button id="reloadAllocation" type="button" class="btn secondary">Reload</button>
         </div>
         <div class="allocation-grid">
           <label>Zone<select id="allocationZone"></select></label>
@@ -317,7 +317,7 @@
     <label>Audit Date<input id="newAuditDate" type="date"></label>
     <label>Expected Running Items<input id="newAuditItems" type="number" value="20000"></label>
   </div>
-  <div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="createAuditConfirm" class="btn primary">Create Audit</button></div>
+  <div class="actions"><button id="cancelModal" type="button" class="btn secondary">Cancel</button><button id="createAuditConfirm" type="button" class="btn primary">Create Audit</button></div>
 </div></div>
 
 <script src="./allocation.js?v=20"></script>

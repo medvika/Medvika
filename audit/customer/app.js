@@ -35,6 +35,9 @@ async function doLogin(){
   authMsg("Signing in...");
   const email=$("email").value.trim(),password=$("password").value;
   if(!email||!password){authMsg("Enter email and password.");return;}
+  // Never carry an old password-recovery state into a normal login.
+  sessionStorage.removeItem("medvika_password_recovery");
+  if(location.search||location.hash) history.replaceState(null,"",location.pathname);
   const {error}=await sb.auth.signInWithPassword({email,password});
   if(error){authMsg(error.message);return;}
   try{await claimAndLoad();}catch(e){authMsg(e.message);}
@@ -53,7 +56,7 @@ async function doForgot(){
   const email=$("email").value.trim();
   if(!email){authMsg("Enter registered email first.");$("email").focus();return;}
   authMsg("Sending password reset email...");
-  sessionStorage.setItem("medvika_password_recovery","1");
+  // Recovery mode is determined only from the actual Supabase recovery callback.
   const redirectTo=location.origin+"/audit/customer/?recovery=1";
   const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
   if(error){authMsg("Reset failed: "+error.message);return;}
@@ -67,7 +70,7 @@ async function savePassword(){
   if(error){$("recoveryMsg").textContent=error.message;return;}
   $("recoveryMsg").textContent="Password updated successfully.";
   sessionStorage.removeItem("medvika_password_recovery");
-  history.replaceState(null,"",location.origin+"/audit/customer/");
+  history.replaceState(null,"",location.pathname);
   try{await claimAndLoad();}catch(e){$("recoveryMsg").textContent=e.message;}
 }
 
@@ -95,16 +98,17 @@ document.addEventListener("DOMContentLoaded",async()=>{
   $("loginBtn").addEventListener("click",doLogin);
   $("forgotBtn").addEventListener("click",doForgot);
   $("savePasswordBtn").addEventListener("click",savePassword);
-  $("cancelRecoveryBtn").addEventListener("click",async()=>{sessionStorage.removeItem("medvika_password_recovery");await sb.auth.signOut();history.replaceState(null,"",location.pathname);showAuth();});
+  $("cancelRecoveryBtn").addEventListener("click",async()=>{sessionStorage.removeItem("medvika_password_recovery");history.replaceState(null,"",location.pathname);showAuth();});
   $("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();sessionStorage.clear();location.href=location.origin+"/audit/customer/";});
 
+  const isRecoveryCallback=()=>{
+    const params=new URLSearchParams(location.search);
+    return params.get("recovery")==="1" || params.get("type")==="recovery" || (location.hash||"").includes("type=recovery");
+  };
+
   sb.auth.onAuthStateChange((event,session)=>{
+    // Only a genuine Supabase PASSWORD_RECOVERY callback can open Change Password.
     if(event==="PASSWORD_RECOVERY"){
-      sessionStorage.setItem("medvika_password_recovery","1");
-      showRecovery();
-      return;
-    }
-    if(event==="SIGNED_IN" && (sessionStorage.getItem("medvika_password_recovery")==="1" || new URLSearchParams(location.search).get("recovery")==="1")){
       showRecovery();
       return;
     }
@@ -113,13 +117,13 @@ document.addEventListener("DOMContentLoaded",async()=>{
 
   const {data,error}=await sb.auth.getSession();
   if(error){authMsg(error.message);showAuth();return;}
-  const params=new URLSearchParams(location.search);
-  const recovery=params.get("recovery")==="1" || sessionStorage.getItem("medvika_password_recovery")==="1" || (location.hash||"").includes("type=recovery") || (location.search||"").includes("type=recovery");
-  if(recovery){
-    sessionStorage.setItem("medvika_password_recovery","1");
-    showRecovery();
+  if(isRecoveryCallback()){
+    if(data?.session) showRecovery();
+    else showAuth();
     return;
   }
+  // Clear any stale flag left by older portal builds. It must never affect normal workflow.
+  sessionStorage.removeItem("medvika_password_recovery");
   if(data?.session){try{await claimAndLoad();}catch(e){authMsg(e.message);showAuth();}} else showAuth();
 });
 
@@ -351,6 +355,20 @@ $("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unpars
 
 
 window.stockAllocation=installStockAllocation({sb,esc,msg,getAuditId:()=>currentAudit?.audit_id||null});
+
+// Install the customer stock importer locally. Import completion refreshes data in-place;
+// it never reloads or redirects the browser, so authentication/recovery state is untouched.
+window.unifiedImporter=installUnifiedImporter({
+  sb,esc,msg,
+  getAuditId:()=>currentAudit?.audit_id||null,
+  getCustomerId:()=>customerId,
+  reloadAfterImport:async()=>{
+    if(!currentAudit?.audit_id) return;
+    await Promise.all([loadSummary(),loadRecon(),loadCustomerCurrentStock()]);
+    if(window.stockAllocation) await window.stockAllocation.loadSummary();
+  }
+});
+window.loadUnifiedImportHistory=()=>window.unifiedImporter?.history?.();
 
 
 // ===== Customer report v1.4 =====
