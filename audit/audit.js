@@ -377,13 +377,38 @@ $("countForm").addEventListener("submit", async e=>{
 async function loadExceptions(){
   const [rr,er]=await Promise.all([
     sb.from("medvika_audit_recounts").select("*").eq("audit_id",currentAuditId).eq("status","open").order("created_at",{ascending:false}).limit(100),
-    sb.from("medvika_audit_count_lines").select("item_name,item_code,batch_no,expiry_date,physical_qty,condition,count_status").eq("audit_id",currentAuditId).in("condition",["near_expiry","expired","damaged"]).order("counted_at",{ascending:false}).limit(100)
+    sb.from("medvika_audit_count_lines").select("item_name,item_code,batch_no,expiry_date,physical_qty,pack_uom,pack_size,condition,count_status").eq("audit_id",currentAuditId).in("condition",["near_expiry","expired","damaged"]).order("counted_at",{ascending:false}).limit(100)
   ]);
   if(!rr.error){
-    $("recountWrap").innerHTML=tableHtml(["Item","Batch","System","First","Recount","Status"],(rr.data||[]).map(r=>[r.item_name,r.batch_no||"—",r.system_qty??"—",r.first_count_qty??"—",r.recount_qty??"—",r.status]));
+    const recountRows=rr.data||[];
+    if(recountRows.some(r=>!r.pack_size)){
+      try{
+        const stock=await fetchAllSystemStock();
+        recountRows.forEach(r=>{
+          const m=stock.find(s=>
+            (r.system_stock_id && String(s.id)===String(r.system_stock_id)) ||
+            (cleanCode(s.item_code)===cleanCode(r.item_code) && cleanBatch(s.batch_no)===cleanBatch(r.batch_no)) ||
+            (normName(s.item_name)===normName(r.item_name) && cleanBatch(s.batch_no)===cleanBatch(r.batch_no))
+          );
+          if(m){ r.pack_size=m.pack_size; r.pack_uom=m.pack_uom; }
+        });
+      }catch(e){}
+    }
+    $("recountWrap").innerHTML=tableHtml(["Item","Batch","System","First","Recount","Status"],recountRows.map(r=>{
+      const ps=r.pack_size??null, u=r.pack_uom||"Pack";
+      return [r.item_name,r.batch_no||"—",
+        r.system_qty===null||r.system_qty===undefined?"—":pharmacyQtyDisplay(r.system_qty,ps,u),
+        r.first_count_qty===null||r.first_count_qty===undefined?"—":pharmacyQtyDisplay(r.first_count_qty,ps,u),
+        r.recount_qty===null||r.recount_qty===undefined?"—":pharmacyQtyDisplay(r.recount_qty,ps,u),
+        r.status];
+    }));
   }
   if(!er.error){
-    $("expiryWrap").innerHTML=tableHtml(["Item","Batch","Expiry","Qty","Condition"],(er.data||[]).map(r=>[r.item_name,r.batch_no||"—",r.expiry_date||"—",r.physical_qty,r.condition.replaceAll("_"," ")]));
+    $("expiryWrap").innerHTML=tableHtml(["Item","Batch","Expiry","Qty","Condition"],(er.data||[]).map(r=>[
+      r.item_name,r.batch_no||"—",r.expiry_date||"—",
+      pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"),
+      r.condition.replaceAll("_"," ")
+    ]));
   }
 }
 
@@ -614,28 +639,20 @@ function normalizeImportedQuantity(value,packSize,mode="smart"){
   }
 
   // SMART:
-  // 1. Whole numeric quantities are treated as full packs when Pack Size exists.
-  // 2. For decimals with Pack Size, prefer ERP pack.loose notation when the
-  //    digits after the decimal are a valid loose-unit count.
-  // 3. Otherwise accept arithmetic decimal packs only when they resolve to a whole unit.
+  // Explicit pharmacy text is handled above. Plain decimal quantities are
+  // intentionally NOT guessed because different ERPs use different conventions.
   if(!(ps>0)) return {ok:true,qty:n,units:null,method:"smart_numeric_no_pack",display:String(n)};
 
   const parts=decimalParts(value);
   if(parts && parts.frac!==""){
-    const loose=Number(parts.frac);
-    if(Number.isInteger(ps) && loose<ps){
-      const units=(parts.whole*ps)+loose;
-      return {ok:true,qty:units/ps,units,method:"smart_erp_pack_loose",display:formatImportedQuantity(units/ps,ps)};
-    }
+    return {
+      ok:false,
+      reason:`Decimal quantity "${raw}" is ambiguous. Choose ERP Pack.Loose or True Decimal Packs for this file.`
+    };
   }
 
-  const unitsRaw=n*ps;
-  if(Math.abs(unitsRaw-Math.round(unitsRaw))<1e-9){
-    const units=Math.round(unitsRaw);
-    return {ok:true,qty:units/ps,units,method:"smart_decimal_pack",display:formatImportedQuantity(units/ps,ps)};
-  }
-
-  return {ok:false,reason:`Ambiguous quantity: ${raw} × Pack Size ${ps} = ${unitsRaw} units`};
+  const units=Math.round(n*ps);
+  return {ok:true,qty:n,units,method:"smart_whole_pack",display:formatImportedQuantity(n,ps)};
 }
 
 function formatImportedQuantity(qty,packSize,packUom="Pack"){
@@ -700,7 +717,7 @@ function hasSmallestUnitVariance(physicalQty,systemQty,packSize){
 
 function quantityModeOptions(selected="smart"){
   const opts=[
-    ["smart","Smart Detect (recommended)"],
+    ["smart","Smart Detect — text + whole quantities only"],
     ["erp_pack_loose","ERP Pack.Loose — 2.5 = 2 packs + 5 loose"],
     ["decimal_pack","True Decimal Packs — 2.5 = 2½ packs"],
     ["base_unit","Smallest Units — 35 = 35 tablets/pieces"]
@@ -747,7 +764,7 @@ function analyzeImportQuantities(container,type){
       ["Row","Imported Qty","Pack Size","Normalized"],
       examples
     )}</div>
-    ${invalid?'<p class="helper"><strong>No row-by-row editing required.</strong> Change the Quantity Interpretation above once for the whole file and re-run Analyze.</p>':""}
+    ${invalid?'<p class="helper"><strong>No row-by-row editing required.</strong> For decimal quantities, choose once for the whole file whether the ERP means Pack.Loose or True Decimal Packs, then re-run Analyze.</p>':""}
   `;
   container.__qtyAnalysis={valid,invalid,mode};
   saveQuantityProfile(type,mode);
