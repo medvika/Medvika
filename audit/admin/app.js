@@ -181,7 +181,7 @@ async function openClient(id){
       <div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br>
       <small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div>
       <div class="audit-actions">
-        <div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="/audit/?audit=${encodeURIComponent(a.audit_id)}" target="_blank" rel="noopener">Open Audit Workspace</a>${String(a.status||"").toLowerCase()==="planning"?`<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`:""}</div>
+        <div class="audit-actions"><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button><a class="btn primary" href="/audit/?audit=${encodeURIComponent(a.audit_id)}">Open Audit Workspace</a>${String(a.status||"").toLowerCase()==="planning"?`<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`:""}</div>
         ${String(a.status||"").toLowerCase()==="planning"
           ? `<button class="btn danger delete-audit" data-id="${a.audit_id}" data-code="${esc(a.project_code)}">Delete</button>`
           : ""}
