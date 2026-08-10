@@ -111,11 +111,12 @@ document.querySelectorAll(".nav-btn").forEach(btn=>{
     const view=btn.dataset.view;
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     $(view+"View").classList.add("active");
-    const titles={dashboard:"Audit Dashboard",count:"Physical Stock Count",zones:"Zones & Teams",exceptions:"Exceptions & Controls",reconciliation:"Complete Reconciliation",report:"Final Audit Report",imports:"Stock Imports"};
+    const titles={dashboard:"Audit Dashboard",count:"Physical Stock Count",zones:"Zones & Teams",exceptions:"Exceptions & Controls",reconciliation:"Complete Reconciliation",report:"Final Audit Report",imports:"Stock Imports","stock-register":"Current Stock Register"};
     $("viewTitle").textContent=titles[view]||"Stock Audit";
     if(view==="count") $("itemName").focus();
     if(view==="reconciliation") loadReconciliation();
     if(view==="report") loadFinalReport();
+    if(view==="stock-register") loadStockRegister();
   });
 });
 
@@ -1209,6 +1210,41 @@ async function importPhysicalRows(container){
   }
 }
 
+
+/* ---------------- Current Stock Register ---------------- */
+function stockExpiryClass(expiry){
+ if(!expiry)return "ok"; const d=new Date(`${expiry}T00:00:00`);if(Number.isNaN(d.getTime()))return "ok";
+ const t=new Date();t.setHours(0,0,0,0);const n=new Date(t);n.setDate(n.getDate()+180);
+ return d<t?"expired":d<=n?"near_expiry":"ok";
+}
+async function loadStockRegister(){
+ if(!currentAuditId||!$("stockRegisterTable"))return;$("stockRegStatus").textContent="Loading current stock…";
+ try{
+  const [stock,a]=await Promise.all([fetchAllSystemStock(),sb.from("medvika_audit_stock_allocations").select("system_stock_id,active").eq("audit_id",currentAuditId).eq("active",true)]);
+  const am=new Map();(a.data||[]).forEach(x=>am.set(String(x.system_stock_id),(am.get(String(x.system_stock_id))||0)+1));
+  stockRegisterRows=stock.map(r=>({...r,_alloc:am.get(String(r.id))||0,_expiry:stockExpiryClass(r.expiry_date)}));
+  stockRegisterPage=1;renderStockRegister();$("stockRegStatus").textContent=`${stockRegisterRows.length} stock lines loaded.`;
+ }catch(e){$("stockRegStatus").textContent=e.message||"Unable to load stock.";}
+}
+function renderStockRegister(){
+ if(!$("stockRegisterTable"))return;
+ const q=String($("stockRegSearch")?.value||"").toLowerCase().trim(),risk=$("stockRegRisk")?.value||"",size=Number($("stockRegPageSize")?.value||100);
+ stockRegisterFiltered=stockRegisterRows.filter(r=>{
+  const hay=[r.item_name,r.item_code,r.barcode,r.batch_no].join(" ").toLowerCase();if(q&&!hay.includes(q))return false;
+  const rate=firstFiniteNumber(r.purchase_rate,r.purchase_rate_ex_gst,r.ptr,r.cost_rate);
+  if(risk==="unallocated"&&r._alloc)return false;if(risk==="missing_rate"&&rate!==null)return false;if(risk==="expired"&&r._expiry!=="expired")return false;if(risk==="near_expiry"&&r._expiry!=="near_expiry")return false;return true;
+ });
+ const pages=Math.max(1,Math.ceil(stockRegisterFiltered.length/size));stockRegisterPage=Math.max(1,Math.min(stockRegisterPage,pages));const rows=stockRegisterFiltered.slice((stockRegisterPage-1)*size,stockRegisterPage*size);
+ $("stockRegTotal").textContent=stockRegisterRows.length;$("stockRegUnallocated").textContent=stockRegisterRows.filter(r=>!r._alloc).length;$("stockRegMissingRate").textContent=stockRegisterRows.filter(r=>firstFiniteNumber(r.purchase_rate,r.purchase_rate_ex_gst,r.ptr,r.cost_rate)===null).length;$("stockRegExpiryRisk").textContent=stockRegisterRows.filter(r=>r._expiry!=="ok").length;
+ $("stockRegPageInfo").textContent=`Page ${stockRegisterPage} of ${pages} • ${stockRegisterFiltered.length} rows`;$("stockRegPrev").disabled=stockRegisterPage<=1;$("stockRegNext").disabled=stockRegisterPage>=pages;
+ $("stockRegisterTable").innerHTML=rows.length?`<table><thead><tr><th>Item</th><th>Code</th><th>Batch</th><th>Expiry</th><th>Pack</th><th>System Qty</th><th>Purchase Rate</th><th>GST</th><th>MRP</th><th>Allocation</th></tr></thead><tbody>${rows.map(r=>{const rate=firstFiniteNumber(r.purchase_rate,r.purchase_rate_ex_gst,r.ptr,r.cost_rate);const badge=r._expiry==="expired"?'<span class="stock-risk stock-expired">Expired</span>':r._expiry==="near_expiry"?'<span class="stock-risk stock-near">Near Expiry</span>':'<span class="stock-risk stock-ok">OK</span>';return `<tr><td><strong>${esc(r.item_name||"")}</strong><br><small>${esc(r.barcode||"")}</small></td><td>${esc(r.item_code||"—")}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(r.expiry_date||"—")}<br>${badge}</td><td>${esc(r.pack_uom||"Pack")} × ${esc(r.pack_size||"—")}</td><td>${esc(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"))}</td><td>${rate===null?'<span class="risk-negative">Rate unavailable</span>':esc(fmtMoney(rate))}</td><td>${esc(r.gst_percent??"—")}</td><td>${r.mrp==null?"—":esc(fmtMoney(r.mrp))}</td><td class="${r._alloc?"stock-yes":"stock-no"}">${r._alloc?`Allocated (${r._alloc})`:"Unallocated"}</td></tr>`}).join("")}</tbody></table>`:'<div class="empty">No matching stock rows.</div>';
+}
+function exportStockRegisterCsv(){
+ const rows=stockRegisterFiltered.length?stockRegisterFiltered:stockRegisterRows;if(!rows.length){toast("No stock rows","error");return;}
+ downloadCsv("current_stock_register.csv",rows.map(r=>({Item_Code:r.item_code||"",Barcode:r.barcode||"",Item_Name:r.item_name||"",Batch:r.batch_no||"",Expiry:r.expiry_date||"",Pack_UOM:r.pack_uom||"",Pack_Size:r.pack_size??"",System_Qty:r.system_qty??"",System_Qty_Display:pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"),Purchase_Rate_Ex_GST:firstFiniteNumber(r.purchase_rate,r.purchase_rate_ex_gst,r.ptr,r.cost_rate)??"",GST:r.gst_percent??"",MRP:r.mrp??"",Allocation:r._alloc?"Allocated":"Unallocated"})));
+}
+$("refreshStockRegister")?.addEventListener("click",loadStockRegister);$("exportStockRegister")?.addEventListener("click",exportStockRegisterCsv);$("stockRegSearch")?.addEventListener("input",()=>{stockRegisterPage=1;renderStockRegister()});$("stockRegRisk")?.addEventListener("change",()=>{stockRegisterPage=1;renderStockRegister()});$("stockRegPageSize")?.addEventListener("change",()=>{stockRegisterPage=1;renderStockRegister()});$("stockRegPrev")?.addEventListener("click",()=>{stockRegisterPage--;renderStockRegister()});$("stockRegNext")?.addEventListener("click",()=>{stockRegisterPage++;renderStockRegister()});
+
 async function loadImportHistory(){
   if(!$("importHistoryWrap")||!currentAuditId) return;
   const {data,error}=await sb.from("medvika_audit_import_jobs").select("*").eq("audit_id",currentAuditId).order("created_at",{ascending:false}).limit(30);
@@ -1606,6 +1642,7 @@ $("saveExpiryRuleButton")?.addEventListener("click",saveNearExpiryRule);
 // STEP 6 - FINAL CLIENT AUDIT REPORT
 // ============================================================
 let finalReportData = null;
+let stockRegisterRows=[],stockRegisterFiltered=[],stockRegisterPage=1;
 
 function daysFromAudit(expiryDate){
   if(!expiryDate) return null;
