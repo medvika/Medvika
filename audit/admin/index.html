@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Medvika Audit SaaS Admin</title>
-  <link rel="stylesheet" href="./app.css">
+  <link rel="stylesheet" href="./app.css?v=11">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</head>
+<style>.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}</style></head>
 <body>
 <div class="wrap">
 
@@ -18,7 +18,7 @@
       <span class="eyebrow">Medvika Only</span>
       <h1>Audit SaaS Admin</h1>
     </div>
-    <button id="logoutBtn" class="btn secondary" hidden>Sign out</button>
+    <div class="top-actions"><a class="btn secondary role-dashboard-link" href="/audit/admin/">Dashboard</a><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
   </div>
 
   <div id="loginCard" class="card">
@@ -68,7 +68,7 @@
         <div class="card">
           <div class="section-head">
             <h2 id="adminAuditTitle">Audit Management</h2>
-            <a class="btn secondary" href="../team/">Open Team Portal</a>
+            <a class="btn secondary" href="/audit/team/" target="_blank" rel="noopener">Open Team Portal</a>
           </div>
           <div id="adminSummary" class="summary-grid"></div>
         </div>
@@ -216,6 +216,6 @@
 </div>
 <script src="./importer.js"></script>
 <script src="./allocation.js"></script>
-<script src="./app.js"></script>
+<script src="./app.js?v=11"></script>
 </body>
 </html>
