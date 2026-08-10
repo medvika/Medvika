@@ -55,7 +55,14 @@
 .chart-empty{padding:16px;border:1px dashed #ccdadd;border-radius:12px;color:#7b8d93;text-align:center}
 </style>
 
-<style>.stock-register-filters{grid-template-columns:2fr 1fr 130px;margin-bottom:14px}.stock-register-pager{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px}.stock-risk{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700}.stock-expired{background:#fde7e7;color:#a61b1b}.stock-near{background:#fff2d5;color:#986000}.stock-ok{background:#e7f6f1;color:#087a5f}.stock-no{color:#b42318;font-weight:700}.stock-yes{color:#087a5f;font-weight:700}@media(max-width:760px){.stock-register-filters{grid-template-columns:1fr}}</style></head>
+<style>
+.stock-register-filters{grid-template-columns:2fr 1fr 130px;margin-bottom:14px}
+.stock-register-pager{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px}
+.stock-risk{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700}
+.stock-expired{background:#fde7e7;color:#a61b1b}.stock-near{background:#fff2d5;color:#986000}.stock-ok{background:#e7f6f1;color:#087a5f}
+.stock-no{color:#b42318;font-weight:700}.stock-yes{color:#087a5f;font-weight:700}
+@media(max-width:760px){.stock-register-filters{grid-template-columns:1fr}.stock-register-pager{justify-content:space-between}}
+</style></head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
 
@@ -95,6 +102,7 @@
         <button class="nav-btn" data-view="reconciliation">Reconciliation</button>
         <button class="nav-btn" data-view="report">Final Report</button>
         <button class="nav-btn" data-view="imports">Imports</button>
+        <button class="nav-btn" data-view="stockRegister">Current Stock</button>
       </nav>
       <div class="sidebar-footer">
         <div id="signedInAs" class="signed-in"></div>
@@ -534,7 +542,60 @@
         </section>
       </section>
 
-      <section id="importsView" class="view">
+      
+      <section id="stockRegisterView" class="view">
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h3>Current Stock Register</h3>
+              <span>Verify imported inventory without opening Supabase</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button id="refreshStockRegister" class="btn secondary" type="button">Refresh</button>
+              <button id="exportStockRegister" class="btn primary" type="button">Export CSV</button>
+            </div>
+          </div>
+
+          <div class="report-stat-grid compact" style="margin-bottom:14px">
+            <div class="report-stat"><span>Total Stock Lines</span><strong id="stockRegTotal">0</strong></div>
+            <div class="report-stat"><span>Unallocated</span><strong id="stockRegUnallocated">0</strong></div>
+            <div class="report-stat"><span>Missing Rate</span><strong id="stockRegMissingRate">0</strong></div>
+            <div class="report-stat"><span>Expiry Risk</span><strong id="stockRegExpiryRisk">0</strong></div>
+          </div>
+
+          <div class="import-options stock-register-filters">
+            <label>Search
+              <input id="stockRegSearch" type="search" placeholder="Medicine, code, barcode or batch">
+            </label>
+            <label>Filter
+              <select id="stockRegRisk">
+                <option value="">All stock</option>
+                <option value="unallocated">Unallocated</option>
+                <option value="missing_rate">Missing purchase rate</option>
+                <option value="expired">Expired</option>
+                <option value="near_expiry">Near expiry</option>
+              </select>
+            </label>
+            <label>Rows
+              <select id="stockRegPageSize">
+                <option value="50">50</option>
+                <option value="100" selected>100</option>
+                <option value="250">250</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="stockRegStatus" class="form-message"></div>
+          <div id="stockRegisterTable" class="table-wrap"></div>
+          <div class="stock-register-pager">
+            <button id="stockRegPrev" class="btn secondary" type="button">Previous</button>
+            <span id="stockRegPageInfo">Page 1</span>
+            <button id="stockRegNext" class="btn secondary" type="button">Next</button>
+          </div>
+        </section>
+      </section>
+
+<section id="importsView" class="view">
         <div class="import-grid">
           <section class="card">
             <div class="card-head">
@@ -659,6 +720,6 @@
     </main>
   </div>
 
-  <script src="./audit.js?v=stockreg1"></script>
+  <script src="./audit.js?v=stockreg2"></script>
 </body>
 </html>
