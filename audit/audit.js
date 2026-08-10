@@ -236,13 +236,13 @@ async function loadRecentCounts(){
   if(error){toast(error.message,"error");return;}
   const rows=data||[];
   $("recentCountBody").innerHTML=rows.length?rows.slice(0,12).map(r=>{
-    const variance=(r.system_qty===null||r.system_qty===undefined)?"—":Number(r.physical_qty)-Number(r.system_qty);
+    const variance=(r.system_qty===null||r.system_qty===undefined)?"—":Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
     const cls=variance==="—"?"":varianceClass(variance);
     return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(r.physical_qty)}</td><td>${esc(r.system_qty??"—")}</td><td class="${cls}">${esc(variance)}</td><td>${esc(r.count_status)}</td></tr>`;
   }).join(""):'<tr><td colspan="7" class="empty">No count entries yet.</td></tr>';
 
   $("mobileCountList").innerHTML=rows.length?rows.map(r=>{
-    const variance=(r.system_qty===null||r.system_qty===undefined)?null:Number(r.physical_qty)-Number(r.system_qty);
+    const variance=(r.system_qty===null||r.system_qty===undefined)?null:Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
     return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(r.physical_qty)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${variance===null?"":` • Var: ${esc(variance)}`}</p></div>`;
   }).join(""):'<div class="empty">No count entries yet.</div>';
 }
@@ -537,6 +537,173 @@ function parsePharmacyQuantity(value, packSize=null){
 
   return packQty;
 }
+
+function quantityProfileKey(type){
+  return `medvika_qty_profile_${currentAuditId||"audit"}_${type}`;
+}
+
+function saveQuantityProfile(type,mode){
+  try{ localStorage.setItem(quantityProfileKey(type),mode); }catch(e){}
+}
+function loadQuantityProfile(type){
+  try{ return localStorage.getItem(quantityProfileKey(type))||"smart"; }catch(e){ return "smart"; }
+}
+
+function decimalParts(value){
+  const s=String(value??"").replace(/,/g,"").trim();
+  if(!/^[+-]?\d+(?:\.\d+)?$/.test(s)) return null;
+  const negative=s.startsWith("-");
+  const clean=negative?s.slice(1):s;
+  const [whole,frac=""]=clean.split(".");
+  return {negative,whole:Number(whole||0),frac,raw:s};
+}
+
+function normalizeImportedQuantity(value,packSize,mode="smart"){
+  if(value===null||value===undefined||String(value).trim()===""){
+    return {ok:false,reason:"Blank quantity"};
+  }
+
+  const ps=toNumber(packSize);
+  const raw=String(value).trim();
+
+  // Explicit pharmacy text is unambiguous and always wins.
+  if(/[a-zA-Z]/.test(raw)){
+    const q=parsePharmacyQuantity(value,ps);
+    if(q===null) return {ok:false,reason:"Could not parse pack/loose text"};
+    const units=(ps>0)?Math.round(q*ps):q;
+    return {ok:true,qty:q,units,method:"pharmacy_text",display:formatImportedQuantity(q,ps)};
+  }
+
+  const n=toNumber(value);
+  if(n===null) return {ok:false,reason:"Not numeric"};
+
+  if(mode==="base_unit"){
+    if(!(ps>0)) return {ok:true,qty:n,units:n,method:"base_unit_no_pack",display:String(n)};
+    if(Math.abs(n-Math.round(n))>1e-9) return {ok:false,reason:"Smallest-unit quantity is not a whole unit"};
+    const units=Math.round(n);
+    return {ok:true,qty:units/ps,units,method:"base_unit",display:formatImportedQuantity(units/ps,ps)};
+  }
+
+  if(mode==="decimal_pack"){
+    if(!(ps>0)) return {ok:true,qty:n,units:null,method:"decimal_pack_no_pack",display:String(n)};
+    const unitsRaw=n*ps;
+    if(Math.abs(unitsRaw-Math.round(unitsRaw))>1e-9){
+      return {ok:false,reason:`Decimal pack creates fractional smallest units (${unitsRaw})`};
+    }
+    const units=Math.round(unitsRaw);
+    return {ok:true,qty:units/ps,units,method:"decimal_pack",display:formatImportedQuantity(units/ps,ps)};
+  }
+
+  if(mode==="erp_pack_loose"){
+    if(!(ps>0)) return {ok:false,reason:"Pack Size is required for ERP pack.loose notation"};
+    const p=decimalParts(value);
+    if(!p) return {ok:false,reason:"Invalid ERP pack.loose quantity"};
+    const loose=p.frac===""?0:Number(p.frac);
+    if(!Number.isInteger(ps)) return {ok:false,reason:"Pack Size must be a whole number"};
+    if(loose>=ps) return {ok:false,reason:`Loose part ${loose} must be less than Pack Size ${ps}`};
+    const units=(p.whole*ps)+loose;
+    const signed=p.negative?-units:units;
+    if(signed<0) return {ok:false,reason:"Negative stock is not supported"};
+    return {ok:true,qty:signed/ps,units:signed,method:"erp_pack_loose",display:formatImportedQuantity(signed/ps,ps)};
+  }
+
+  // SMART:
+  // 1. Whole numeric quantities are treated as full packs when Pack Size exists.
+  // 2. For decimals with Pack Size, prefer ERP pack.loose notation when the
+  //    digits after the decimal are a valid loose-unit count.
+  // 3. Otherwise accept arithmetic decimal packs only when they resolve to a whole unit.
+  if(!(ps>0)) return {ok:true,qty:n,units:null,method:"smart_numeric_no_pack",display:String(n)};
+
+  const parts=decimalParts(value);
+  if(parts && parts.frac!==""){
+    const loose=Number(parts.frac);
+    if(Number.isInteger(ps) && loose<ps){
+      const units=(parts.whole*ps)+loose;
+      return {ok:true,qty:units/ps,units,method:"smart_erp_pack_loose",display:formatImportedQuantity(units/ps,ps)};
+    }
+  }
+
+  const unitsRaw=n*ps;
+  if(Math.abs(unitsRaw-Math.round(unitsRaw))<1e-9){
+    const units=Math.round(unitsRaw);
+    return {ok:true,qty:units/ps,units,method:"smart_decimal_pack",display:formatImportedQuantity(units/ps,ps)};
+  }
+
+  return {ok:false,reason:`Ambiguous quantity: ${raw} × Pack Size ${ps} = ${unitsRaw} units`};
+}
+
+function formatImportedQuantity(qty,packSize,packUom="Pack"){
+  const q=toNumber(qty),ps=toNumber(packSize);
+  if(q===null) return "—";
+  if(!(ps>0)||!Number.isInteger(ps)) return String(Number(q.toFixed(6)));
+  const rawUnits=q*ps;
+  if(Math.abs(rawUnits-Math.round(rawUnits))>1e-8) return String(Number(q.toFixed(6)));
+  const units=Math.round(rawUnits);
+  const packs=Math.floor(Math.abs(units)/ps);
+  const loose=Math.abs(units)%ps;
+  const sign=units<0?"−":"";
+  const u=String(packUom||"Pack").trim()||"Pack";
+  return loose
+    ? `${sign}${packs} ${u}${packs===1?"":"s"} + ${loose} loose`
+    : `${sign}${packs} ${u}${packs===1?"":"s"}`;
+}
+
+function quantityModeOptions(selected="smart"){
+  const opts=[
+    ["smart","Smart Detect (recommended)"],
+    ["erp_pack_loose","ERP Pack.Loose — 2.5 = 2 packs + 5 loose"],
+    ["decimal_pack","True Decimal Packs — 2.5 = 2½ packs"],
+    ["base_unit","Smallest Units — 35 = 35 tablets/pieces"]
+  ];
+  return opts.map(([v,l])=>`<option value="${v}"${v===selected?" selected":""}>${l}</option>`).join("");
+}
+
+function analyzeImportQuantities(container,type){
+  const rows=container.__rows||[];
+  const map=readMapping(container);
+  const qtyKey=type==="system"?"system_qty":"physical_qty";
+  const mode=container.querySelector("[data-qty-mode]")?.value||"smart";
+  const report=container.querySelector("[data-qty-analysis]");
+  if(!report) return null;
+
+  if(!map[qtyKey]){
+    report.innerHTML='<div class="import-progress error">Map the quantity column first.</div>';
+    return null;
+  }
+
+  let valid=0,invalid=0;
+  const methods={};
+  const examples=[];
+  rows.forEach((r,idx)=>{
+    const ps=map.pack_size?toNumber(r[map.pack_size]):null;
+    const result=normalizeImportedQuantity(r[map[qtyKey]],ps,mode);
+    if(result.ok){
+      valid++;
+      methods[result.method]=(methods[result.method]||0)+1;
+      if(examples.length<5) examples.push([idx+2,r[map[qtyKey]],ps??"—",result.display]);
+    }else{
+      invalid++;
+      if(examples.length<8) examples.push([idx+2,r[map[qtyKey]],ps??"—","⚠ "+result.reason]);
+    }
+  });
+
+  const methodText=Object.entries(methods).map(([k,v])=>`${k.replaceAll("_"," ")}: ${fmtNum(v)}`).join(" · ");
+  report.innerHTML=`
+    <div class="import-progress ${invalid?"error":""}">
+      <strong>Smart Quantity Check:</strong> ${fmtNum(valid)} ready · ${fmtNum(invalid)} need review
+      ${methodText?`<br><span class="helper">${esc(methodText)}</span>`:""}
+    </div>
+    <div class="preview-table">${tableHtml(
+      ["Row","Imported Qty","Pack Size","Normalized"],
+      examples
+    )}</div>
+    ${invalid?'<p class="helper"><strong>No row-by-row editing required.</strong> Change the Quantity Interpretation above once for the whole file and re-run Analyze.</p>':""}
+  `;
+  container.__qtyAnalysis={valid,invalid,mode};
+  saveQuantityProfile(type,mode);
+  return container.__qtyAnalysis;
+}
+
 function toISODate(v){
   if(!v) return null;
   if(typeof v==="number" && window.XLSX){
@@ -652,16 +819,33 @@ function renderMapping(container,rows,type){
   const fields=isSystem
     ? [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["System Qty","system_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Category","category",false],["Manufacturer","manufacturer",false],["Purchase Rate Ex-GST","purchase_rate",false],["GST %","gst_percent",false],["MRP","mrp",false]]
     : [["Item Name","item_name",true],["Item Code","item_code",false],["Barcode","barcode",false],["Batch No.","batch_no",false],["Expiry Date","expiry_date",false],["Physical Qty","physical_qty",true],["Pack/UOM","pack_uom",false],["Pack Size","pack_size",false],["Category","category",false],["Condition / Damage","condition",false]];
+  const savedMode=loadQuantityProfile(type);
   container.__rows=rows;
   container.innerHTML=`<div class="mapping-card">
     <strong>Column Mapping</strong>
     <p class="helper">${fmtNum(rows.length)} rows detected. Confirm the columns before importing.</p>
     <div class="mapping-grid">${fields.map(f=>mappingField(f[0],f[1],headers,f[2])).join("")}</div>
+
+    <div class="import-options" style="margin-top:14px">
+      <label>Quantity Interpretation
+        <select data-qty-mode>${quantityModeOptions(savedMode)}</select>
+      </label>
+      <button class="btn secondary" type="button" data-analyze-qty>Analyze Quantities</button>
+    </div>
+    <p class="helper">Choose one rule for the complete file. Smart Detect understands pharmacy text and common ERP pack.loose notation. The selected rule is remembered for this audit.</p>
+    <div data-qty-analysis></div>
+
     <div class="preview-table">${tableHtml(headers.slice(0,8),rows.slice(0,5).map(r=>headers.slice(0,8).map(h=>r[h])))}</div>
     <button class="btn primary" type="button" data-import="${type}">${isSystem?"Import System Stock":"Match & Import Physical Counts"}</button>
     <div class="import-progress" data-progress hidden></div>
   </div>`;
+
+  const analyze=()=>analyzeImportQuantities(container,type);
+  container.querySelector("[data-analyze-qty]").addEventListener("click",analyze);
+  container.querySelector("[data-qty-mode]").addEventListener("change",analyze);
+  container.querySelectorAll("[data-map]").forEach(el=>el.addEventListener("change",()=>{ if(el.dataset.map==="system_qty"||el.dataset.map==="physical_qty"||el.dataset.map==="pack_size") analyze(); }));
   container.querySelector(`[data-import="${type}"]`).addEventListener("click",()=> type==="system" ? importSystemRows(container) : importPhysicalRows(container));
+  setTimeout(analyze,0);
 }
 function readMapping(container){
   const out={};
@@ -712,6 +896,13 @@ async function importSystemRows(container){
   const rows=container.__rows||[], map=readMapping(container), file=$("systemStockFile").files[0], mode=$("systemImportMode").value;
   const progress=container.querySelector("[data-progress]"); progress.hidden=false; progress.textContent="Preparing stock import…";
   if(!map.item_name||!map.system_qty){progress.className="import-progress error";progress.textContent="Map Item Name and System Qty.";return;}
+  const analysis=analyzeImportQuantities(container,"system");
+  if(!analysis) return;
+  if(analysis.invalid>0){
+    progress.className="import-progress error";
+    progress.textContent=`${analysis.invalid} quantities are still ambiguous. Choose the correct file-wide Quantity Interpretation and analyze again before import.`;
+    return;
+  }
   let jobId=null;
   try{
     jobId=await createImportJob("system_stock",file,mode,rows.length);
@@ -725,7 +916,9 @@ async function importSystemRows(container){
     rows.forEach((r,idx)=>{
       const name=String(r[map.item_name]??"").trim();
       const importedPackSize=map.pack_size?toNumber(r[map.pack_size]):null;
-      const qty=parsePharmacyQuantity(r[map.system_qty],importedPackSize);
+      const qtyMode=container.querySelector("[data-qty-mode]")?.value||"smart";
+      const normalized=normalizeImportedQuantity(r[map.system_qty],importedPackSize,qtyMode);
+      const qty=normalized.ok?normalized.qty:null;
       if(!name||qty===null){failed++;return;}
       recs.push({
         audit_id:currentAuditId,import_job_id:jobId,source_row_no:idx+2,
@@ -777,6 +970,13 @@ async function importPhysicalRows(container){
   const zoneId=$("physicalImportZone").value||null, teamId=$("physicalImportTeam").value||null;
   const progress=container.querySelector("[data-progress]"); progress.hidden=false; progress.textContent="Loading current inventory for matching…";
   if(!map.item_name||!map.physical_qty){progress.className="import-progress error";progress.textContent="Map Item Name and Physical Qty.";return;}
+  const analysis=analyzeImportQuantities(container,"physical");
+  if(!analysis) return;
+  if(analysis.invalid>0){
+    progress.className="import-progress error";
+    progress.textContent=`${analysis.invalid} quantities are still ambiguous. Choose the correct file-wide Quantity Interpretation and analyze again before import.`;
+    return;
+  }
   let jobId=null;
   try{
     jobId=await createImportJob("physical_count",file,"append",rows.length);
@@ -792,8 +992,9 @@ async function importPhysicalRows(container){
       const name=String(r[map.item_name]??"").trim();
       const importedPackSize=map.pack_size?toNumber(r[map.pack_size]):null;
       const rawPhysical=map.physical_qty?r[map.physical_qty]:null;
-      // Auto-detect decimal or pharmacy-style quantity, e.g. 2.5 or 2Strip10Tab.
-      const physical=parsePharmacyQuantity(rawPhysical,importedPackSize);
+      const qtyMode=container.querySelector("[data-qty-mode]")?.value||"smart";
+      const normalizedPhysical=normalizeImportedQuantity(rawPhysical,importedPackSize,qtyMode);
+      const physical=normalizedPhysical.ok?normalizedPhysical.qty:null;
       if(!name||physical===null){failed++;return;}
       const code=map.item_code?String(r[map.item_code]??"").trim():"";
       const barcode=map.barcode?String(r[map.barcode]??"").trim():"";
@@ -891,6 +1092,7 @@ function buildReconciliationRows(systemStock, countLines){
           category:c.category||null,
           expiry_date:c.expiry_date||null,
           condition:c.condition||classifyCondition(c.expiry_date,null),
+          pack_uom:c.pack_uom||"Pack",
           pack_size:c.pack_size||null,
           full_pack_qty:c.full_pack_qty??null,
           loose_qty:c.loose_qty??null,
@@ -913,7 +1115,7 @@ function buildReconciliationRows(systemStock, countLines){
     const g=matchedGroups.get(String(s.id));
     const sys=Number(s.system_qty||0);
     const phy=g ? Number(g.physical_qty||0) : 0;
-    const variance=phy-sys;
+    const variance=Number((phy-sys).toFixed(9));
 
     let status="matched";
     if(!g) status="missing";
@@ -929,6 +1131,7 @@ function buildReconciliationRows(systemStock, countLines){
       category:s.category||"",
       expiry_date:g?.latest_count?.expiry_date || s.expiry_date || null,
       condition:g?.latest_count?.condition || classifyCondition(s.expiry_date,null),
+      pack_uom:g?.latest_count?.pack_uom || s.pack_uom || "Pack",
       pack_size:g?.latest_count?.pack_size || s.pack_size || null,
       full_pack_qty:g?.latest_count?.full_pack_qty ?? null,
       loose_qty:g?.latest_count?.loose_qty ?? null,
@@ -962,6 +1165,7 @@ function buildReconciliationRows(systemStock, countLines){
       category:g.category||"",
       expiry_date:g.expiry_date||null,
       condition:g.condition||"saleable",
+      pack_uom:g.pack_uom||"Pack",
       pack_size:g.pack_size||null,
       full_pack_qty:g.full_pack_qty??null,
       loose_qty:g.loose_qty??null,
@@ -1047,9 +1251,9 @@ function renderReconciliationTable(){
       <td>${conditionChip(r.condition)}</td>
       <td>${r.purchase_rate===null?"—":fmtMoney(r.purchase_rate)}</td>
       <td>${r.gst_percent===null?"—":esc(r.gst_percent)+"%"}</td>
-      <td>${esc(r.system_qty)}</td>
-      <td>${esc(r.physical_qty)}</td>
-      <td class="${varianceClass(r.variance)}">${esc(r.variance)}</td>
+      <td>${esc(formatImportedQuantity(r.system_qty,r.pack_size,r.pack_uom))}</td>
+      <td>${esc(formatImportedQuantity(r.physical_qty,r.pack_size,r.pack_uom))}</td>
+      <td class="${varianceClass(r.variance)}">${esc(formatImportedQuantity(r.variance,r.pack_size,r.pack_uom))}</td>
       <td>${r.system_value===null?"—":fmtMoney(r.system_value)}</td>
       <td>${r.physical_value===null?"—":fmtMoney(r.physical_value)}</td>
       <td class="${r.variance_value===null?"":(r.variance_value<0?"money-negative":r.variance_value>0?"money-positive":"money-neutral")}">${r.variance_value===null?"—":fmtMoney(r.variance_value)}</td>
@@ -1088,7 +1292,7 @@ async function fetchAllCountLinesDetailed(){
   const all=[]; let from=0; const size=1000;
   while(true){
     const {data,error}=await sb.from("medvika_audit_count_lines")
-      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,expiry_date,condition,physical_qty,system_qty,count_status,match_status,pack_size,full_pack_qty,loose_qty,qty_basis")
+      .select("id,system_stock_id,item_code,barcode,item_name,batch_no,category,expiry_date,condition,physical_qty,system_qty,count_status,match_status,pack_uom,pack_size,full_pack_qty,loose_qty,qty_basis")
       .eq("audit_id",currentAuditId).range(from,from+size-1);
     if(error) throw error;
     all.push(...(data||[]));
@@ -1114,8 +1318,11 @@ function reconciliationExportRows(){
     Purchase_Rate_Ex_GST:r.purchase_rate,
     GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
+    System_Qty_Display:formatImportedQuantity(r.system_qty,r.pack_size,r.pack_uom),
     Physical_Qty:r.physical_qty,
+    Physical_Qty_Display:formatImportedQuantity(r.physical_qty,r.pack_size,r.pack_uom),
     Variance:r.variance,
+    Variance_Display:formatImportedQuantity(r.variance,r.pack_size,r.pack_uom),
     System_Value_Ex_GST:r.system_value,
     Physical_Value_Ex_GST:r.physical_value,
     Variance_Value_Ex_GST:r.variance_value,
@@ -1490,8 +1697,11 @@ function reportExcelRows(){
     Purchase_Rate_Ex_GST:r.purchase_rate,
     GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
+    System_Qty_Display:formatImportedQuantity(r.system_qty,r.pack_size,r.pack_uom),
     Physical_Qty:r.physical_qty,
+    Physical_Qty_Display:formatImportedQuantity(r.physical_qty,r.pack_size,r.pack_uom),
     Variance:r.variance,
+    Variance_Display:formatImportedQuantity(r.variance,r.pack_size,r.pack_uom),
     System_Value_Ex_GST:r.system_value,
     Physical_Value_Ex_GST:r.physical_value,
     Variance_Value_Ex_GST:r.variance_value,

@@ -431,7 +431,7 @@
                 <span>CSV or Excel · designed for 20,000+ current rows</span>
               </div>
             </div>
-            <p class="helper">Import the client's current stock before physical counting. Use one <strong>System Qty</strong> column. It accepts decimal quantities such as <strong>2.5</strong> and pharmacy-style quantities such as <strong>2Strip10Tab</strong>; Pack Size is used when loose units need conversion. The portal matches item code + batch, barcode + batch, then item name + batch. <strong>Purchase Rate is treated as Ex-GST cost.</strong> GST % is stored separately for reference and optional future GST-inclusive reporting.</p>
+            <p class="helper">Import the client's current stock before physical counting. The Smart Quantity Engine can read normal numbers, ERP pack.loose notation such as <strong>2.5 = 2 packs + 5 loose units</strong>, smallest-unit stock, and text such as <strong>2Strip10Tab</strong>. Choose the interpretation once for the whole file; Medvika normalizes all rows automatically using Pack Size and shows a validation summary before import. <strong>No row-by-row correction is required.</strong> Purchase Rate is treated as Ex-GST cost.</p>
             <div class="import-options">
               <label>Import mode
                 <select id="systemImportMode">
@@ -454,7 +454,7 @@
                 <span>Match physical counts against system stock</span>
               </div>
             </div>
-            <p class="helper">Upload physical stock prepared in Excel/CSV. Use one <strong>Physical Qty</strong> column. It accepts decimal quantities such as <strong>2.5</strong> and pharmacy-style quantities such as <strong>2Strip10Tab</strong>. When loose units are included, <strong>Pack Size</strong> is used to convert them to decimal pack quantity automatically. If an item/batch does not exist in current stock, it is flagged as <strong>Unlisted Excess</strong>.</p>
+            <p class="helper">Upload physical stock prepared in Excel/CSV. The same Smart Quantity Engine is used so one quantity rule can normalize the complete file. If an item/batch does not exist in current stock, it is flagged as <strong>Unlisted Excess</strong>.</p>
             <div class="import-options">
               <label>Zone for imported counts
                 <select id="physicalImportZone"></select>
@@ -514,6 +514,6 @@
     </main>
   </div>
 
-  <script src="./audit.js"></script>
+  <script src="./audit.js?v=smartqty1"></script>
 </body>
 </html>
