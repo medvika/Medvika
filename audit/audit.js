@@ -1339,7 +1339,7 @@ function buildReconciliationRows(systemStock, countLines){
       full_pack_qty:g.full_pack_qty??null,
       loose_qty:g.loose_qty??null,
       qty_basis:g.qty_basis||"decimal",
-      purchase_rate:null,
+      purchase_rate:firstFiniteNumber(g.resolved_purchase_rate,g.purchase_rate,g.purchase_rate_ex_gst,g.ptr,g.cost_rate),
       gst_percent:null,
       mrp:null,
       system_qty:0,
@@ -1485,6 +1485,7 @@ function reconciliationExportRows(){
     Loose_Qty:r.loose_qty??"",
     Qty_Basis:r.qty_basis||"",
     Purchase_Rate_Ex_GST:r.purchase_rate,
+    Rate_Status:r.purchase_rate===null?"Rate unavailable":"Valued",
     GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
     System_Qty_Display:pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom),
@@ -1726,6 +1727,7 @@ function buildAuditHealthScore(data){
   const completion=clampScore(100-((recount/total)*100));
 
   const damagedLines=recon.filter(r=>r.condition==="damaged").length;
+  const unvaluedLines=Number(fin.unvaluedLines||0);
   const expiryRiskLines=Number(se.expired_lines||0)+Number(se.near_lines||0);
   const damageRisk=clampScore(100-((damagedLines/total)*100*4));
   const expiryRisk=clampScore(100-((expiryRiskLines/total)*100*3));
@@ -1757,6 +1759,95 @@ function scoreLabel(score){
 }
 
 
+
+function firstFiniteNumber(...vals){
+  for(const v of vals){
+    const n=Number(v);
+    if(v!==null && v!==undefined && v!=="" && Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function resolvePurchaseRateForCount(count,systemStock){
+  if(!count) return {rate:null,source:"unavailable"};
+
+  // Direct rate on the physical/count row wins when present.
+  const direct=firstFiniteNumber(count.purchase_rate,count.purchase_rate_ex_gst,count.ptr,count.cost_rate);
+  if(direct!==null) return {rate:direct,source:"physical_count"};
+
+  const stock=systemStock||[];
+  let match=null;
+
+  // Strongest match: linked system stock row.
+  if(count.system_stock_id!==null && count.system_stock_id!==undefined){
+    match=stock.find(s=>String(s.id)===String(count.system_stock_id))||null;
+  }
+
+  // Then item code + batch.
+  if(!match && count.item_code){
+    match=stock.find(s=>
+      cleanCode(s.item_code)===cleanCode(count.item_code) &&
+      cleanBatch(s.batch_no)===cleanBatch(count.batch_no)
+    )||null;
+  }
+
+  // Then barcode + batch.
+  if(!match && count.barcode){
+    match=stock.find(s=>
+      cleanCode(s.barcode)===cleanCode(count.barcode) &&
+      cleanBatch(s.batch_no)===cleanBatch(count.batch_no)
+    )||null;
+  }
+
+  // Then exact name + batch.
+  if(!match && count.item_name){
+    match=stock.find(s=>
+      normName(s.item_name)===normName(count.item_name) &&
+      cleanBatch(s.batch_no)===cleanBatch(count.batch_no)
+    )||null;
+  }
+
+  // Safe fallback only when exactly one stock row exists for the item/code/barcode.
+  if(!match && count.item_code){
+    const c=stock.filter(s=>cleanCode(s.item_code)===cleanCode(count.item_code));
+    if(c.length===1) match=c[0];
+  }
+  if(!match && count.barcode){
+    const c=stock.filter(s=>cleanCode(s.barcode)===cleanCode(count.barcode));
+    if(c.length===1) match=c[0];
+  }
+  if(!match && count.item_name){
+    const c=stock.filter(s=>normName(s.item_name)===normName(count.item_name));
+    if(c.length===1) match=c[0];
+  }
+
+  if(!match) return {rate:null,source:"unavailable"};
+
+  const rate=firstFiniteNumber(match.purchase_rate,match.purchase_rate_ex_gst,match.ptr,match.cost_rate);
+  return rate===null ? {rate:null,source:"unavailable"} : {rate,source:"system_stock"};
+}
+
+function rateLabel(v){
+  return v===null||v===undefined||!Number.isFinite(Number(v)) ? "Rate unavailable" : fmtMoney(v);
+}
+
+function valueLabel(v,rateKnown=true){
+  if(!rateKnown) return "Not valued";
+  return fmtMoney(v||0);
+}
+
+function enrichCountsWithRates(counts,systemStock){
+  return (counts||[]).map(c=>{
+    const resolved=resolvePurchaseRateForCount(c,systemStock);
+    return {
+      ...c,
+      resolved_purchase_rate:resolved.rate,
+      resolved_rate_source:resolved.source,
+      rate_available:resolved.rate!==null
+    };
+  });
+}
+
 function renderFinancialImpactChart(data){
   const box=$("financialImpactChart");
   if(!box) return;
@@ -1770,7 +1861,9 @@ function renderFinancialImpactChart(data){
   ];
   const max=Math.max(...rows.map(r=>r[1]),0);
   if(max<=0){
-    box.innerHTML='<div class="chart-empty">No financial risk exposure recorded.</div>';
+    box.innerHTML=(Number(f.unvaluedLines||0)>0)
+      ? `<div class="chart-empty">${Number(f.unvaluedLines||0)} exception line${Number(f.unvaluedLines||0)===1?"":"s"} could not be valued because purchase rate is unavailable.</div>`
+      : '<div class="chart-empty">No financial risk exposure recorded.</div>';
     return;
   }
   box.innerHTML=rows.map(([label,value,cls])=>{
@@ -1878,19 +1971,19 @@ function renderExecutiveAuditIntelligence(data){
     ["Expired Value",fmtMoney(fin.expiredValue||0)],
     ["Damaged Value",fmtMoney(fin.damagedValue||0)],
     ["Near Expiry Exposure",fmtMoney(fin.nearExpiryValue||0)],
-    ["Net Inventory Variance",fmtMoney(fin.netInventoryVariance||0)]
+    ["Unvalued Exception Lines",String(fin.unvaluedLines||0)]
   ];
   if($("financialRiskCards")){
     $("financialRiskCards").innerHTML=riskCards.map(([k,v])=>`<div class="report-stat"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("");
   }
 
   const shortage=[...(data.recon||[])]
-    .filter(r=>Number(r.variance_value||0)<0)
+    .filter(r=>r.variance_value!==null && r.variance_value!==undefined && Number(r.variance_value)<0)
     .sort((a,b)=>Math.abs(Number(b.variance_value||0))-Math.abs(Number(a.variance_value||0)))
     .slice(0,10);
 
   const excess=[...(data.recon||[])]
-    .filter(r=>Number(r.variance_value||0)>0)
+    .filter(r=>r.variance_value!==null && r.variance_value!==undefined && Number(r.variance_value)>0)
     .sort((a,b)=>Math.abs(Number(b.variance_value||0))-Math.abs(Number(a.variance_value||0)))
     .slice(0,10);
 
@@ -1931,6 +2024,14 @@ function renderManagementFindings(data,scores){
   const expiredLines=Number(se.expired_lines||0);
   const nearLines=Number(se.near_lines||0);
   const damagedLines=recon.filter(r=>r.condition==="damaged").length;
+
+  if(unvaluedLines>0){
+    findings.push({
+      p:"High",
+      t:`${unvaluedLines} material exception line${unvaluedLines===1?"":"s"} could not be financially valued`,
+      a:"Purchase rate is unavailable for these items. Map/import purchase rate or resolve the item against Current Stock before relying on total financial exposure."
+    });
+  }
 
   if(Math.abs(Number(fin.shortageLoss||0))>0){
     findings.push({
@@ -2022,6 +2123,7 @@ async function loadFinalReport(){
     if(allocationRes.error) console.warn("Allocation data could not load for zone completion chart:",allocationRes.error);
 
     const project=projectRes.data;
+    counts=enrichCountsWithRates(counts,systemStock);
     const client=project.medvika_audit_clients?.business_name || project.medvika_audit_clients?.client_name || "Client";
     const recon=buildReportReconciliation(systemStock,counts);
 
@@ -2347,7 +2449,8 @@ async function exportFinalReportPdf(){
       ["System Expired Lines",se.expired_lines,"System Near Expiry Lines",se.near_lines],
       ["Shortage Loss Ex-GST",fmtMoney(finalReportData.financials.shortageLoss),"Excess Value Ex-GST",fmtMoney(finalReportData.financials.excessValue)],
       ["Damaged Value Ex-GST",fmtMoney(finalReportData.financials.damagedValue),"Expired Value Ex-GST",fmtMoney(finalReportData.financials.expiredValue)],
-      ["Net Inventory Variance",fmtMoney(finalReportData.financials.netInventoryVariance),"Near Expiry Exposure",fmtMoney(finalReportData.financials.nearExpiryValue)]
+      ["Net Inventory Variance",fmtMoney(finalReportData.financials.netInventoryVariance),"Near Expiry Exposure",fmtMoney(finalReportData.financials.nearExpiryValue)],
+      ["Unvalued Exception Lines",finalReportData.financials.unvaluedLines||0,"Valuation Note",(finalReportData.financials.unvaluedLines||0)>0?"Some exceptions have no purchase rate":"All material exceptions valued"]
     ],
     theme:"grid",styles:{fontSize:8,cellPadding:2},
     headStyles:{fillColor:green,textColor:[255,255,255]}
