@@ -76,11 +76,11 @@ function installUnifiedImporter(ctx){
   }
   function mapOf(area){const o={};area.querySelectorAll("[data-map]").forEach(x=>o[x.dataset.map]=x.value);return o;}
   async function start(type,file,mode,total){
-    const {data,error}=await sb.rpc("medvika_start_import_job",{p_audit_id:getAuditId(),p_import_type:type,p_file_name:file?.name||"",p_file_type:(file?.name?.split(".").pop()||"").toLowerCase(),p_mode:mode,p_total_rows:total});
+    const {data,error}=await sb.rpc("medvika_customer_start_import_job",{p_audit_id:getAuditId(),p_import_type:type,p_file_name:file?.name||"",p_file_type:(file?.name?.split(".").pop()||"").toLowerCase(),p_mode:mode,p_total_rows:total});
     if(error)throw error;return data;
   }
   async function finish(id,i,m,u,f,e=null){
-    const {error}=await sb.rpc("medvika_finish_import_job",{p_job_id:id,p_inserted:i,p_matched:m,p_unmatched:u,p_failed:f,p_error:e});
+    const {error}=await sb.rpc("medvika_customer_finish_import_job",{p_job_id:id,p_inserted:i,p_matched:m,p_unmatched:u,p_failed:f,p_error:e});
     if(error)throw error;
   }
   async function doSystem(area,rows){
@@ -99,7 +99,7 @@ function installUnifiedImporter(ctx){
       });
       for(let i=0;i<recs.length;i+=300){
         pr.textContent=`Uploading ${Math.min(i+300,recs.length).toLocaleString("en-IN")} / ${recs.length.toLocaleString("en-IN")}…`;
-        const {data,error}=await sb.rpc("medvika_import_system_stock_batch",{p_audit_id:getAuditId(),p_job_id:job,p_rows:recs.slice(i,i+300)});
+        const {data,error}=await sb.rpc("medvika_customer_import_system_stock_batch",{p_audit_id:getAuditId(),p_job_id:job,p_rows:recs.slice(i,i+300)});
         if(error)throw error;inserted+=Number(data||0);
       }
       await finish(job,inserted,0,0,failed,null);pr.textContent=`Completed: ${inserted.toLocaleString("en-IN")} Current Stock rows imported${failed?`, ${failed} skipped`:""}.`;msg("Current Stock import completed.");await history();if(reloadAfterImport)await reloadAfterImport();
@@ -122,7 +122,7 @@ function installUnifiedImporter(ctx){
       });
       for(let i=0;i<recs.length;i+=250){
         pr.textContent=`Matching ${Math.min(i+250,recs.length).toLocaleString("en-IN")} / ${recs.length.toLocaleString("en-IN")}…`;
-        const {data,error}=await sb.rpc("medvika_import_physical_count_batch",{p_audit_id:getAuditId(),p_job_id:job,p_zone_id:zone||null,p_team_id:team||null,p_rows:recs.slice(i,i+250)});
+        const {data,error}=await sb.rpc("medvika_customer_import_physical_count_batch",{p_audit_id:getAuditId(),p_job_id:job,p_zone_id:zone||null,p_team_id:team||null,p_rows:recs.slice(i,i+250)});
         if(error)throw error;const r=data?.[0]||{};inserted+=Number(r.inserted||0);matched+=Number(r.matched||0);unlisted+=Number(r.unlisted||0);
       }
       await finish(job,inserted,matched,unlisted,failed,null);pr.textContent=`Completed: ${inserted} counts • ${matched} matched • ${unlisted} unlisted excess${failed?` • ${failed} skipped`:""}.`;msg("Physical Count import completed.");await history();if(reloadAfterImport)await reloadAfterImport();
@@ -130,7 +130,7 @@ function installUnifiedImporter(ctx){
   }
   async function history(){
     if(!$("unifiedImportHistory")||!getAuditId())return;
-    const {data,error}=await sb.rpc("medvika_import_history",{p_audit_id:getAuditId()});
+    const {data,error}=await sb.rpc("medvika_customer_import_history",{p_audit_id:getAuditId()});
     if(error){$("unifiedImportHistory").innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
     const rs=data||[];$("unifiedImportHistory").innerHTML=rs.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Type</th><th>File</th><th>Rows</th><th>Inserted</th><th>Matched</th><th>Unlisted</th><th>Status</th></tr></thead><tbody>${rs.map(r=>`<tr><td>${esc(new Date(r.created_at).toLocaleString("en-IN"))}</td><td>${esc(r.import_type)}</td><td>${esc(r.file_name||"")}</td><td>${r.total_rows}</td><td>${r.inserted_rows}</td><td>${r.matched_rows}</td><td>${r.unmatched_rows}</td><td>${esc(r.status)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="muted">No imports yet.</p>';
   }
