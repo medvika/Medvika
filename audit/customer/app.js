@@ -51,7 +51,9 @@ async function doForgot(){
   const email=$("email").value.trim();
   if(!email){authMsg("Enter registered email first.");$("email").focus();return;}
   authMsg("Sending password reset email...");
-  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/audit/customer/"});
+  sessionStorage.setItem("medvika_password_recovery","1");
+  const redirectTo=location.origin+"/audit/customer/?recovery=1";
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
   if(error){authMsg("Reset failed: "+error.message);return;}
   authMsg("Reset email request accepted. Check Inbox and Spam/Junk.");
 }
@@ -61,7 +63,9 @@ async function savePassword(){
   if(a!==b){$("recoveryMsg").textContent="Passwords do not match.";return;}
   const {error}=await sb.auth.updateUser({password:a});
   if(error){$("recoveryMsg").textContent=error.message;return;}
-  $("recoveryMsg").textContent="Password updated.";
+  $("recoveryMsg").textContent="Password updated successfully.";
+  sessionStorage.removeItem("medvika_password_recovery");
+  history.replaceState(null,"",location.origin+"/audit/customer/");
   try{await claimAndLoad();}catch(e){$("recoveryMsg").textContent=e.message;}
 }
 
@@ -71,18 +75,31 @@ document.addEventListener("DOMContentLoaded",async()=>{
   $("signupBtn").addEventListener("click",doSignup);
   $("forgotBtn").addEventListener("click",doForgot);
   $("savePasswordBtn").addEventListener("click",savePassword);
-  $("cancelRecoveryBtn").addEventListener("click",async()=>{await sb.auth.signOut();history.replaceState(null,"",location.pathname);showAuth();});
+  $("cancelRecoveryBtn").addEventListener("click",async()=>{sessionStorage.removeItem("medvika_password_recovery");await sb.auth.signOut();history.replaceState(null,"",location.pathname);showAuth();});
   $("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();sessionStorage.clear();location.href=location.origin+"/audit/customer/";});
 
   sb.auth.onAuthStateChange((event,session)=>{
-    if(event==="PASSWORD_RECOVERY") showRecovery();
+    if(event==="PASSWORD_RECOVERY"){
+      sessionStorage.setItem("medvika_password_recovery","1");
+      showRecovery();
+      return;
+    }
+    if(event==="SIGNED_IN" && (sessionStorage.getItem("medvika_password_recovery")==="1" || new URLSearchParams(location.search).get("recovery")==="1")){
+      showRecovery();
+      return;
+    }
     if(event==="SIGNED_OUT") showAuth();
   });
 
   const {data,error}=await sb.auth.getSession();
   if(error){authMsg(error.message);showAuth();return;}
-  const recovery=(location.hash||"").includes("type=recovery")||(location.search||"").includes("type=recovery");
-  if(recovery&&data?.session){showRecovery();return;}
+  const params=new URLSearchParams(location.search);
+  const recovery=params.get("recovery")==="1" || sessionStorage.getItem("medvika_password_recovery")==="1" || (location.hash||"").includes("type=recovery") || (location.search||"").includes("type=recovery");
+  if(recovery){
+    sessionStorage.setItem("medvika_password_recovery","1");
+    showRecovery();
+    return;
+  }
   if(data?.session){try{await claimAndLoad();}catch(e){authMsg(e.message);showAuth();}} else showAuth();
 });
 
