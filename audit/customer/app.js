@@ -5,12 +5,13 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 });
 const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
+let customerView="dashboard",reconPage=1,reconPageSize=25;
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
 function msg(t){const e=$("msg");if(e)e.textContent=t||"";}
 function authMsg(t){const e=$("authMsg");if(e)e.textContent=t||"";}
 function showAuth(){ $("authCard").hidden=false; $("workspace").hidden=true; $("logoutBtn").hidden=true; $("recoveryCard").hidden=true; }
-function showWorkspace(){ $("authCard").hidden=true; $("workspace").hidden=false; $("logoutBtn").hidden=false; $("recoveryCard").hidden=true; }
+function showWorkspace(){ $("authCard").hidden=true; $("workspace").hidden=false; $("logoutBtn").hidden=false; $("recoveryCard").hidden=true; setCustomerView(customerView); }
 function showRecovery(){ $("authCard").hidden=true; $("workspace").hidden=true; $("logoutBtn").hidden=true; $("recoveryCard").hidden=false; }
 
 window.addEventListener("error",e=>{authMsg("Page script error: "+(e.message||"Unknown error"));});
@@ -25,7 +26,7 @@ async function claimAndLoad(){
   access=a?.[0];
   if(!access) throw new Error("No audit subscription found for this login.");
   showWorkspace();
-  $("accessBanner").innerHTML=`<span class="eyebrow">Access</span><h3>${access.access_active?"Active":"Inactive"}</h3><p class="muted">Access until ${access.access_until||"—"} • Audit limit ${access.audit_limit} • Team limit ${access.team_limit} • SKU limit ${Number(access.sku_limit||0).toLocaleString("en-IN")}</p>`;
+  $("accessBanner").innerHTML=`<span class="eyebrow">Access</span><h3>${access.access_active?"Active":"Inactive"}</h3><p class="muted">Until ${access.access_until||"—"} • ${access.audit_limit} audit • ${access.team_limit} team • ${Number(access.sku_limit||0).toLocaleString("en-IN")} SKU</p>`; if($("sidebarAccess")) $("sidebarAccess").textContent=`${access.access_active?"Active":"Inactive"} access`;
   await loadAudits();
 }
 
@@ -69,8 +70,26 @@ async function savePassword(){
   try{await claimAndLoad();}catch(e){$("recoveryMsg").textContent=e.message;}
 }
 
+
+const customerTitles={dashboard:"Audit Dashboard",setup:"Teams & Zones",stock:"Stock & Allocation",counts:"Physical Counts",reconciliation:"Reconciliation",report:"Final Report"};
+function setCustomerView(view){
+ customerView=customerTitles[view]?view:"dashboard";
+ document.querySelectorAll(".customer-view").forEach(x=>x.classList.toggle("active",x.id===customerView+"View"));
+ document.querySelectorAll(".portal-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.customerView===customerView));
+ if($("customerViewTitle")) $("customerViewTitle").textContent=customerTitles[customerView];
+ if(customerView==="reconciliation"&&currentAudit) renderReconPage();
+ if(customerView==="report"&&currentAudit) renderCustomerReport();
+ window.scrollTo({top:0,left:0,behavior:"auto"});
+}
+function bindCustomerNavigation(){
+ document.querySelectorAll(".portal-nav-btn").forEach(b=>b.addEventListener("click",()=>setCustomerView(b.dataset.customerView)));
+ document.querySelectorAll(".customer-go").forEach(b=>b.addEventListener("click",()=>setCustomerView(b.dataset.go)));
+ $("customerAuditSelect")?.addEventListener("change",async e=>{if(e.target.value) await openAudit(e.target.value);});
+}
+
 document.addEventListener("DOMContentLoaded",async()=>{
   authMsg("Login system loaded.");
+  bindCustomerNavigation();
   $("loginBtn").addEventListener("click",doLogin);
   $("signupBtn").addEventListener("click",doSignup);
   $("forgotBtn").addEventListener("click",doForgot);
@@ -104,13 +123,13 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 
 async function loadAudits(){
- const {data,error}=await sb.rpc("medvika_customer_audits",{p_customer_id:customerId});if(error){msg(error.message);return;}audits=data||[];
- $("auditList").innerHTML=audits.length?audits.map(a=>`<div class="audit-row"><div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br><small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div><div class="audit-actions"><button class="btn primary customer-dashboard" data-id="${a.audit_id}">Dashboard</button><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button></div></div>`).join(""):'<p class="muted">No audits yet.</p>';
- document.querySelectorAll(".open-audit").forEach(b=>b.onclick=()=>openAudit(b.dataset.id));
- document.querySelectorAll(".customer-dashboard").forEach(b=>b.onclick=async()=>{
-   await openAudit(b.dataset.id);
-   $("auditPanel")?.scrollIntoView({behavior:"smooth",block:"start"});
- });
+ const {data,error}=await sb.rpc("medvika_customer_audits",{p_customer_id:customerId});
+ if(error){msg(error.message);return;}
+ audits=data||[];
+ $("auditList").innerHTML=audits.length?audits.map(a=>`<div class="audit-row"><div><strong>${esc(a.project_code)} — ${esc(a.project_name)}</strong><br><small>${esc(a.location||"")} • ${esc(a.audit_date||"")} • ${esc(a.status)}</small></div><div class="audit-actions"><button class="btn primary customer-dashboard" data-id="${a.audit_id}">Open Dashboard</button><button class="btn secondary open-audit" data-id="${a.audit_id}">Teams & Setup</button></div></div>`).join(""):'<p class="muted">No audits yet.</p>';
+ if($("customerAuditSelect")) $("customerAuditSelect").innerHTML='<option value="">Select audit</option>'+audits.map(a=>`<option value="${a.audit_id}">${esc(a.project_code)} — ${esc(a.project_name)}</option>`).join("");
+ document.querySelectorAll(".customer-dashboard").forEach(b=>b.onclick=async()=>{await openAudit(b.dataset.id);setCustomerView("dashboard");});
+ document.querySelectorAll(".open-audit").forEach(b=>b.onclick=async()=>{await openAudit(b.dataset.id);setCustomerView("setup");});
 }
 $("newAuditBtn").onclick=()=>{$("modal").hidden=false;};
 $("cancelModal").onclick=()=>{$("modal").hidden=true;};
@@ -119,8 +138,15 @@ $("createAuditConfirm").onclick=async()=>{
  if(error){msg(error.message);return;}$("modal").hidden=true;await loadAudits();await openAudit(data);
 };
 async function openAudit(id){
- currentAudit=audits.find(a=>a.audit_id===id)||{audit_id:id}; $("auditPanel").hidden=false;$("auditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
- await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts(),loadRecon()]); if($("allocationPanel")) $("allocationPanel").hidden=false; if(window.stockAllocation) await window.stockAllocation.loadSummary(); if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=true;
+ currentAudit=audits.find(a=>String(a.audit_id)===String(id))||{audit_id:id};
+ $("auditPanel").hidden=false;
+ $("auditTitle").textContent=`${currentAudit.project_code||""} — ${currentAudit.project_name||"Audit"}`;
+ if($("customerAuditSelect")) $("customerAuditSelect").value=String(id);
+ if($("allocationPanel")) $("allocationPanel").hidden=false;
+ if($("unifiedImportPanel")) $("unifiedImportPanel").hidden=false;
+ await Promise.all([loadSummary(),loadZones(),loadTeams(),loadCustomerRecentCounts(),loadRecon()]);
+ if(window.stockAllocation) await window.stockAllocation.loadSummary();
+ if(typeof loadUnifiedImportHistory==="function") try{await loadUnifiedImportHistory();}catch(e){}
 }
 async function loadSummary(){
  const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const r=data?.[0]||{};
@@ -174,16 +200,32 @@ function varianceUnitDisplay(physicalQty,systemQty,packSize){
   return `${d>0?"+":"−"}${Math.abs(d)} loose unit${Math.abs(d)===1?"":"s"}`;
 }
 
+function getFilteredRecon(){
+ const q=String($("reconSearch")?.value||"").trim().toLowerCase();
+ const f=String($("reconFindingFilter")?.value||"").trim().toLowerCase();
+ return (reconRows||[]).filter(r=>{
+  const finding=String(r.finding||"").toLowerCase();
+  const hay=[r.item_name,r.batch_no,r.finding,r.condition].map(x=>String(x||"").toLowerCase()).join(" ");
+  return (!q||hay.includes(q))&&(!f||finding.includes(f));
+ });
+}
+function renderReconPage(){
+ if(!$("reconTable"))return;
+ const filtered=getFilteredRecon(),pages=Math.max(1,Math.ceil(filtered.length/reconPageSize));
+ reconPage=Math.max(1,Math.min(reconPage,pages));
+ const rows=filtered.slice((reconPage-1)*reconPageSize,reconPage*reconPageSize);
+ $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${rows.map(r=>{
+  const ps=r.pack_size??null,u=r.pack_uom||"Pack";
+  return `<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(pharmacyQtyDisplay(r.system_qty,ps,u))}</td><td>${esc(pharmacyQtyDisplay(r.physical_qty,ps,u))}</td><td>${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,ps))}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`;
+ }).join("")||'<tr><td colspan="9">No reconciliation findings match this filter.</td></tr>'}</tbody></table></div>`;
+ if($("reconPageInfo")) $("reconPageInfo").textContent=`Page ${reconPage} of ${pages} • ${filtered.length} findings`;
+ if($("reconPrev")) $("reconPrev").disabled=reconPage<=1;
+ if($("reconNext")) $("reconNext").disabled=reconPage>=pages;
+}
 async function loadRecon(){
- const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}reconRows=data||[];
- $("reconTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Rate Ex-GST</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${reconRows.slice(0,500).map(r=>{
-    const ps=r.pack_size??null,u=r.pack_uom||"Pack";
-    const sys=pharmacyQtyDisplay(r.system_qty,ps,u);
-    const phy=pharmacyQtyDisplay(r.physical_qty,ps,u);
-    const variance=varianceUnitDisplay(r.physical_qty,r.system_qty,ps);
-    return `<tr><td>${esc(r.finding)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"")}</td><td>${esc(sys)}</td><td>${esc(phy)}</td><td>${esc(variance)}</td><td>${r.purchase_rate??"—"}</td><td>${r.variance_value??"—"}</td><td>${esc(r.condition||"")}</td></tr>`;
-  }).join("")}</tbody></table></div>`;
- renderCustomerReport();
+ const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});
+ if(error){msg(error.message);return;}
+ reconRows=data||[];reconPage=1;renderReconPage();renderCustomerReport();
 }
 
 function cleanDisplayQty(v){
@@ -238,6 +280,12 @@ $("clearAllCountsBtn")?.addEventListener("click",clearAllCustomerCounts);
 $("clearAllocationsBtn")?.addEventListener("click",clearCustomerAllocations);
 $("resetCountingBtn")?.addEventListener("click",resetCustomerCounting);
 
+
+$("reconSearch")?.addEventListener("input",()=>{reconPage=1;renderReconPage();});
+$("reconFindingFilter")?.addEventListener("change",()=>{reconPage=1;renderReconPage();});
+$("reconPrev")?.addEventListener("click",()=>{reconPage--;renderReconPage();});
+$("reconNext")?.addEventListener("click",()=>{reconPage++;renderReconPage();});
+
 $("exportCsvBtn").onclick=()=>{if(!reconRows.length)return;const csv=Papa.unparse(reconRows);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Medvika_Reconciliation_${currentAudit.project_code||"Audit"}.csv`;a.click();};
 
 
@@ -263,7 +311,7 @@ function renderCustomerReport(){
  const expired=rows.filter(r=>String(r.condition||"").toLowerCase().includes("expired")).length;
  const near=rows.filter(r=>String(r.condition||"").toLowerCase().includes("near")).length;
  const net=rows.reduce((s,r)=>s+crN(r.variance_value),0);
- const detail=rows.slice(0,500).map(r=>{
+ const detail=rows.slice(0,50).map(r=>{
    const ps=r.pack_size??null,u=r.pack_uom||"Pack";
    return `<tr><td>${esc(r.finding||"")}</td><td>${esc(r.item_name||"")}</td><td>${esc(r.batch_no||"")}</td><td>${esc(pharmacyQtyDisplay(r.system_qty,ps,u))}</td><td>${esc(pharmacyQtyDisplay(r.physical_qty,ps,u))}</td><td>${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,ps))}</td><td>${crMoney(r.variance_value)}</td><td>${esc(r.condition||"")}</td></tr>`;
  }).join("");
@@ -278,7 +326,7 @@ function renderCustomerReport(){
   <div class="customer-report-kpi"><small>Near Expiry / Damaged</small><strong>${near} / ${damaged}</strong></div>
  </div>
  <div class="report-value"><span>Net Inventory Variance Value</span><strong>${crMoney(net)}</strong></div>
- <div class="table-wrap"><table class="customer-report-table"><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${detail||'<tr><td colspan="8">No reconciliation findings yet.</td></tr>'}</tbody></table></div>
+ <h3 style="margin-top:16px">Key Findings</h3><p class="muted">Showing up to 50 findings in the PDF view. Use Export Full Report CSV for complete item-level detail.</p><div class="table-wrap"><table class="customer-report-table"><thead><tr><th>Finding</th><th>Item</th><th>Batch</th><th>System</th><th>Physical</th><th>Variance</th><th>Variance Value</th><th>Condition</th></tr></thead><tbody>${detail||'<tr><td colspan="8">No reconciliation findings yet.</td></tr>'}</tbody></table></div>
  <p class="muted report-foot">Generated from the selected Medvika audit workspace. Final values depend on completed physical counting and reconciliation.</p>`;
 }
 function exportCustomerReport(){

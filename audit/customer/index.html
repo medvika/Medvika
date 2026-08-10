@@ -1,214 +1,286 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Medvika Audit Customer Workspace</title>
-<link rel="stylesheet" href="./app.css?v=14">
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Medvika Audit Customer Portal</title>
+<link rel="icon" href="./logo.png">
+<link rel="stylesheet" href="./app.css?v=20">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<style>.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}</style></head>
-<body><div class="wrap">
-<div class="card top"><img src="./logo.png" class="logo"><div><span class="eyebrow">Customer Workspace</span><h1>Medvika Audit Dashboard</h1></div><div class="top-actions"><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div></div>
+</head>
+<body>
+<div id="toastCustomer" class="customer-toast" aria-live="polite"></div>
 
-<div id="authCard" class="card">
-  <h2>Customer Login</h2>
-  <p class="muted">Use the same email registered with Medvika Audit.</p>
-  <div class="grid">
-    <label>Email<input id="email" type="email"></label>
-    <label>Password<input id="password" type="password"></label>
+<section id="authCard" class="auth-shell">
+  <div class="auth-card">
+    <img src="./logo.png" class="auth-logo" alt="Medvika Healthcare Solutions">
+    <span class="eyebrow">Secure Customer Workspace</span>
+    <h1>Medvika Stock Audit Portal</h1>
+    <p class="muted">Manage your pharmacy audit, counting teams, stock allocation and reconciliation from one secure workspace.</p>
+    <div class="grid auth-grid">
+      <label>Email<input id="email" type="email" autocomplete="username" placeholder="Registered email"></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" placeholder="Password"></label>
+    </div>
+    <div class="actions">
+      <button id="loginBtn" class="btn primary" type="button">Sign In</button>
+      <button id="signupBtn" class="btn secondary" type="button">Create Login</button>
+      <button id="forgotBtn" class="btn link-btn" type="button">Forgot Password?</button>
+    </div>
+    <p id="authMsg" class="muted"></p>
   </div>
-  <div class="actions">
-    <button id="loginBtn" class="btn primary" type="button">Sign In</button>
-    <button id="signupBtn" class="btn secondary" type="button">Create Login</button>
-<button id="forgotBtn" class="btn link-btn" type="button">Forgot Password?</button>
+</section>
+
+<section id="recoveryCard" class="auth-shell" hidden>
+  <div class="auth-card">
+    <img src="./logo.png" class="auth-logo" alt="Medvika">
+    <span class="eyebrow">Account Recovery</span>
+    <h2>Set New Password</h2>
+    <div class="grid auth-grid">
+      <label>New Password<input id="newPassword" type="password" minlength="6"></label>
+      <label>Confirm Password<input id="confirmPassword" type="password" minlength="6"></label>
+    </div>
+    <div class="actions">
+      <button id="savePasswordBtn" class="btn primary" type="button">Save New Password</button>
+      <button id="cancelRecoveryBtn" class="btn secondary" type="button">Cancel</button>
+    </div>
+    <p id="recoveryMsg" class="muted"></p>
   </div>
-  <p id="authMsg" class="muted"></p><small class="build-tag">Customer Auth v5</small>
-</div>
+</section>
 
-
-<div id="recoveryCard" class="card" hidden>
-  <h2>Set New Password</h2>
-  <div class="grid">
-    <label>New Password<input id="newPassword" type="password" minlength="6"></label>
-    <label>Confirm Password<input id="confirmPassword" type="password" minlength="6"></label>
-  </div>
-  <div class="actions">
-    <button id="savePasswordBtn" class="btn primary" type="button">Save New Password</button>
-    <button id="cancelRecoveryBtn" class="btn secondary" type="button">Cancel</button>
-  </div>
-  <p id="recoveryMsg" class="muted"></p>
-</div>
-
-<div id="workspace" hidden>
-  <div class="card"><div id="accessBanner"></div></div>
-
-  <div class="card">
-    <div class="section-head"><div><span class="eyebrow">My Workspace</span><h2>Audits</h2></div><button id="newAuditBtn" class="btn primary">Create Audit</button></div>
-    <div id="auditList"></div>
-  </div>
-
-  <div id="auditPanel" hidden>
-    <div class="card"><div class="section-head"><div><span class="eyebrow">Selected Audit</span><h2 id="auditTitle">—</h2></div><a href="/audit/team/" target="_blank" rel="noopener" class="btn secondary">Open Team Portal</a></div>
-      <div id="summaryGrid" class="summary-grid"></div>
+<div id="workspace" class="portal-shell" hidden>
+  <aside class="portal-sidebar">
+    <div class="portal-brand">
+      <img src="./logo.png" alt="Medvika">
+      <div><strong>Stock Audit</strong><span>Customer Portal</span></div>
     </div>
 
-    <div class="grid-two">
-      <div class="card">
-        <h3>Zones</h3>
-        <div class="grid"><label>Zone Name<input id="zoneName"></label><label>Category<input id="zoneCategory"></label></div>
-        <button id="addZoneBtn" class="btn primary">Add Zone</button>
-        <div id="zoneList"></div>
-      </div>
+    <nav class="portal-nav" aria-label="Customer audit navigation">
+      <button class="portal-nav-btn active" data-customer-view="dashboard">Dashboard</button>
+      <button class="portal-nav-btn" data-customer-view="setup">Teams & Zones</button>
+      <button class="portal-nav-btn" data-customer-view="stock">Stock & Allocation</button>
+      <button class="portal-nav-btn" data-customer-view="counts">Physical Counts</button>
+      <button class="portal-nav-btn" data-customer-view="reconciliation">Reconciliation</button>
+      <button class="portal-nav-btn" data-customer-view="report">Final Report</button>
+    </nav>
 
-      <div class="card">
-        <h3>Counting Teams</h3>
-        <div class="grid">
-          <label>Team Name<input id="teamName" placeholder="Team 1"></label>
-          <label>Zone<select id="teamZone"></select></label>
-          <label>Team Login Code<input id="teamLoginCode" placeholder="T01-Z1"></label>
-          <label>PIN<input id="teamPin" type="password" inputmode="numeric"></label>
-        </div>
-        <label><input id="allowUnlisted" type="checkbox" checked style="width:auto"> Allow unlisted physical items</label>
-        <button id="addTeamBtn" class="btn primary">Create Team & PIN</button>
-        <div id="teamList"></div>
-      </div>
+    <div class="sidebar-footer">
+      <span id="sidebarAccess">Secure access</span>
+      <button id="logoutBtn" class="btn sidebar-signout" hidden>Sign out</button>
     </div>
+  </aside>
 
-
-    <div class="card data-controls-card">
-      <div class="section-head">
-        <div><span class="eyebrow">Audit Data Controls</span><h2>Counts & Allocations</h2></div>
-        <button id="reloadCustomerCounts" class="btn secondary" type="button">Reload</button>
+  <main class="portal-main">
+    <header class="portal-header">
+      <div>
+        <span class="eyebrow">Medvika Healthcare Solutions</span>
+        <h1 id="customerViewTitle">Audit Dashboard</h1>
       </div>
-      <p class="muted">Delete an incorrect/test physical count without touching Current Stock. Allocations are controlled separately.</p>
-      <div class="data-control-actions">
-        <button id="clearAllCountsBtn" class="btn danger-soft" type="button">Clear All Physical Counts</button>
-        <button id="clearAllocationsBtn" class="btn danger-soft" type="button">Clear Stock Allocations</button>
-        <button id="resetCountingBtn" class="btn danger-btn" type="button">Reset Counts + Allocations</button>
-      </div>
-      <h3>Recent Physical Counts</h3>
-      <div id="customerRecentCounts"></div>
-    </div>
-
-    <div class="card">
-      <div class="section-head"><div><span class="eyebrow">Report</span><h2>Reconciliation Summary</h2></div><button id="exportCsvBtn" class="btn secondary">Export CSV</button></div>
-      <div id="reconTable"></div>
-    </div>
-    <div class="card" id="customerFinalReport">
-      <div class="section-head">
-        <div><span class="eyebrow">Final Report</span><h2>Customer Audit Report</h2>
-        <p class="muted">Client-safe audit report for the selected project.</p></div>
-        <div class="report-actions">
-          <button id="printCustomerReportBtn" class="btn primary" type="button">Download / Print PDF</button>
-          <button id="exportCustomerReportBtn" class="btn secondary" type="button">Export Report CSV</button>
-        </div>
-      </div>
-      <div id="customerReportBody"><p class="muted">Select an audit to load the report.</p></div>
-    </div>
-  </div>
-</div>
-
-
-<div id="unifiedImportPanel" class="card" hidden>
-  <div class="section-head">
-    <div><span class="eyebrow">Single Source of Truth</span><h2>Stock Imports</h2></div>
-    <button id="reloadUnifiedImports" class="btn secondary">Reload History</button>
-  </div>
-  <p class="muted">Import Current/System Stock once for this audit. All counting, exceptions, reconciliation and reports use this same dataset. Physical Count import is optional when counts come from Excel/CSV instead of the team portal.</p>
-
-  <div class="grid-two">
-    <div class="import-box">
-      <h3>1. Current / System Stock</h3>
-      <label>Import Mode
-        <select id="unifiedSystemMode">
-          <option value="replace">Replace Current Stock</option>
-          <option value="append">Append to Current Stock</option>
+      <div class="portal-header-actions">
+        <select id="customerAuditSelect" aria-label="Selected audit">
+          <option value="">Select audit</option>
         </select>
-      </label>
-      <label>Choose CSV / Excel<input id="unifiedSystemFile" type="file" accept=".csv,.xlsx,.xls"></label>
-      <button id="previewUnifiedSystem" class="btn secondary">Preview & Map Columns</button>
-      <div id="unifiedSystemArea"></div>
-    </div>
-
-    <div class="import-box">
-      <h3>2. Physical Count File <span class="muted">(Optional)</span></h3><p class="muted">Use only when physical counting has already been completed in Excel/CSV. Not required when teams count through the Medvika Team Portal.</p>
-      <label>Import Mode
-        <select id="unifiedPhysicalMode">
-          <option value="append">Add to Existing Physical Counts</option>
-          <option value="replace">Replace Existing Physical Counts</option>
-        </select>
-      </label>
-      <div class="grid">
-        <label>Zone<select id="unifiedPhysicalZone"></select></label>
-        <label>Team<select id="unifiedPhysicalTeam"></select></label>
+        <a href="/audit/team/" target="_blank" rel="noopener" class="btn secondary">Open Team Portal</a>
       </div>
-      <label>Choose CSV / Excel<input id="unifiedPhysicalFile" type="file" accept=".csv,.xlsx,.xls"></label>
-      <button id="previewUnifiedPhysical" class="btn secondary">Preview & Match</button>
-      <div id="unifiedPhysicalArea"></div>
-    </div>
-  </div>
+    </header>
 
-  <h3>Import History</h3>
-  <div id="unifiedImportHistory"></div>
-</div>
+    <div id="accessBanner" class="access-strip"></div>
 
+    <section id="dashboardView" class="customer-view active">
+      <div class="section-toolbar">
+        <div><span class="eyebrow">My Workspace</span><h2>Audits</h2></div>
+        <button id="newAuditBtn" class="btn primary">Create Audit</button>
+      </div>
+      <div id="auditList" class="audit-list"></div>
 
-<div id="allocationPanel" class="card" hidden>
-  <div class="section-head">
-    <div>
-      <span class="eyebrow">Work Allocation</span>
-      <h2>Allocate Stock to Zones / Teams</h2>
-    </div>
-    <button id="reloadAllocation" class="btn secondary">Reload</button>
-  </div>
+      <div id="auditPanel" hidden>
+        <section class="hero-card">
+          <div>
+            <span class="eyebrow">Selected Audit</span>
+            <h2 id="auditTitle">—</h2>
+            <p class="muted">Live audit progress and key findings.</p>
+          </div>
+          <button class="btn secondary customer-go" data-go="setup">Manage Setup</button>
+        </section>
+        <div id="summaryGrid" class="summary-grid dashboard-kpis"></div>
 
-  <p class="muted">
-    Allocate Current Stock before counting. Teams will search only stock assigned to their team/zone.
-    Use alphabetical ranges for A–M / N–Z style counting, or allocate by category/manufacturer/item-code range.
-  </p>
+        <div class="dashboard-grid">
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Next Steps</span><h3>Audit Workflow</h3></div></div>
+            <div class="workflow-list">
+              <button class="workflow-step customer-go" data-go="setup"><strong>1. Teams & Zones</strong><span>Create counting areas and secure team logins.</span></button>
+              <button class="workflow-step customer-go" data-go="stock"><strong>2. Stock & Allocation</strong><span>Import stock and allocate it to counting teams.</span></button>
+              <button class="workflow-step customer-go" data-go="counts"><strong>3. Physical Counting</strong><span>Track submitted counts and correct test entries.</span></button>
+              <button class="workflow-step customer-go" data-go="reconciliation"><strong>4. Reconciliation</strong><span>Review missing, short and excess inventory.</span></button>
+              <button class="workflow-step customer-go" data-go="report"><strong>5. Final Report</strong><span>Review the client-safe summary and export results.</span></button>
+            </div>
+          </section>
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Audit Guidance</span><h3>Before Counting</h3></div></div>
+            <div class="guidance-list">
+              <p>✓ Freeze stock movement during the physical count.</p>
+              <p>✓ Verify team allocation before counters begin.</p>
+              <p>✓ Count batch and expiry separately where applicable.</p>
+              <p>✓ Review shortages/excesses before final sign-off.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
 
-  <div class="allocation-grid">
-    <label>Zone
-      <select id="allocationZone"></select>
-    </label>
-    <label>Team
-      <select id="allocationTeam"></select>
-    </label>
-    <label>Allocation Method
-      <select id="allocationMode">
-        <option value="alphabet">Alphabetical Item Name Range</option>
-        <option value="category">Category</option>
-        <option value="manufacturer">Manufacturer</option>
-        <option value="item_code_range">Item Code Range</option>
-        <option value="unallocated">All Currently Unallocated</option>
-        <option value="all">All Current Stock</option>
-      </select>
-    </label>
-    <label id="allocationValue1Label">From
-      <input id="allocationValue1" placeholder="A">
-    </label>
-    <label id="allocationValue2Label">To
-      <input id="allocationValue2" placeholder="M">
-    </label>
-  </div>
+    <section id="setupView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Audit Setup</span><h2>Teams & Zones</h2><p>Create controlled counting zones and team credentials before allocating stock.</p></div>
+      <div class="grid-two">
+        <section class="card">
+          <div class="section-head"><div><h3>Zones</h3><span class="muted">Counting areas / sections</span></div></div>
+          <div class="grid"><label>Zone Name<input id="zoneName" placeholder="A to M / Rack 1"></label><label>Category<input id="zoneCategory" placeholder="Medicine"></label></div>
+          <button id="addZoneBtn" class="btn primary">Add Zone</button>
+          <div id="zoneList" class="spaced-list"></div>
+        </section>
 
-  <div class="allocation-actions">
-    <button id="previewAllocation" class="btn secondary">Preview Items</button>
-    <button id="applyAllocation" class="btn primary">Allocate Matching Items</button>
-  </div>
+        <section class="card">
+          <div class="section-head"><div><h3>Counting Teams</h3><span class="muted">Secure counting access</span></div></div>
+          <div class="grid">
+            <label>Team Name<input id="teamName" placeholder="Team 1"></label>
+            <label>Zone<select id="teamZone"></select></label>
+            <label>Team Login Code<input id="teamLoginCode" placeholder="T01-Z1"></label>
+            <label>PIN<input id="teamPin" type="password" inputmode="numeric" placeholder="4+ digits"></label>
+          </div>
+          <label class="check-line"><input id="allowUnlisted" type="checkbox" checked> Allow unlisted physical items</label>
+          <button id="addTeamBtn" class="btn primary">Create Team & PIN</button>
+          <div id="teamList" class="spaced-list"></div>
+        </section>
+      </div>
+    </section>
 
-  <div id="allocationPreview"></div>
+    <section id="stockView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Stock Preparation</span><h2>Stock & Allocation</h2><p>Import Current/System Stock and allocate each line to the correct zone and team.</p></div>
 
-  <h3>Allocation Summary</h3>
-  <div id="allocationSummary"></div>
+      <section id="unifiedImportPanel" class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">Single Source of Truth</span><h3>Stock Imports</h3></div>
+          <button id="reloadUnifiedImports" class="btn secondary">Reload History</button>
+        </div>
+        <p class="muted">Import Current/System Stock once. Physical Count file is optional when teams count through the Team Portal.</p>
+        <div class="grid-two">
+          <div class="import-box">
+            <h3>1. Current / System Stock</h3>
+            <label>Import Mode<select id="unifiedSystemMode"><option value="replace">Replace Current Stock</option><option value="append">Append to Current Stock</option></select></label>
+            <label>Choose CSV / Excel<input id="unifiedSystemFile" type="file" accept=".csv,.xlsx,.xls"></label>
+            <button id="previewUnifiedSystem" class="btn secondary">Preview & Map Columns</button>
+            <div id="unifiedSystemArea"></div>
+          </div>
+          <div class="import-box">
+            <h3>2. Physical Count File <span class="muted">(Optional)</span></h3>
+            <label>Import Mode<select id="unifiedPhysicalMode"><option value="append">Add to Existing Physical Counts</option><option value="replace">Replace Existing Physical Counts</option></select></label>
+            <div class="grid"><label>Zone<select id="unifiedPhysicalZone"></select></label><label>Team<select id="unifiedPhysicalTeam"></select></label></div>
+            <label>Choose CSV / Excel<input id="unifiedPhysicalFile" type="file" accept=".csv,.xlsx,.xls"></label>
+            <button id="previewUnifiedPhysical" class="btn secondary">Preview & Match</button>
+            <div id="unifiedPhysicalArea"></div>
+          </div>
+        </div>
+        <h3>Import History</h3><div id="unifiedImportHistory"></div>
+      </section>
+
+      <section id="allocationPanel" class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">Work Allocation</span><h3>Allocate Stock to Zones / Teams</h3></div>
+          <button id="reloadAllocation" class="btn secondary">Reload</button>
+        </div>
+        <div class="allocation-grid">
+          <label>Zone<select id="allocationZone"></select></label>
+          <label>Team<select id="allocationTeam"></select></label>
+          <label>Allocation Method<select id="allocationMode">
+            <option value="alphabet">Alphabetical Item Name Range</option>
+            <option value="category">Category</option>
+            <option value="manufacturer">Manufacturer</option>
+            <option value="item_code_range">Item Code Range</option>
+            <option value="unallocated">All Currently Unallocated</option>
+            <option value="all">All Current Stock</option>
+          </select></label>
+          <label id="allocationValue1Label">From<input id="allocationValue1" placeholder="A"></label>
+          <label id="allocationValue2Label">To<input id="allocationValue2" placeholder="M"></label>
+        </div>
+        <div class="allocation-actions">
+          <button id="previewAllocation" class="btn secondary">Preview Items</button>
+          <button id="applyAllocation" class="btn primary">Allocate Matching Items</button>
+        </div>
+        <div id="allocationPreview"></div>
+        <h3>Allocation Summary</h3><div id="allocationSummary"></div>
+      </section>
+    </section>
+
+    <section id="countsView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Physical Counting</span><h2>Count Activity & Controls</h2><p>Review submitted counts and remove incorrect/test entries without changing Current Stock.</p></div>
+      <section class="card data-controls-card">
+        <div class="section-head">
+          <div><span class="eyebrow">Audit Data Controls</span><h3>Counts & Allocations</h3></div>
+          <button id="reloadCustomerCounts" class="btn secondary" type="button">Reload</button>
+        </div>
+        <div class="data-control-actions">
+          <button id="clearAllCountsBtn" class="btn danger-soft" type="button">Clear All Physical Counts</button>
+          <button id="clearAllocationsBtn" class="btn danger-soft" type="button">Clear Stock Allocations</button>
+          <button id="resetCountingBtn" class="btn danger-btn" type="button">Reset Counts + Allocations</button>
+        </div>
+        <h3>Recent Physical Counts</h3>
+        <div id="customerRecentCounts"></div>
+      </section>
+    </section>
+
+    <section id="reconciliationView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Reconciliation</span><h2>Inventory Differences</h2><p>Search and review differences without rendering the entire stock file on one screen.</p></div>
+      <section class="card">
+        <div class="section-head">
+          <div><span class="eyebrow">Material Reconciliation</span><h3>Findings</h3></div>
+          <button id="exportCsvBtn" class="btn secondary">Export Full CSV</button>
+        </div>
+        <div class="recon-tools">
+          <input id="reconSearch" type="search" placeholder="Search item, batch or finding">
+          <select id="reconFindingFilter">
+            <option value="">All findings</option><option value="Matched">Matched</option><option value="Short">Short</option><option value="Excess">Excess</option><option value="Missing">Missing</option><option value="Unlisted">Unlisted</option>
+          </select>
+        </div>
+        <div id="reconTable"></div>
+        <div class="pager">
+          <button id="reconPrev" class="btn secondary" type="button">Previous</button>
+          <span id="reconPageInfo">Page 1</span>
+          <button id="reconNext" class="btn secondary" type="button">Next</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="reportView" class="customer-view">
+      <div class="page-intro"><span class="eyebrow">Final Report</span><h2>Customer Audit Report</h2><p>Executive summary for client review. Full item-level detail remains available as CSV.</p></div>
+      <section class="card" id="customerFinalReport">
+        <div class="section-head">
+          <div><span class="eyebrow">Client-safe Report</span><h3>Audit Summary</h3></div>
+          <div class="report-actions">
+            <button id="printCustomerReportBtn" class="btn primary" type="button">Download / Print PDF</button>
+            <button id="exportCustomerReportBtn" class="btn secondary" type="button">Export Full Report CSV</button>
+          </div>
+        </div>
+        <div id="customerReportBody"><p class="muted">Select an audit to load the report.</p></div>
+      </section>
+    </section>
+
+    <p id="msg" class="portal-message"></p>
+  </main>
 </div>
 
 <div id="modal" class="modal" hidden><div class="modal-card">
-<h3>Create New Audit</h3>
-<div class="grid"><label>Audit Name<input id="newAuditName" placeholder="Main Store Stock Audit"></label>
-<label>Location<input id="newAuditLocation"></label><label>Audit Date<input id="newAuditDate" type="date"></label>
-<label>Expected Running Items<input id="newAuditItems" type="number" value="20000"></label></div>
-<div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="createAuditConfirm" class="btn primary">Create Audit</button></div>
+  <h3>Create New Audit</h3>
+  <div class="grid">
+    <label>Audit Name<input id="newAuditName" placeholder="Main Store Stock Audit"></label>
+    <label>Location<input id="newAuditLocation"></label>
+    <label>Audit Date<input id="newAuditDate" type="date"></label>
+    <label>Expected Running Items<input id="newAuditItems" type="number" value="20000"></label>
+  </div>
+  <div class="actions"><button id="cancelModal" class="btn secondary">Cancel</button><button id="createAuditConfirm" class="btn primary">Create Audit</button></div>
 </div></div>
 
-<p id="msg" class="muted"></p>
-</div><script src="./allocation.js?v=5"></script>
-<script src="./app.js?v=14"></script></body></html>
+<script src="./allocation.js?v=20"></script>
+<script src="./importer.js?v=20"></script>
+<script src="./app.js?v=20"></script>
+</body>
+</html>
