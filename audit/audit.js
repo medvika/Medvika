@@ -229,21 +229,26 @@ function tableHtml(headers,rows){
 async function loadRecentCounts(){
   const {data,error}=await sb
     .from("medvika_audit_count_lines")
-    .select("id,item_name,item_code,batch_no,physical_qty,system_qty,count_status,condition,counted_at")
+    .select("id,item_name,item_code,batch_no,physical_qty,system_qty,pack_uom,pack_size,count_status,condition,counted_at")
     .eq("audit_id",currentAuditId)
     .order("counted_at",{ascending:false})
     .limit(30);
   if(error){toast(error.message,"error");return;}
   const rows=data||[];
   $("recentCountBody").innerHTML=rows.length?rows.slice(0,12).map(r=>{
-    const variance=(r.system_qty===null||r.system_qty===undefined)?"—":Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
-    const cls=variance==="—"?"":varianceClass(variance);
-    return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(r.physical_qty)}</td><td>${esc(r.system_qty??"—")}</td><td class="${cls}">${esc(variance)}</td><td>${esc(r.count_status)}</td></tr>`;
+    const hasVar=(r.system_qty===null||r.system_qty===undefined)?false:hasSmallestUnitVariance(r.physical_qty,r.system_qty,r.pack_size);
+    const rawVariance=Number(r.physical_qty||0)-Number(r.system_qty||0);
+    const cls=hasVar?varianceClass(rawVariance):"ok";
+    const physicalDisplay=pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack");
+    const systemDisplay=(r.system_qty===null||r.system_qty===undefined)?"—":pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack");
+    const varianceDisplay=(r.system_qty===null||r.system_qty===undefined)?"—":varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size);
+    return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(physicalDisplay)}</td><td>${esc(systemDisplay)}</td><td class="${cls}">${esc(varianceDisplay)}</td><td>${esc(r.count_status)}</td></tr>`;
   }).join(""):'<tr><td colspan="7" class="empty">No count entries yet.</td></tr>';
 
   $("mobileCountList").innerHTML=rows.length?rows.map(r=>{
-    const variance=(r.system_qty===null||r.system_qty===undefined)?null:Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
-    return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(r.physical_qty)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${variance===null?"":` • Var: ${esc(variance)}`}</p></div>`;
+    const physicalDisplay=pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack");
+    const varianceDisplay=(r.system_qty===null||r.system_qty===undefined)?null:varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size);
+    return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(physicalDisplay)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${varianceDisplay===null?"":` • Var: ${esc(varianceDisplay)}`}</p></div>`;
   }).join(""):'<div class="empty">No count entries yet.</div>';
 }
 
@@ -315,7 +320,8 @@ $("countForm").addEventListener("submit", async e=>{
     const finalExpiry=enteredExpiry||s?.expiry_date||null;
     const finalCondition=classifyCondition(finalExpiry,explicitCondition);
     const systemQty=s?Number(s.system_qty||0):0;
-    const hasVariance=s && physical!==systemQty;
+    const finalPackSize=manualPackSize||s?.pack_size||null;
+    const hasVariance=s && hasSmallestUnitVariance(physical,systemQty,finalPackSize);
 
     const record={
       audit_id:currentAuditId,
@@ -328,7 +334,7 @@ $("countForm").addEventListener("submit", async e=>{
       batch_no:batch||s?.batch_no||null,
       expiry_date:finalExpiry,
       pack_uom:$("packUom").value.trim()||s?.pack_uom||null,
-      pack_size:manualPackSize||s?.pack_size||null,
+      pack_size:finalPackSize,
       full_pack_qty:manualFullPackQty,
       loose_qty:manualLooseQty,
       qty_basis:manualQtyBasis,
@@ -646,6 +652,50 @@ function formatImportedQuantity(qty,packSize,packUom="Pack"){
   return loose
     ? `${sign}${packs} ${u}${packs===1?"":"s"} + ${loose} loose`
     : `${sign}${packs} ${u}${packs===1?"":"s"}`;
+}
+
+
+function smallestUnitCount(qty,packSize){
+  const q=toNumber(qty),ps=toNumber(packSize);
+  if(q===null || !(ps>0) || !Number.isInteger(ps)) return null;
+  return Math.round(q*ps);
+}
+
+function pharmacyQtyDisplay(qty,packSize,packUom="Pack"){
+  const q=toNumber(qty),ps=toNumber(packSize);
+  if(q===null) return "—";
+  if(!(ps>0) || !Number.isInteger(ps)) return String(Number(q.toFixed(3)));
+
+  const units=Math.round(q*ps);
+  const abs=Math.abs(units);
+  const packs=Math.floor(abs/ps);
+  const loose=abs%ps;
+  const sign=units<0?"−":"";
+  const u=String(packUom||"Pack").trim()||"Pack";
+
+  if(packs===0 && loose>0) return `${sign}${loose} loose unit${loose===1?"":"s"}`;
+  if(loose===0) return `${sign}${packs} ${u}${packs===1?"":"s"}`;
+  return `${sign}${packs} ${u}${packs===1?"":"s"} + ${loose} loose`;
+}
+
+function varianceUnitDisplay(physicalQty,systemQty,packSize){
+  const p=smallestUnitCount(physicalQty,packSize);
+  const s=smallestUnitCount(systemQty,packSize);
+  if(p===null || s===null){
+    const a=toNumber(physicalQty),b=toNumber(systemQty);
+    if(a===null||b===null) return "—";
+    return String(Number((a-b).toFixed(3)));
+  }
+  const diff=p-s;
+  if(diff===0) return "0";
+  return `${diff>0?"+":"−"}${Math.abs(diff)} loose unit${Math.abs(diff)===1?"":"s"}`;
+}
+
+function hasSmallestUnitVariance(physicalQty,systemQty,packSize){
+  const p=smallestUnitCount(physicalQty,packSize);
+  const s=smallestUnitCount(systemQty,packSize);
+  if(p!==null && s!==null) return p!==s;
+  return Math.abs(Number(physicalQty||0)-Number(systemQty||0))>0.0000001;
 }
 
 function quantityModeOptions(selected="smart"){
@@ -1251,9 +1301,9 @@ function renderReconciliationTable(){
       <td>${conditionChip(r.condition)}</td>
       <td>${r.purchase_rate===null?"—":fmtMoney(r.purchase_rate)}</td>
       <td>${r.gst_percent===null?"—":esc(r.gst_percent)+"%"}</td>
-      <td>${esc(formatImportedQuantity(r.system_qty,r.pack_size,r.pack_uom))}</td>
-      <td>${esc(formatImportedQuantity(r.physical_qty,r.pack_size,r.pack_uom))}</td>
-      <td class="${varianceClass(r.variance)}">${esc(formatImportedQuantity(r.variance,r.pack_size,r.pack_uom))}</td>
+      <td>${esc(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom))}</td>
+      <td>${esc(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom))}</td>
+      <td class="${varianceClass(r.variance)}">${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size))}</td>
       <td>${r.system_value===null?"—":fmtMoney(r.system_value)}</td>
       <td>${r.physical_value===null?"—":fmtMoney(r.physical_value)}</td>
       <td class="${r.variance_value===null?"":(r.variance_value<0?"money-negative":r.variance_value>0?"money-positive":"money-neutral")}">${r.variance_value===null?"—":fmtMoney(r.variance_value)}</td>
@@ -1318,11 +1368,11 @@ function reconciliationExportRows(){
     Purchase_Rate_Ex_GST:r.purchase_rate,
     GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
-    System_Qty_Display:formatImportedQuantity(r.system_qty,r.pack_size,r.pack_uom),
+    System_Qty_Display:pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom),
     Physical_Qty:r.physical_qty,
-    Physical_Qty_Display:formatImportedQuantity(r.physical_qty,r.pack_size,r.pack_uom),
+    Physical_Qty_Display:pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom),
     Variance:r.variance,
-    Variance_Display:formatImportedQuantity(r.variance,r.pack_size,r.pack_uom),
+    Variance_Display:varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size),
     System_Value_Ex_GST:r.system_value,
     Physical_Value_Ex_GST:r.physical_value,
     Variance_Value_Ex_GST:r.variance_value,
@@ -1637,7 +1687,7 @@ async function loadFinalReport(){
     $("reportSystemExpiryTable").innerHTML=tableHtml(
       ["Item","Batch","Expiry","System Qty","Finding"],
       exposureRows.map(r=>[
-        r.item_name,r.batch_no||"—",r.expiry_date||"—",r.system_qty,
+        r.item_name,r.batch_no||"—",r.expiry_date||"—",pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"),
         r.expiry_class==="expired"?"Expired":"Near Expiry"
       ])
     );
@@ -1650,7 +1700,7 @@ async function loadFinalReport(){
     $("reportConditionTable").innerHTML=tableHtml(
       ["Item","Batch","Expiry","Qty","Condition"],
       conditionRows.map(c=>[
-        c.item_name,c.batch_no||"—",c.expiry_date||"—",c.physical_qty,conditionLabel(c.condition)
+        c.item_name,c.batch_no||"—",c.expiry_date||"—",pharmacyQtyDisplay(c.physical_qty,c.pack_size,c.pack_uom||"Pack"),conditionLabel(c.condition)
       ])
     );
 
@@ -1666,7 +1716,9 @@ async function loadFinalReport(){
       ["Status","Item","Code","Batch","System","Physical","Variance","Rate Ex-GST","Variance Value","Condition"],
       exceptions.slice(0,500).map(r=>[
         statusLabel(r),r.item_name,r.item_code||"—",r.batch_no||"—",
-        r.system_qty,r.physical_qty,r.variance,
+        pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom),
+        pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom),
+        varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size),
         r.purchase_rate===null?"—":fmtMoney(r.purchase_rate),
         r.variance_value===null?"—":fmtMoney(r.variance_value),
         conditionLabel(r.condition)
@@ -1697,11 +1749,11 @@ function reportExcelRows(){
     Purchase_Rate_Ex_GST:r.purchase_rate,
     GST_Percent:r.gst_percent,
     System_Qty:r.system_qty,
-    System_Qty_Display:formatImportedQuantity(r.system_qty,r.pack_size,r.pack_uom),
+    System_Qty_Display:pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom),
     Physical_Qty:r.physical_qty,
-    Physical_Qty_Display:formatImportedQuantity(r.physical_qty,r.pack_size,r.pack_uom),
+    Physical_Qty_Display:pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom),
     Variance:r.variance,
-    Variance_Display:formatImportedQuantity(r.variance,r.pack_size,r.pack_uom),
+    Variance_Display:varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size),
     System_Value_Ex_GST:r.system_value,
     Physical_Value_Ex_GST:r.physical_value,
     Variance_Value_Ex_GST:r.variance_value,
@@ -1764,7 +1816,9 @@ function exportFinalReportExcel(){
     .filter(c=>["damaged","expired","near_expiry"].includes(c.condition))
     .map(c=>({
       Item:c.item_name,Code:c.item_code||"",Batch:c.batch_no||"",
-      Expiry:c.expiry_date||"",Physical_Qty:c.physical_qty,Condition:conditionLabel(c.condition)
+      Expiry:c.expiry_date||"",Physical_Qty:c.physical_qty,
+      Physical_Qty_Display:pharmacyQtyDisplay(c.physical_qty,c.pack_size,c.pack_uom||"Pack"),
+      Condition:conditionLabel(c.condition)
     }));
   XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(conditionRows),"Condition Findings");
 
@@ -1773,6 +1827,7 @@ function exportFinalReportExcel(){
     .map(r=>({
       Item:r.item_name,Code:r.item_code||"",Batch:r.batch_no||"",
       Expiry:r.expiry_date||"",System_Qty:r.system_qty,
+      System_Qty_Display:pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"),
       Finding:r.expiry_class==="expired"?"Expired":"Near Expiry"
     }));
   XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(expiryRows),"System Expiry Exposure");
@@ -1887,7 +1942,9 @@ async function exportFinalReportPdf(){
     head:[["Status","Item","Batch","System","Physical","Variance"]],
     body:exceptions.map(r=>[
       statusLabel(r),safePdfText(r.item_name),safePdfText(r.batch_no||"-"),
-      r.system_qty,r.physical_qty,r.variance
+      safePdfText(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom)),
+      safePdfText(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom)),
+      safePdfText(varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size))
     ]),
     theme:"striped",
     styles:{fontSize:7,cellPadding:1.6,overflow:"linebreak"},
@@ -1907,7 +1964,7 @@ async function exportFinalReportPdf(){
     head:[["Item","Batch","Expiry","Qty","Condition"]],
     body:findings.map(c=>[
       safePdfText(c.item_name),safePdfText(c.batch_no||"-"),c.expiry_date||"-",
-      c.physical_qty,conditionLabel(c.condition)
+      safePdfText(pharmacyQtyDisplay(c.physical_qty,c.pack_size,c.pack_uom||"Pack")),conditionLabel(c.condition)
     ]),
     theme:"grid",
     styles:{fontSize:7,cellPadding:1.6},

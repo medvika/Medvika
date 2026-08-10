@@ -431,7 +431,7 @@
                 <span>CSV or Excel · designed for 20,000+ current rows</span>
               </div>
             </div>
-            <p class="helper">Import the client's current stock before physical counting. The Smart Quantity Engine can read normal numbers, ERP pack.loose notation such as <strong>2.5 = 2 packs + 5 loose units</strong>, smallest-unit stock, and text such as <strong>2Strip10Tab</strong>. Choose the interpretation once for the whole file; Medvika normalizes all rows automatically using Pack Size and shows a validation summary before import. <strong>No row-by-row correction is required.</strong> Purchase Rate is treated as Ex-GST cost.</p>
+            <p class="helper">Import the client's current stock before physical counting. The Smart Quantity Engine reads unambiguous pharmacy text such as <strong>2Strip10Tab</strong>, whole-pack quantities and smallest-unit stock. For plain decimals such as <strong>2.5</strong>, Medvika does not guess: choose once for the whole file whether the ERP means <strong>2 packs + 5 loose</strong> or <strong>2.5 true packs</strong>. Medvika then normalizes all rows automatically using Pack Size and shows a validation summary before import. <strong>No row-by-row correction is required.</strong> Purchase Rate is treated as Ex-GST cost.</p>
             <div class="import-options">
               <label>Import mode
                 <select id="systemImportMode">
@@ -514,6 +514,6 @@
     </main>
   </div>
 
-  <script src="./audit.js?v=smartqty1"></script>
+  <script src="./audit.js?v=qtyprofile3"></script>
 </body>
 </html>
