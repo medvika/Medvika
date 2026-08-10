@@ -12,6 +12,49 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+.executive-intelligence-card{overflow:hidden}
+.executive-score-wrap{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:center}
+.audit-score-hero{display:flex;align-items:center;gap:16px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eef9f6,#f8fbfc);border:1px solid #dbeceb}
+.score-ring{width:112px;height:112px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;background:conic-gradient(#0f8a78 0deg,#0f8a78 var(--scoredeg,0deg),#e6efef var(--scoredeg,0deg),#e6efef 360deg);position:relative;color:#15323d}
+.score-ring:before{content:"";position:absolute;width:86px;height:86px;border-radius:50%;background:white}
+.score-ring strong,.score-ring span{position:relative;z-index:1}
+.score-ring strong{font-size:30px;line-height:1}
+.score-ring span{font-size:12px;color:#6d7f84}
+.score-breakdown-grid{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:12px}
+.score-item{padding:14px;border:1px solid #e2ecee;border-radius:14px;background:#fff}
+.score-item span{display:block;color:#6d7f84;font-size:12px;margin-bottom:5px}
+.score-item strong{font-size:20px}
+.risk-positive{color:#087a5f}.risk-warn{color:#b76b00}.risk-negative{color:#b42318}
+.management-findings{display:grid;gap:10px}
+.finding-row{display:grid;grid-template-columns:90px 1fr;gap:12px;padding:14px;border:1px solid #e4ecee;border-radius:14px;background:#fff}
+.finding-priority{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.finding-critical{color:#b42318}.finding-high{color:#b76b00}.finding-medium{color:#246a73}.finding-low{color:#087a5f}
+.finding-row h4{margin:0 0 4px}.finding-row p{margin:0;color:#60727a;font-size:13px}
+@media(max-width:900px){
+ .executive-score-wrap{grid-template-columns:1fr}
+ .score-breakdown-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+
+
+<style>
+.mini-chart{display:grid;gap:12px;margin-top:10px}
+.chart-row{display:grid;grid-template-columns:minmax(110px,1.3fr) minmax(120px,3fr) auto;gap:10px;align-items:center}
+.chart-label{font-size:13px;color:#415d66}
+.chart-track{height:12px;border-radius:999px;background:#edf3f4;overflow:hidden}
+.chart-bar{height:100%;border-radius:999px;min-width:3px}
+.bar-shortage{background:#c0392b}.bar-excess{background:#d68b00}.bar-expired{background:#8e44ad}.bar-damaged{background:#d35400}.bar-near{background:#2b7a78}
+.chart-value{font-size:12px;font-weight:700;white-space:nowrap;color:#2d4650}
+.zone-chart-row{display:grid;grid-template-columns:minmax(110px,1.4fr) minmax(130px,3fr) 60px;gap:10px;align-items:center}
+.zone-progress-track{height:12px;border-radius:999px;background:#edf3f4;overflow:hidden}
+.zone-progress-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#0f8a78,#22aa90)}
+.zone-progress-bar.warn{background:linear-gradient(90deg,#d68b00,#f0b44d)}
+.zone-progress-bar.danger{background:linear-gradient(90deg,#b42318,#dc665d)}
+.chart-empty{padding:16px;border:1px dashed #ccdadd;border-radius:12px;color:#7b8d93;text-align:center}
+</style>
+
 </head>
 <body>
   <div id="toast" class="toast" aria-live="polite"></div>
@@ -365,6 +408,59 @@
           <div id="reportReconSummary" class="report-stat-grid"></div>
         </section>
 
+        <section class="card executive-intelligence-card">
+          <div class="card-head">
+            <div>
+              <h3>Executive Audit Scorecard</h3>
+              <span>Management-level view of audit quality and inventory risk</span>
+            </div>
+          </div>
+          <div class="executive-score-wrap">
+            <div class="audit-score-hero">
+              <div class="score-ring">
+                <strong id="auditHealthScore">—</strong>
+                <span>/100</span>
+              </div>
+              <div>
+                <span class="eyebrow">Audit Health</span>
+                <h4 id="auditHealthLabel">Calculating…</h4>
+                <p id="auditHealthNarrative" class="helper">Based on accuracy, execution completion and inventory risk.</p>
+              </div>
+            </div>
+            <div id="auditScoreBreakdown" class="score-breakdown-grid"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h3>Financial Risk Dashboard</h3>
+              <span>Ex-GST inventory exposure and material risk concentration</span>
+            </div>
+          </div>
+          <div id="financialRiskCards" class="report-stat-grid"></div>
+          <div class="two-col" style="margin-top:16px">
+            <div>
+              <h4>Top Shortage Risks</h4>
+              <div id="topShortageRiskTable" class="table-wrap report-small-table"></div>
+            </div>
+            <div>
+              <h4>Top Excess Risks</h4>
+              <div id="topExcessRiskTable" class="table-wrap report-small-table"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h3>Management Findings & Recommended Actions</h3>
+              <span>Auto-generated from reconciliation, expiry, damage and execution data</span>
+            </div>
+          </div>
+          <div id="managementFindings" class="management-findings"></div>
+        </section>
+
         <div class="two-col">
           <section class="card">
             <div class="card-head"><h3>Current Stock Expiry Exposure</h3><span>Based on book/system stock expiry</span></div>
@@ -378,6 +474,22 @@
             <div id="reportConditionTable" class="table-wrap report-small-table"></div>
           </section>
         </div>
+
+        <section class="card">
+          <div class="card-head">
+            <div><h3>Visual Risk Overview</h3><span>Management-ready financial exposure and audit execution charts</span></div>
+          </div>
+          <div class="two-col">
+            <div>
+              <h4>Inventory Risk by Value</h4>
+              <div id="financialImpactChart" class="mini-chart"></div>
+            </div>
+            <div>
+              <h4>Zone Completion</h4>
+              <div id="zoneCompletionChart" class="mini-chart"></div>
+            </div>
+          </div>
+        </section>
 
         <div class="two-col">
           <section class="card">
@@ -547,6 +659,6 @@
     </main>
   </div>
 
-  <script src="./audit.js?v=admincontrols1"></script>
+  <script src="./audit.js?v=visualreport1"></script>
 </body>
 </html>

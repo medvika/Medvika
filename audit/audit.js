@@ -1704,11 +1704,307 @@ function calculateFinancialImpact(systemStock,counts,recon){
   };
 }
 
+
+function clampScore(v){ return Math.max(0,Math.min(100,Math.round(Number(v)||0))); }
+
+function buildAuditHealthScore(data){
+  const recon=data?.recon||[];
+  const rc=data?.reconCounts||{};
+  const pc=data?.physicalConditions||{};
+  const se=data?.systemExpiry||{};
+  const fin=data?.financials||{};
+
+  const total=Math.max(1,recon.length);
+  const matched=Number(rc.matched||0);
+  const excess=Number(rc.excess||0);
+  const short=Number(rc.short||0);
+  const missing=Number(rc.missing||0);
+  const unlisted=Number(rc.unlisted||0);
+  const recount=Number(rc.recount||0);
+
+  const accuracy=clampScore((matched/total)*100);
+  const completion=clampScore(100-((recount/total)*100));
+
+  const damagedLines=recon.filter(r=>r.condition==="damaged").length;
+  const expiryRiskLines=Number(se.expired_lines||0)+Number(se.near_lines||0);
+  const damageRisk=clampScore(100-((damagedLines/total)*100*4));
+  const expiryRisk=clampScore(100-((expiryRiskLines/total)*100*3));
+
+  const stockValue=Math.max(1,Number(fin.systemStockValue||0));
+  const exposure=Math.abs(Number(fin.shortageLoss||0))
+    +Math.abs(Number(fin.excessValue||0))
+    +Math.abs(Number(fin.damagedValue||0))
+    +Math.abs(Number(fin.expiredValue||0))
+    +Math.abs(Number(fin.nearExpiryValue||0));
+  const financial=clampScore(100-Math.min(100,(exposure/stockValue)*100));
+
+  const overall=clampScore(
+    accuracy*0.35 +
+    completion*0.20 +
+    expiryRisk*0.15 +
+    damageRisk*0.10 +
+    financial*0.20
+  );
+
+  return {overall,accuracy,completion,expiryRisk,damageRisk,financial};
+}
+
+function scoreLabel(score){
+  if(score>=90) return ["Excellent","risk-positive"];
+  if(score>=75) return ["Good","risk-positive"];
+  if(score>=60) return ["Needs Attention","risk-warn"];
+  return ["High Risk","risk-negative"];
+}
+
+
+function renderFinancialImpactChart(data){
+  const box=$("financialImpactChart");
+  if(!box) return;
+  const f=data?.financials||{};
+  const rows=[
+    ["Shortage",Math.abs(Number(f.shortageLoss||0)),"bar-shortage"],
+    ["Excess",Math.abs(Number(f.excessValue||0)),"bar-excess"],
+    ["Expired",Math.abs(Number(f.expiredValue||0)),"bar-expired"],
+    ["Damaged",Math.abs(Number(f.damagedValue||0)),"bar-damaged"],
+    ["Near Expiry",Math.abs(Number(f.nearExpiryValue||0)),"bar-near"]
+  ];
+  const max=Math.max(...rows.map(r=>r[1]),0);
+  if(max<=0){
+    box.innerHTML='<div class="chart-empty">No financial risk exposure recorded.</div>';
+    return;
+  }
+  box.innerHTML=rows.map(([label,value,cls])=>{
+    const width=Math.max(2,(value/max)*100);
+    return `<div class="chart-row">
+      <span class="chart-label">${esc(label)}</span>
+      <div class="chart-track"><div class="chart-bar ${cls}" style="width:${width.toFixed(1)}%"></div></div>
+      <span class="chart-value">${esc(fmtMoney(value))}</span>
+    </div>`;
+  }).join("");
+}
+
+function zoneCompletionRows(data){
+  const zones=data?.zones||[];
+  const allocations=(data?.allocations||[]).filter(a=>a.active!==false);
+  const counts=data?.counts||[];
+
+  return zones.map(z=>{
+    const allocatedIds=new Set(
+      allocations.filter(a=>String(a.zone_id||"")===String(z.id)).map(a=>String(a.system_stock_id))
+    );
+
+    const countedIds=new Set(
+      counts
+        .filter(c=>String(c.zone_id||"")===String(z.id) && c.system_stock_id!==null && c.system_stock_id!==undefined)
+        .map(c=>String(c.system_stock_id))
+    );
+
+    let percent=null;
+    let basis="";
+    if(allocatedIds.size>0){
+      const done=[...countedIds].filter(id=>allocatedIds.has(id)).length;
+      percent=Math.min(100,(done/allocatedIds.size)*100);
+      basis=`${done}/${allocatedIds.size} allocated items`;
+    }else{
+      const status=String(z.status||"").toLowerCase();
+      if(status==="completed"||status==="closed") percent=100;
+      else if(status==="in_progress"||status==="counting") percent=50;
+      else percent=0;
+      basis="status based";
+    }
+    return {...z,percent,basis};
+  });
+}
+
+function renderZoneCompletionChart(data){
+  const box=$("zoneCompletionChart");
+  if(!box) return;
+  const rows=zoneCompletionRows(data);
+  if(!rows.length){
+    box.innerHTML='<div class="chart-empty">No zones configured.</div>';
+    return;
+  }
+  box.innerHTML=rows.map(z=>{
+    const p=Math.max(0,Math.min(100,Number(z.percent||0)));
+    const cls=p>=80?"":p>=40?"warn":"danger";
+    return `<div class="zone-chart-row" title="${esc(z.basis)}">
+      <span class="chart-label">${esc(`${z.zone_code||""} ${z.zone_name||""}`.trim())}</span>
+      <div class="zone-progress-track"><div class="zone-progress-bar ${cls}" style="width:${p.toFixed(1)}%"></div></div>
+      <span class="chart-value">${p.toFixed(0)}%</span>
+    </div>`;
+  }).join("");
+}
+
+function renderExecutiveAuditIntelligence(data){
+  if(!data) return;
+  renderFinancialImpactChart(data);
+  renderZoneCompletionChart(data);
+  const s=buildAuditHealthScore(data);
+  const [label,cls]=scoreLabel(s.overall);
+
+  const scoreEl=$("auditHealthScore");
+  const labelEl=$("auditHealthLabel");
+  const narrative=$("auditHealthNarrative");
+  const ring=document.querySelector(".score-ring");
+  if(scoreEl) scoreEl.textContent=s.overall;
+  if(labelEl){labelEl.textContent=label;labelEl.className=cls;}
+  if(ring) ring.style.setProperty("--scoredeg",`${s.overall*3.6}deg`);
+
+  const rc=data.reconCounts||{}, fin=data.financials||{};
+  if(narrative){
+    const exceptions=Number(rc.excess||0)+Number(rc.short||0)+Number(rc.missing||0)+Number(rc.unlisted||0);
+    narrative.textContent=`${exceptions} material reconciliation exception${exceptions===1?"":"s"} identified. Financial risk exposure is ${fmtMoney(
+      Math.abs(Number(fin.shortageLoss||0))+Math.abs(Number(fin.excessValue||0))+Math.abs(Number(fin.damagedValue||0))+Math.abs(Number(fin.expiredValue||0))+Math.abs(Number(fin.nearExpiryValue||0))
+    )}.`;
+  }
+
+  const breakdown=[
+    ["Inventory Accuracy",s.accuracy],
+    ["Execution Completion",s.completion],
+    ["Expiry Control",s.expiryRisk],
+    ["Damage Control",s.damageRisk],
+    ["Financial Control",s.financial]
+  ];
+  if($("auditScoreBreakdown")){
+    $("auditScoreBreakdown").innerHTML=breakdown.map(([k,v])=>{
+      const [lbl,klass]=scoreLabel(v);
+      return `<div class="score-item"><span>${esc(k)}</span><strong class="${klass}">${v}/100</strong><small>${esc(lbl)}</small></div>`;
+    }).join("");
+  }
+
+  const riskCards=[
+    ["Shortage Loss",fmtMoney(fin.shortageLoss||0)],
+    ["Excess Value",fmtMoney(fin.excessValue||0)],
+    ["Expired Value",fmtMoney(fin.expiredValue||0)],
+    ["Damaged Value",fmtMoney(fin.damagedValue||0)],
+    ["Near Expiry Exposure",fmtMoney(fin.nearExpiryValue||0)],
+    ["Net Inventory Variance",fmtMoney(fin.netInventoryVariance||0)]
+  ];
+  if($("financialRiskCards")){
+    $("financialRiskCards").innerHTML=riskCards.map(([k,v])=>`<div class="report-stat"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("");
+  }
+
+  const shortage=[...(data.recon||[])]
+    .filter(r=>Number(r.variance_value||0)<0)
+    .sort((a,b)=>Math.abs(Number(b.variance_value||0))-Math.abs(Number(a.variance_value||0)))
+    .slice(0,10);
+
+  const excess=[...(data.recon||[])]
+    .filter(r=>Number(r.variance_value||0)>0)
+    .sort((a,b)=>Math.abs(Number(b.variance_value||0))-Math.abs(Number(a.variance_value||0)))
+    .slice(0,10);
+
+  if($("topShortageRiskTable")){
+    $("topShortageRiskTable").innerHTML=tableHtml(
+      ["Item","Batch","Variance","Value"],
+      shortage.map(r=>[
+        r.item_name,
+        r.batch_no||"—",
+        varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size),
+        fmtMoney(Math.abs(Number(r.variance_value||0)))
+      ])
+    );
+  }
+  if($("topExcessRiskTable")){
+    $("topExcessRiskTable").innerHTML=tableHtml(
+      ["Item","Batch","Variance","Value"],
+      excess.map(r=>[
+        r.item_name,
+        r.batch_no||"—",
+        varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size),
+        fmtMoney(Math.abs(Number(r.variance_value||0)))
+      ])
+    );
+  }
+
+  renderManagementFindings(data,s);
+}
+
+function renderManagementFindings(data,scores){
+  const rc=data.reconCounts||{}, fin=data.financials||{}, se=data.systemExpiry||{};
+  const recon=data.recon||[];
+  const findings=[];
+
+  const shortageCount=Number(rc.short||0)+Number(rc.missing||0);
+  const unlisted=Number(rc.unlisted||0);
+  const recount=Number(rc.recount||0);
+  const expiredLines=Number(se.expired_lines||0);
+  const nearLines=Number(se.near_lines||0);
+  const damagedLines=recon.filter(r=>r.condition==="damaged").length;
+
+  if(Math.abs(Number(fin.shortageLoss||0))>0){
+    findings.push({
+      p:Math.abs(Number(fin.shortageLoss||0))>Math.max(5000,Number(fin.systemStockValue||0)*0.01)?"Critical":"High",
+      t:`Shortage exposure of ${fmtMoney(Math.abs(Number(fin.shortageLoss||0)))}`,
+      a:`Review ${shortageCount} shortage/missing line${shortageCount===1?"":"s"}, verify recounts and investigate high-value discrepancies before sign-off.`
+    });
+  }
+  if(unlisted>0){
+    findings.push({
+      p:unlisted>=10?"High":"Medium",
+      t:`${unlisted} unlisted physical stock line${unlisted===1?"":"s"} found`,
+      a:"Validate purchase/GRN posting, batch master accuracy and stock-entry controls for items physically present but absent from system stock."
+    });
+  }
+  if(expiredLines>0){
+    findings.push({
+      p:expiredLines>=5?"High":"Medium",
+      t:`${expiredLines} expired current-stock line${expiredLines===1?"":"s"} identified`,
+      a:`Segregate expired inventory immediately and initiate supplier return/write-off controls. Estimated expired value: ${fmtMoney(fin.expiredValue||0)}.`
+    });
+  }
+  if(nearLines>0){
+    findings.push({
+      p:Number(fin.nearExpiryValue||0)>5000?"High":"Medium",
+      t:`Near-expiry exposure of ${fmtMoney(fin.nearExpiryValue||0)}`,
+      a:"Prioritize FEFO movement, supplier return opportunities and targeted sale-through for short-dated stock."
+    });
+  }
+  if(damagedLines>0){
+    findings.push({
+      p:damagedLines>=5?"High":"Medium",
+      t:`${damagedLines} damaged physical stock line${damagedLines===1?"":"s"} recorded`,
+      a:`Quarantine non-saleable stock and document supplier claims/write-offs. Estimated damaged value: ${fmtMoney(fin.damagedValue||0)}.`
+    });
+  }
+  if(recount>0){
+    findings.push({
+      p:recount>=10?"High":"Medium",
+      t:`${recount} line${recount===1?"":"s"} require recount`,
+      a:"Complete second-count verification before final audit closure, prioritizing high-value and controlled medicines."
+    });
+  }
+  if(scores.accuracy>=95 && shortageCount===0 && unlisted===0){
+    findings.push({
+      p:"Low",
+      t:"Strong inventory accuracy",
+      a:"Maintain the current stock-control process and continue periodic cycle counts to preserve accuracy."
+    });
+  }
+  if(!findings.length){
+    findings.push({
+      p:"Low",
+      t:"No material control exceptions identified",
+      a:"Proceed with routine management sign-off and retain the reconciliation export as the audit trail."
+    });
+  }
+
+  const rank={Critical:4,High:3,Medium:2,Low:1};
+  findings.sort((a,b)=>rank[b.p]-rank[a.p]);
+
+  if($("managementFindings")){
+    $("managementFindings").innerHTML=findings.map(f=>{
+      const cls="finding-"+f.p.toLowerCase();
+      return `<div class="finding-row"><div class="finding-priority ${cls}">${esc(f.p)}</div><div><h4>${esc(f.t)}</h4><p>${esc(f.a)}</p></div></div>`;
+    }).join("");
+  }
+}
+
 async function loadFinalReport(){
   if(!currentAuditId || !$("reportView")) return;
 
   try{
-    const [projectRes,systemStock,counts,zoneRes,teamRes,signoff]=await Promise.all([
+    const [projectRes,systemStock,counts,zoneRes,teamRes,allocationRes,signoff]=await Promise.all([
       sb.from("medvika_audit_projects")
         .select("*,medvika_audit_clients(client_name,business_name,contact_person)")
         .eq("id",currentAuditId).single(),
@@ -1716,12 +2012,14 @@ async function loadFinalReport(){
       fetchAllCountLinesDetailed(),
       sb.from("medvika_audit_zones").select("*").eq("audit_id",currentAuditId).order("sequence_no"),
       sb.from("medvika_audit_teams").select("*").eq("audit_id",currentAuditId).eq("active",true).order("team_code"),
+      sb.from("medvika_audit_stock_allocations").select("system_stock_id,zone_id,team_id,active").eq("audit_id",currentAuditId).eq("active",true),
       fetchSignoff()
     ]);
 
     if(projectRes.error) throw projectRes.error;
     if(zoneRes.error) throw zoneRes.error;
     if(teamRes.error) throw teamRes.error;
+    if(allocationRes.error) console.warn("Allocation data could not load for zone completion chart:",allocationRes.error);
 
     const project=projectRes.data;
     const client=project.medvika_audit_clients?.business_name || project.medvika_audit_clients?.client_name || "Client";
@@ -1754,7 +2052,7 @@ async function loadFinalReport(){
 
     finalReportData={
       project,client,systemStock,counts,recon,zones:zoneRes.data||[],teams:teamRes.data||[],
-      signoff,reconCounts,physicalConditions,systemExpiryRows,systemExpiry,financials
+      allocations:allocationRes.data||[],signoff,reconCounts,physicalConditions,systemExpiryRows,systemExpiry,financials
     };
 
     $("reportProjectMeta").textContent=`${client} • ${project.project_code||""} • ${project.location||""} • ${project.audit_date||""}`;
@@ -1823,10 +2121,12 @@ async function loadFinalReport(){
       ])
     );
 
+    const zoneCompletion=zoneCompletionRows(finalReportData);
     $("reportZoneTable").innerHTML=tableHtml(
-      ["Zone","Category","Status","Supervisor"],
-      (zoneRes.data||[]).map(z=>[
-        `${z.zone_code} - ${z.zone_name}`,z.category||"—",z.status,z.assigned_supervisor||"—"
+      ["Zone","Category","Status","Completion","Basis","Supervisor"],
+      zoneCompletion.map(z=>[
+        `${z.zone_code} - ${z.zone_name}`,z.category||"—",z.status,
+        `${Number(z.percent||0).toFixed(0)}%`,z.basis,z.assigned_supervisor||"—"
       ])
     );
 
@@ -1843,6 +2143,8 @@ async function loadFinalReport(){
         conditionLabel(r.condition)
       ])
     );
+
+    renderExecutiveAuditIntelligence(finalReportData);
 
     if($("reportLeadName")) $("reportLeadName").value=signoff?.medvika_lead_name||"";
     if($("reportClientRep")) $("reportClientRep").value=signoff?.client_representative_name||project.medvika_audit_clients?.contact_person||"";
@@ -2049,6 +2351,50 @@ async function exportFinalReportPdf(){
     ],
     theme:"grid",styles:{fontSize:8,cellPadding:2},
     headStyles:{fillColor:green,textColor:[255,255,255]}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+  const scoreData=buildAuditHealthScore(finalReportData);
+  const scoreLbl=scoreLabel(scoreData.overall)[0];
+  if(y>245){doc.addPage();await addHeader();}
+  doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("Executive Audit Intelligence",margin,y); y+=3;
+  doc.autoTable({
+    startY:y,
+    head:[["Audit Health","Accuracy","Completion","Expiry","Damage","Financial"]],
+    body:[[
+      `${scoreData.overall}/100 - ${scoreLbl}`,
+      `${scoreData.accuracy}/100`,
+      `${scoreData.completion}/100`,
+      `${scoreData.expiryRisk}/100`,
+      `${scoreData.damageRisk}/100`,
+      `${scoreData.financial}/100`
+    ]],
+    theme:"grid",
+    styles:{fontSize:8,cellPadding:2},
+    headStyles:{fillColor:green,textColor:[255,255,255]}
+  });
+  y=doc.lastAutoTable.finalY+7;
+
+
+  if(y>235){doc.addPage();await addHeader();}
+  doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
+  doc.text("Financial Risk & Zone Completion",margin,y); y+=3;
+
+  const f=finalReportData.financials||{};
+  const zc=zoneCompletionRows(finalReportData);
+  doc.autoTable({
+    startY:y,
+    head:[["Risk","Value","Zone","Completion"]],
+    body:[
+      ["Shortage",fmtMoney(Math.abs(Number(f.shortageLoss||0))),zc[0]?`${zc[0].zone_code} - ${zc[0].zone_name}`:"-",zc[0]?`${Number(zc[0].percent||0).toFixed(0)}%`:"-"],
+      ["Excess",fmtMoney(Math.abs(Number(f.excessValue||0))),zc[1]?`${zc[1].zone_code} - ${zc[1].zone_name}`:"-",zc[1]?`${Number(zc[1].percent||0).toFixed(0)}%`:"-"],
+      ["Expired",fmtMoney(Math.abs(Number(f.expiredValue||0))),zc[2]?`${zc[2].zone_code} - ${zc[2].zone_name}`:"-",zc[2]?`${Number(zc[2].percent||0).toFixed(0)}%`:"-"],
+      ["Damaged",fmtMoney(Math.abs(Number(f.damagedValue||0))),zc[3]?`${zc[3].zone_code} - ${zc[3].zone_name}`:"-",zc[3]?`${Number(zc[3].percent||0).toFixed(0)}%`:"-"],
+      ["Near Expiry",fmtMoney(Math.abs(Number(f.nearExpiryValue||0))),zc[4]?`${zc[4].zone_code} - ${zc[4].zone_name}`:"-",zc[4]?`${Number(zc[4].percent||0).toFixed(0)}%`:"-"]
+    ],
+    theme:"grid",styles:{fontSize:8,cellPadding:2},
+    headStyles:{fillColor:navy,textColor:[255,255,255]}
   });
   y=doc.lastAutoTable.finalY+7;
 
