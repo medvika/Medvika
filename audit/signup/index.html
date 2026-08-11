@@ -1,131 +1,152 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Medvika Stock Audit — Free Pilot Signup</title>
+  <title>Request Stock Audit Trial | Medvika Healthcare Solutions</title>
+  <meta name="description" content="Request limited trial or demo access to the Medvika Stock Audit Portal for pharmacy stock verification, reconciliation and audit reporting.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://medvika.co.in/audit/signup/">
+  <link rel="icon" href="../../logo.png">
   <link rel="stylesheet" href="./app.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .pilot-plan{
-      border:1px solid #bfe6ce;
-      background:linear-gradient(135deg,#f3fbf6,#eef8fb);
-      border-radius:18px;
-      padding:20px;
-      margin:16px 0 22px;
-    }
-    .pilot-plan-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
-    .pilot-plan h3{margin:4px 0 5px;color:#0b3c5d}
-    .pilot-plan .free{font-size:24px;font-weight:800;color:#0b8f4d}
-    .pilot-pill{
-      display:inline-block;padding:5px 9px;border-radius:999px;background:#dff5e7;
-      color:#087a42;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase
-    }
-    .pilot-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:14px}
-    .pilot-features span{font-size:13px;color:#526774}
-    .pilot-features span:before{content:"✓";color:#0b8f4d;font-weight:800;margin-right:7px}
-    .paid-link{margin-top:12px;text-align:center;font-size:12px}
-    .success-box{
-      display:none;border:1px solid #bfe6ce;background:#f2fbf5;border-radius:14px;
-      padding:16px;margin-top:15px;color:#225a39;line-height:1.55
-    }
-    .success-box a{font-weight:700;color:#0b3c5d}
-    @media(max-width:600px){.pilot-features{grid-template-columns:1fr}}
-  </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card hero">
-      <img src="./logo.png?v=3" class="logo" alt="Medvika Healthcare Solutions">
-      <span class="eyebrow">Medvika Stock Audit</span>
-      <h1 id="pageTitle">Start Your Free Pilot Workspace</h1>
-      <p class="muted" id="pageIntro">
-        Create your account for Medvika's limited-period Stock Audit Pilot.
-        No package selection or online payment is required during the pilot.
+  <main class="page-shell">
+
+    <section class="intro-card">
+      <a class="brand" href="/" aria-label="Medvika home">
+        <img src="../../logo.png" alt="Medvika Healthcare Solutions">
+      </a>
+
+      <span class="eyebrow">Medvika Stock Audit Portal</span>
+      <h1>Request Free Trial Access</h1>
+
+      <p class="lead">
+        Interested in testing Medvika's structured pharmacy stock-audit workflow?
+        Submit your details and our team will review your request before enabling
+        a limited trial or arranging a guided demo.
       </p>
-    </div>
 
-    <div id="pilotPlan" class="pilot-plan">
-      <div class="pilot-plan-top">
-        <div>
-          <span class="pilot-pill">Limited-period pilot</span>
-          <h3>Free Pilot Access</h3>
-          <p class="muted" style="margin:0">Evaluate one complete self-managed pharmacy stock audit workflow.</p>
-        </div>
-        <div class="free">₹0</div>
+      <div class="notice">
+        <strong>Trial access is approval-based.</strong>
+        Selected users may receive short-term access for approximately 2–3 days
+        to evaluate one audit workflow. Larger or professionally managed audits
+        remain separate paid services.
       </div>
-      <div class="pilot-features">
-        <span>1 audit project</span>
-        <span>Up to 2,000 stock lines</span>
-        <span>Current stock import</span>
-        <span>Smart quantity handling</span>
-        <span>Physical count workflow</span>
-        <span>Reconciliation included</span>
-        <span>Expiry / damage findings</span>
-        <span>Professional PDF report</span>
+    </section>
+
+    <section class="content-grid">
+
+      <div class="form-card">
+        <div class="section-head">
+          <span class="step">Trial Request</span>
+          <h2>Tell us about your pharmacy</h2>
+          <p>There is no payment required to submit this request.</p>
+        </div>
+
+        <form id="trialForm">
+          <div class="form-grid">
+
+            <label>
+              Full Name *
+              <input id="fullName" required autocomplete="name" placeholder="Your name">
+            </label>
+
+            <label>
+              Business / Pharmacy Name *
+              <input id="businessName" required placeholder="Pharmacy or business name">
+            </label>
+
+            <label>
+              Email *
+              <input id="email" type="email" required autocomplete="email" placeholder="name@example.com">
+            </label>
+
+            <label>
+              Mobile *
+              <input id="mobile" required inputmode="tel" autocomplete="tel" placeholder="+91">
+            </label>
+
+            <label>
+              City
+              <input id="city" autocomplete="address-level2">
+            </label>
+
+            <label>
+              State
+              <input id="state" autocomplete="address-level1">
+            </label>
+
+          </div>
+
+          <label class="consent">
+            <input id="consent" type="checkbox" required>
+            <span>
+              I understand that submitting this form does not automatically activate portal
+              access. Medvika may contact me to verify the request and enable a limited trial or demo.
+            </span>
+          </label>
+
+          <button id="submitBtn" class="btn primary" type="submit">
+            Request Trial Access
+          </button>
+
+          <p id="msg" class="form-msg" aria-live="polite"></p>
+
+          <div id="successBox" class="success-box" hidden>
+            <div class="success-icon">✓</div>
+            <div>
+              <strong>Request received successfully.</strong>
+              <p>
+                Medvika will review your request. If approved, we will share trial-access
+                instructions or contact you for a short demo.
+              </p>
+            </div>
+          </div>
+        </form>
       </div>
-    </div>
 
-    <div id="plans" class="plans" hidden></div>
+      <aside class="side-card">
+        <span class="side-label">What you can evaluate</span>
+        <h2>A complete stock-audit workflow</h2>
 
-    <div class="card">
-      <form id="signupForm">
-        <div class="grid">
-          <label>Full Name
-            <input id="fullName" required autocomplete="name">
-          </label>
-          <label>Business / Pharmacy Name
-            <input id="businessName" required>
-          </label>
-          <label>Email
-            <input id="email" type="email" required autocomplete="email">
-          </label>
-          <label>Mobile
-            <input id="mobile" required inputmode="tel" autocomplete="tel">
-          </label>
-          <label>Password
-            <input id="password" type="password" required minlength="6" autocomplete="new-password" placeholder="Minimum 6 characters">
-          </label>
-          <label>Confirm Password
-            <input id="confirmPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="Re-enter password">
-          </label>
-          <label>City
-            <input id="city">
-          </label>
-          <label>State
-            <input id="state">
-          </label>
-
-          <label id="paidPlanLabel" class="span-2" hidden>Selected Plan
-            <select id="planCode">
-              <option value="">Loading plans...</option>
-            </select>
-          </label>
+        <div class="feature-list">
+          <div><span>✓</span><p><strong>Current Stock Import</strong><br>Excel / CSV based stock upload.</p></div>
+          <div><span>✓</span><p><strong>Smart Quantity</strong><br>Pack-and-loose quantity handling.</p></div>
+          <div><span>✓</span><p><strong>Teams & Zones</strong><br>Structured counting allocation.</p></div>
+          <div><span>✓</span><p><strong>Physical Count</strong><br>Batch, expiry and condition capture.</p></div>
+          <div><span>✓</span><p><strong>Reconciliation</strong><br>System vs physical variance review.</p></div>
+          <div><span>✓</span><p><strong>Audit PDF</strong><br>Professional management report.</p></div>
         </div>
 
-        <input id="pilotPlanCode" type="hidden" value="FREE_PILOT">
+        <div class="side-divider"></div>
 
-        <button id="submitBtn" class="btn primary" type="submit">Create Free Pilot Account</button>
-        <p id="msg" class="muted"></p>
-
-        <div id="successBox" class="success-box">
-          <strong>Free Pilot registration received.</strong><br>
-          Your secure login and pilot request have been saved. Medvika will review and activate
-          your pilot access. Once activated, use the same email and password in the
-          <a href="../customer/">Customer Portal</a>.
-        </div>
-
-        <p id="pilotNote" class="muted" style="font-size:13px">
-          Free Pilot: 1 audit project, up to 2,000 stock lines. Medvika-managed professional
-          audits and larger projects are separate paid services.
+        <h3>Prefer a guided demonstration?</h3>
+        <p class="muted">
+          Contact Medvika and we can walk you through the portal before enabling trial access.
         </p>
 
-        <p class="paid-link">
-          <a href="?plans=1">View commercial audit packages</a>
-        </p>
-      </form>
-    </div>
-  </div>
+        <a class="btn outline"
+           href="https://wa.me/918979841035?text=Hello%20Medvika%2C%20I%20would%20like%20a%20demo%20of%20the%20Stock%20Audit%20Portal."
+           target="_blank" rel="noopener">
+          Request Demo on WhatsApp
+        </a>
+
+        <a class="existing-link" href="../customer/">
+          Already have access? Open Customer Portal →
+        </a>
+      </aside>
+
+    </section>
+
+    <p class="footer-note">
+      Medvika Healthcare Solutions · Pharmacy Consulting · Audit · Inventory & Operations
+    </p>
+
+  </main>
+
   <script src="./app.js"></script>
 </body>
 </html>
