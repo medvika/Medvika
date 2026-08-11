@@ -41,11 +41,27 @@ function fmtDate(v){
 }
 function varianceClass(v){ v=Number(v||0); return v<0?"negative":v>0?"positive":"ok"; }
 
+async function verifyInternalAdmin(){
+  const {data,error}=await sb.rpc("medvika_is_audit_admin");
+  if(error) throw error;
+  if(data!==true) throw new Error("This workspace is restricted to Medvika Audit Admin users.");
+}
+
 async function requireSession(){
   const { data } = await sb.auth.getSession();
   if(data.session){
-    showApp(data.session.user);
-    await bootstrap();
+    try{
+      await verifyInternalAdmin();
+      showApp(data.session.user);
+      await bootstrap();
+    }catch(err){
+      await sb.auth.signOut();
+      $("loginView").hidden = false;
+      $("loginView").style.display = "";
+      $("appShell").hidden = true;
+      $("appShell").style.display = "none";
+      $("loginMessage").textContent = err.message || "Unable to validate Medvika admin access.";
+    }
   }else{
     $("loginView").hidden = false;
     $("loginView").style.display = "";
@@ -81,7 +97,8 @@ $("loginForm").addEventListener("submit", async (e)=>{
       throw new Error("Login completed but no active session was returned.");
     }
 
-    // Show the dashboard immediately after successful authentication.
+    // Internal workspace is admin-only.
+    await verifyInternalAdmin();
     showApp(data.user);
     localStorage.setItem("medvika_login_ok", "1");
 
@@ -124,11 +141,19 @@ document.querySelectorAll(".nav-btn").forEach(btn=>{
 async function bootstrap(){
   await loadProjects();
   if(!projects.length){
-    toast("No audit project found. Check Step 1 SQL.", "error");
+    toast("No audit project found.", "error");
     return;
   }
+  const requested=new URLSearchParams(location.search).get("audit");
   const saved=localStorage.getItem("medvika_audit_id");
-  currentAuditId = projects.some(p=>p.id===saved) ? saved : projects[0].id;
+  if(requested && projects.some(p=>String(p.id)===String(requested))){
+    currentAuditId=requested;
+  }else if(saved && projects.some(p=>String(p.id)===String(saved))){
+    currentAuditId=saved;
+  }else{
+    currentAuditId=projects[0].id;
+  }
+  localStorage.setItem("medvika_audit_id",currentAuditId);
   $("projectSelect").value=currentAuditId;
   await loadCurrentAudit();
 }
