@@ -6,6 +6,8 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 const $=id=>document.getElementById(id);
 let customerId=null,access=null,audits=[],currentAudit=null,reconRows=[];
 let customerZones=[],customerTeams=[];
+let dashboardSummary={};
+let dashboardRecentRows=[];
 let customerView="dashboard",reconPage=1,reconPageSize=25;
 let currentStockRows=[],currentStockFiltered=[],currentStockPage=1;
 
@@ -156,17 +158,48 @@ async function openAudit(id){
 }
 async function loadSummary(){
  const {data,error}=await sb.rpc("medvika_customer_audit_summary",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const r=data?.[0]||{};
+ dashboardSummary=r;
  $("summaryGrid").innerHTML=[["Count Lines",r.total_count_lines],["Variance",r.variance_lines],["Expired",r.expired_lines],["Near Expiry",r.near_expiry_lines],["Damaged",r.damaged_lines],["Progress",(Number(r.progress_percent||0).toFixed(1)+"%")]].map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]??0}</strong></div>`).join("");
+ renderDashboardInsights();
 }
+
+function dashboardPct(v){return Math.max(0,Math.min(100,Number(v)||0));}
+function setDashboardRing(id,pct,color){const el=$(id);if(el)el.style.background=`conic-gradient(${color} ${dashboardPct(pct)}%, #e8eef5 0)`;}
+function renderDashboardInsights(){
+ if(!$("auditHealthValue"))return;
+ const r=dashboardSummary||{};
+ const rows=reconRows||[];
+ const progress=dashboardPct(r.progress_percent||0);
+ const matched=rows.filter(x=>String(x.finding||"").toLowerCase().includes("match") || Math.abs(Number(x.variance_qty??(Number(x.physical_qty||0)-Number(x.system_qty||0)))||0)<0.000001).length;
+ const short=rows.filter(x=>Number(x.physical_qty||0)<Number(x.system_qty||0)).length;
+ const excess=rows.filter(x=>Number(x.physical_qty||0)>Number(x.system_qty||0)).length;
+ const recount=rows.filter(x=>x.recount===true || String(x.finding||"").toLowerCase().includes("recount")).length;
+ const accuracy=rows.length?dashboardPct((matched/rows.length)*100):0;
+ const health=rows.length?dashboardPct((progress*0.55)+(accuracy*0.45)):progress;
+ const net=rows.reduce((sum,x)=>sum+(Number(x.variance_value)||0),0);
+ $("auditHealthValue").textContent=`${health.toFixed(0)}%`; $("accuracyValue").textContent=`${accuracy.toFixed(0)}%`; $("completionValue").textContent=`${progress.toFixed(0)}%`;
+ $("auditHealthLabel").textContent=health>=90?"Excellent":health>=70?"Healthy":health>0?"In progress":"Awaiting count";
+ $("accuracyLabel").textContent=rows.length?(accuracy>=95?"Strong match rate":accuracy>=80?"Review variances":"Variance review needed"):"No reconciled lines";
+ $("completionLabel").textContent=progress>=100?"Counting complete":progress>0?"Counting in progress":"Not started";
+ setDashboardRing("auditHealthRing",health,"#0f766e");setDashboardRing("accuracyRing",accuracy,"#2563eb");setDashboardRing("completionRing",progress,"#f59e0b");
+ if($("dashboardReconStats")) $("dashboardReconStats").innerHTML=[["Reconciled",rows.length,"neutral"],["Matched",matched,"good"],["Short",short,"bad"],["Excess",excess,"warn"],["Recount",recount,"warn"]].map(x=>`<div class="recon-mini ${x[2]}"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join("");
+ if($("dashboardVarianceValue")) $("dashboardVarianceValue").textContent=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(net);
+ const controls=[["Zones configured",customerZones.length>0,`${customerZones.length} zone${customerZones.length===1?"":"s"}`],["Teams configured",customerTeams.length>0,`${customerTeams.length} team${customerTeams.length===1?"":"s"}`],["Physical counting",Number(r.total_count_lines||0)>0,`${Number(r.total_count_lines||0)} count lines`],["Reconciliation",rows.length>0,`${rows.length} reconciled lines`]];
+ if($("dashboardControlList")) $("dashboardControlList").innerHTML=controls.map(x=>`<div class="control-row"><span class="control-dot ${x[1]?"done":"pending"}"></span><div><strong>${x[0]}</strong><small>${x[2]}</small></div><b>${x[1]?"Ready":"Pending"}</b></div>`).join("");
+ if($("dashboardRecentActivity")) $("dashboardRecentActivity").innerHTML=dashboardRecentRows.length?dashboardRecentRows.slice(0,6).map(x=>`<div class="activity-row"><div><strong>${esc(x.item_name||"Item")}</strong><small>${esc(x.item_code||"No code")} • Batch ${esc(x.batch_no||"—")}</small></div><div class="activity-qty"><strong>${esc(pharmacyQtyDisplay(x.physical_qty,x.pack_size,x.pack_uom||"Pack"))}</strong><small>physical</small></div></div>`).join(""):'<p class="muted">No physical counts yet.</p>';
+ const exceptions=[["Variance lines",Number(r.variance_lines||0),"bad"],["Expired",Number(r.expired_lines||0),"bad"],["Near expiry",Number(r.near_expiry_lines||0),"warn"],["Damaged",Number(r.damaged_lines||0),"warn"],["Recount",recount,"neutral"]];
+ if($("dashboardExceptionList")) $("dashboardExceptionList").innerHTML=exceptions.map(x=>`<div class="exception-row"><span>${x[0]}</span><strong class="${x[2]}">${x[1]}</strong></div>`).join("");
+}
+
 async function loadZones(){
- const {data,error}=await sb.rpc("medvika_customer_zones",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; customerZones=rows;
+ const {data,error}=await sb.rpc("medvika_customer_zones",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; customerZones=rows; renderDashboardInsights();
  $("zoneList").innerHTML=rows.map(z=>`<div class="item-row"><div><strong>${esc(z.zone_code)} — ${esc(z.zone_name)}</strong><br><small>${esc(z.category||"")}</small></div></div>`).join("")||'<p class="muted">No zones.</p>';
  $("teamZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("allocationZone")) $("allocationZone").innerHTML='<option value="">-- No Zone --</option>'+rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join(""); if($("unifiedPhysicalZone")) $("unifiedPhysicalZone").innerHTML=rows.map(z=>`<option value="${z.id}">${esc(z.zone_code)} — ${esc(z.zone_name)}</option>`).join("");
 }
 $("addZoneBtn").onclick=async()=>{if(!currentAudit)return;const {error}=await sb.rpc("medvika_manage_zone",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_zone_name:$("zoneName").value,p_category:$("zoneCategory").value,p_zone_id:null});if(error){msg(error.message);return;}$("zoneName").value="";$("zoneCategory").value="";await loadZones();};
 
 async function loadTeams(){
- const {data,error}=await sb.rpc("medvika_customer_teams",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; customerTeams=rows; if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">-- No Team --</option>'+rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
+ const {data,error}=await sb.rpc("medvika_customer_teams",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});if(error){msg(error.message);return;}const rows=data||[]; customerTeams=rows; renderDashboardInsights(); if($("allocationTeam")) $("allocationTeam").innerHTML='<option value="">-- No Team --</option>'+rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
  $("teamList").innerHTML=rows.map(t=>`<div class="item-row"><div><strong>${esc(t.team_code)} — ${esc(t.team_name||"")}</strong><br><small>${esc(t.zone_code||"")} ${esc(t.zone_name||"")} • Login ${esc(t.login_code||"—")}</small></div><button class="btn secondary reset-pin" data-id="${t.team_id}">Reset PIN</button></div>`).join("")||'<p class="muted">No teams.</p>';
  if($("unifiedPhysicalTeam")) $("unifiedPhysicalTeam").innerHTML=rows.map(t=>`<option value="${t.team_id}">${esc(t.team_code)} — ${esc(t.team_name||"")}</option>`).join("");
  document.querySelectorAll(".reset-pin").forEach(b=>b.onclick=async()=>{const pin=prompt("Enter new PIN (4+ digits):");if(!pin)return;const {error}=await sb.rpc("medvika_reset_customer_team_pin",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id,p_team_id:b.dataset.id,p_new_pin:pin});msg(error?error.message:"PIN reset successfully.");});
@@ -231,7 +264,7 @@ function renderReconPage(){
 async function loadRecon(){
  const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});
  if(error){msg(error.message);return;}
- reconRows=data||[];reconPage=1;renderReconPage();renderCustomerReport();
+ reconRows=data||[];reconPage=1;renderReconPage();renderCustomerReport();renderDashboardInsights();
 }
 
 function cleanDisplayQty(v){
@@ -298,6 +331,8 @@ async function loadCustomerRecentCounts(){
  const {data,error}=await sb.rpc("medvika_customer_recent_counts",{p_audit_id:currentAudit.audit_id,p_limit:50});
  if(error){$("customerRecentCounts").innerHTML=`<p class="muted">${esc(error.message)}</p>`;return;}
  const rows=data||[];
+ dashboardRecentRows=rows;
+ renderDashboardInsights();
  $("customerRecentCounts").innerHTML=rows.length?rows.map(r=>{
    const variance=(r.system_qty===null||r.system_qty===undefined)?null:Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
    return `<div class="count-control-row"><div><strong>${esc(r.item_name||"Item")}</strong><small> • ${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.counted_at||"")}</small><div class="qty-line">Physical ${esc(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"))} · System ${esc(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"))}${variance===null?"":` · Variance ${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size))}`}</div></div><button class="btn danger-soft count-delete" type="button" data-count-id="${r.id}">Delete Count</button></div>`;

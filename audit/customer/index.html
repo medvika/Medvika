@@ -100,15 +100,57 @@
       <div id="auditList" class="audit-list"></div>
 
       <div id="auditPanel" hidden>
-        <section class="hero-card">
+        <section class="hero-card dashboard-hero">
           <div>
             <span class="eyebrow">Selected Audit</span>
             <h2 id="auditTitle">—</h2>
-            <p class="muted">Live audit progress and key findings.</p>
+            <p class="muted">Live stock verification, reconciliation and audit controls.</p>
           </div>
-          <button class="btn secondary customer-go" data-go="setup">Manage Setup</button>
+          <div class="dashboard-hero-actions">
+            <button class="btn secondary customer-go" data-go="setup">Manage Setup</button>
+            <button class="btn primary customer-go" data-go="reconciliation">View Reconciliation</button>
+          </div>
         </section>
+
         <div id="summaryGrid" class="summary-grid dashboard-kpis"></div>
+
+        <div class="dashboard-health-grid">
+          <section class="dashboard-health-card">
+            <div class="health-ring" id="auditHealthRing"><strong id="auditHealthValue">0%</strong></div>
+            <div><span class="eyebrow">Audit Health</span><h3 id="auditHealthLabel">Awaiting count</h3><p class="muted">Combined view of completion and reconciliation accuracy.</p></div>
+          </section>
+          <section class="dashboard-health-card">
+            <div class="health-ring blue" id="accuracyRing"><strong id="accuracyValue">0%</strong></div>
+            <div><span class="eyebrow">Accuracy Score</span><h3 id="accuracyLabel">No reconciled lines</h3><p class="muted">Share of reconciled lines matching system stock.</p></div>
+          </section>
+          <section class="dashboard-health-card">
+            <div class="health-ring amber" id="completionRing"><strong id="completionValue">0%</strong></div>
+            <div><span class="eyebrow">Completion</span><h3 id="completionLabel">Not started</h3><p class="muted">Physical count progress for the selected audit.</p></div>
+          </section>
+        </div>
+
+        <div class="dashboard-insight-grid">
+          <section class="card dashboard-recon-card">
+            <div class="section-head"><div><span class="eyebrow">Live Controls</span><h3>Reconciliation Overview</h3></div><button class="btn secondary customer-go" data-go="reconciliation">Open Details</button></div>
+            <div id="dashboardReconStats" class="dashboard-recon-stats"></div>
+            <div class="variance-value-panel"><span>Net Inventory Variance Value</span><strong id="dashboardVarianceValue">₹0.00</strong><small>Based on available purchase-rate valuation.</small></div>
+          </section>
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Control Status</span><h3>Audit Readiness</h3></div></div>
+            <div id="dashboardControlList" class="dashboard-control-list"></div>
+          </section>
+        </div>
+
+        <div class="dashboard-insight-grid">
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Activity</span><h3>Recent Count Activity</h3></div><button class="btn secondary customer-go" data-go="counts">View Counts</button></div>
+            <div id="dashboardRecentActivity" class="dashboard-activity-list"><p class="muted">No physical counts yet.</p></div>
+          </section>
+          <section class="card">
+            <div class="section-head"><div><span class="eyebrow">Exceptions</span><h3>Items Requiring Attention</h3></div></div>
+            <div id="dashboardExceptionList" class="dashboard-exception-list"></div>
+          </section>
+        </div>
 
         <div class="dashboard-grid">
           <section class="card">
@@ -126,10 +168,7 @@
           <section class="card">
             <div class="section-head"><div><span class="eyebrow">Audit Guidance</span><h3>Before Counting</h3></div></div>
             <div class="guidance-list">
-              <p>✓ Freeze stock movement during the physical count.</p>
-              <p>✓ Verify team allocation before counters begin.</p>
-              <p>✓ Count batch and expiry separately where applicable.</p>
-              <p>✓ Review shortages/excesses before final sign-off.</p>
+              <p>✓ Freeze stock movement during the physical count.</p><p>✓ Verify team allocation before counters begin.</p><p>✓ Count batch and expiry separately where applicable.</p><p>✓ Review shortages/excesses before final sign-off.</p>
             </div>
           </section>
         </div>
