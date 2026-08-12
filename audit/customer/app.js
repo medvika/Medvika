@@ -354,9 +354,20 @@ async function loadCustomerRecentCounts(){
  renderDashboardInsights();
  $("customerRecentCounts").innerHTML=rows.length?rows.map(r=>{
    const variance=(r.system_qty===null||r.system_qty===undefined)?null:Number((Number(r.physical_qty)-Number(r.system_qty)).toFixed(9));
-   return `<div class="count-control-row"><div><strong>${esc(r.item_name||"Item")}</strong><small> • ${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.counted_at||"")}</small><div class="qty-line">Physical ${esc(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"))} · System ${esc(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"))}${variance===null?"":` · Variance ${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size))}`}</div></div><button class="btn danger-soft count-delete" type="button" data-count-id="${r.id}">Delete Count</button></div>`;
+   return `<div class="count-control-row"><div><strong>${esc(r.item_name||"Item")}</strong><small> • ${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.counted_at||"")}</small><div class="qty-line">Physical ${esc(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"))} · System ${esc(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"))}${variance===null?"":` · Variance ${esc(varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size))}`}</div></div><div class="actions"><button class="btn secondary count-edit" type="button" data-count-id="${r.id}">Edit / Recount</button><button class="btn danger-soft count-delete" type="button" data-count-id="${r.id}">Delete Count</button></div></div>`;
  }).join(""):'<p class="muted">No physical counts for this audit.</p>';
  $("customerRecentCounts").querySelectorAll(".count-delete").forEach(b=>b.onclick=()=>deleteCustomerCount(b.dataset.countId));
+ $("customerRecentCounts").querySelectorAll(".count-edit").forEach(b=>b.onclick=()=>editCustomerCount(rows.find(r=>String(r.id)===String(b.dataset.countId))));
+}
+async function editCustomerCount(r){
+ if(!r||!currentAudit?.audit_id)return;
+ const ps=Math.max(1,Number(r.pack_size||1)),units=Math.round(Number(r.physical_qty||0)*ps);
+ const packs=prompt(`Recount ${r.item_name}\nPack size: ${ps}\nEnter full packs:`,String(Math.floor(units/ps)));if(packs===null)return;
+ const loose=prompt(`Enter loose units (0 to ${ps-1}):`,String(units%ps));if(loose===null)return;
+ const reason=prompt("Enter recount/correction reason:","Quantity corrected after recount");if(reason===null)return;
+ const {error}=await sb.rpc("medvika_update_physical_count",{p_audit_id:currentAudit.audit_id,p_count_id:Number(r.id),p_full_packs:Number(packs),p_loose_units:Number(loose),p_reason:reason});
+ if(error){msg(error.message);return;}msg("Physical count updated after recount.");
+ await Promise.all([loadCustomerRecentCounts(),loadSummary(),loadRecon()]);
 }
 async function deleteCustomerCount(id){
  if(!currentAudit?.audit_id||!confirm("Delete this physical count? Current Stock and allocations remain unchanged.")) return;
