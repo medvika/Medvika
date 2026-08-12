@@ -512,8 +512,11 @@ async function loadRecentCounts(){
   $("mobileCountList").innerHTML=rows.length?rows.map(r=>{
     const physicalDisplay=pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack");
     const varianceDisplay=(r.system_qty===null||r.system_qty===undefined)?null:varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size);
-    return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(physicalDisplay)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${varianceDisplay===null?"":` • Var: ${esc(varianceDisplay)}`}</p></div>`;
+    return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(physicalDisplay)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${varianceDisplay===null?"":` • Var: ${esc(varianceDisplay)}`}</p><div class="actions"><button type="button" class="btn secondary mobile-admin-edit-count" data-id="${r.id}">Edit / Recount</button></div></div>`;
   }).join(""):'<div class="empty">No count entries yet.</div>';
+  $("mobileCountList").querySelectorAll(".mobile-admin-edit-count").forEach(btn=>{
+    btn.addEventListener("click",()=>editAdminCount(rows.find(r=>String(r.id)===String(btn.dataset.id))));
+  });
 }
 
 async function editAdminCount(r){
