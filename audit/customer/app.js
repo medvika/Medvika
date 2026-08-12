@@ -265,7 +265,25 @@ function renderReconPage(){
 async function loadRecon(){
  const {data,error}=await sb.rpc("medvika_customer_reconciliation",{p_customer_id:customerId,p_audit_id:currentAudit.audit_id});
  if(error){msg(error.message);return;}
- reconRows=data||[];reconPage=1;renderReconPage();renderCustomerReport();renderDashboardInsights();
+ const rows=data||[];
+ // The customer reconciliation RPC returns normalized quantities but currently
+ // omits pack metadata. Enrich each line from the customer's authorized stock
+ // register so quantities can be shown as packs + loose units, as in Admin.
+ let stock=currentStockRows||[];
+ if(!stock.length){
+   try{stock=await fetchCustomerCurrentStock();}catch(e){console.warn("Unable to enrich reconciliation pack metadata",e);}
+ }
+ const key=(code,name,batch)=>`${String(code||"").trim().toLowerCase()}|${String(name||"").trim().toLowerCase()}|${String(batch||"").trim().toLowerCase()}`;
+ const byExact=new Map(stock.map(s=>[key(s.item_code,s.item_name,s.batch_no),s]));
+ const byCodeBatch=new Map(stock.filter(s=>s.item_code).map(s=>[`${String(s.item_code).trim().toLowerCase()}|${String(s.batch_no||"").trim().toLowerCase()}`,s]));
+ const byNameBatch=new Map(stock.map(s=>[`${String(s.item_name||"").trim().toLowerCase()}|${String(s.batch_no||"").trim().toLowerCase()}`,s]));
+ reconRows=rows.map(r=>{
+   const s=byExact.get(key(r.item_code,r.item_name,r.batch_no))
+     ||byCodeBatch.get(`${String(r.item_code||"").trim().toLowerCase()}|${String(r.batch_no||"").trim().toLowerCase()}`)
+     ||byNameBatch.get(`${String(r.item_name||"").trim().toLowerCase()}|${String(r.batch_no||"").trim().toLowerCase()}`);
+   return {...r,pack_size:r.pack_size??s?.pack_size??null,pack_uom:r.pack_uom||s?.pack_uom||"Pack"};
+ });
+ reconPage=1;renderReconPage();renderCustomerReport();renderDashboardInsights();
 }
 
 function cleanDisplayQty(v){
