@@ -2299,11 +2299,18 @@ function zoneCompletionRows(data){
       percent=Math.min(100,(done/allocatedIds.size)*100);
       basis=`${done}/${allocatedIds.size} allocated items`;
     }else{
-      const status=String(z.status||"").toLowerCase();
-      if(status==="completed"||status==="closed") percent=100;
-      else if(status==="in_progress"||status==="counting") percent=50;
-      else percent=0;
-      basis="status based";
+      // Physical-file imports may be assigned to a zone without creating stock
+      // allocations. Counted lines are authoritative evidence of completion.
+      if(countedIds.size>0){
+        percent=100;
+        basis=`physical count imported (${countedIds.size} items)`;
+      }else{
+        const status=String(z.status||"").toLowerCase();
+        if(status==="completed"||status==="closed") percent=100;
+        else if(status==="in_progress"||status==="counting") percent=50;
+        else percent=0;
+        basis="status based";
+      }
     }
     return {...z,percent,basis};
   });
@@ -2559,7 +2566,9 @@ async function loadFinalReport(){
     };
 
     $("reportProjectMeta").textContent=`${client} • ${project.project_code||""} • ${project.location||""} • ${project.audit_date||""}`;
-    $("reportProjectStatus").textContent=(project.status||"planning").replaceAll("_"," ");
+    $("reportProjectStatus").textContent=recon.length>0
+      ? (recon.length>=systemStock.length?"Reconciliation completed":"Counting in progress")
+      : (project.status||"planning").replaceAll("_"," ");
 
     $("reportReconSummary").innerHTML=[
       reportStat("System Lines",systemStock.length,"","item + batch"),
@@ -2793,13 +2802,11 @@ async function exportFinalReportPdf(){
     }
     doc.setTextColor(...navy);
     doc.setFont("helvetica","bold");
-    doc.setFontSize(first?16:10);
-    doc.text(first?"STOCK AUDIT - FINAL REPORT":"MEDVIKA HEALTHCARE SOLUTIONS",first?margin+49:margin,first?16:12);
-    if(first){
-      doc.setFontSize(8);
-      doc.setTextColor(...green);
-      doc.text("Independent verification | Inventory control | Actionable reporting",margin+49,21);
-    }
+    doc.setFontSize(first?16:12);
+    doc.text("STOCK AUDIT - FINAL REPORT",margin+49,16);
+    doc.setFontSize(8);
+    doc.setTextColor(...green);
+    doc.text(first?"Independent verification | Inventory control | Actionable reporting":"Continuation | Medvika Healthcare Solutions",margin+49,21);
     doc.setDrawColor(215,225,231);
     doc.line(margin,27,pageW-margin,27);
     y=33;
@@ -2819,12 +2826,15 @@ async function exportFinalReportPdf(){
   await addHeader(true);
 
   doc.setFontSize(9); doc.setTextColor(...dark); doc.setFont("helvetica","normal");
+  const reportStatus=(finalReportData.recon||[]).length>0
+    ? ((finalReportData.recon||[]).length>=(finalReportData.systemStock||[]).length?"Reconciliation completed":"Counting in progress")
+    : String(finalReportData.project.status||"Planning").replaceAll("_"," ");
   const meta=[
     ["Client",finalReportData.client],
     ["Project",finalReportData.project.project_code||""],
     ["Audit Date",finalReportData.project.audit_date||""],
     ["Location",finalReportData.project.location||""],
-    ["Audit Status",(finalReportData.project.status||"").replaceAll("_"," ")]
+    ["Audit Status",reportStatus]
   ];
   doc.autoTable({
     startY:y,head:[["Engagement","Details"]],body:meta,
@@ -2944,13 +2954,14 @@ async function exportFinalReportPdf(){
 
   if(y>225){doc.addPage();await addHeader();}
   doc.setTextColor(...navy);doc.setFontSize(11);doc.setFont("helvetica","bold");
-  doc.text("Zone Completion",margin,y); y+=3;
+  doc.text("Zone Completion / Counting Method",margin,y); y+=3;
+  const zoneReportRows=zoneCompletionRows(finalReportData);
   doc.autoTable({
     startY:y,
     head:[["Zone","Category","Status","Supervisor"]],
-    body:finalReportData.zones.map(z=>[
+    body:zoneReportRows.map(z=>[
       safePdfText(`${z.zone_code} - ${z.zone_name}`),safePdfText(z.category||"-"),
-      safePdfText(z.status),safePdfText(z.assigned_supervisor||"-")
+      safePdfText(Number(z.percent||0)>=100&&String(z.basis||"").includes("physical count imported")?"Physical count imported / reconciled":(z.status||"Pending")),safePdfText(z.assigned_supervisor||"-")
     ]),
     theme:"grid",styles:{fontSize:7.5,cellPadding:1.8},
     headStyles:{fillColor:navy,textColor:[255,255,255]}
