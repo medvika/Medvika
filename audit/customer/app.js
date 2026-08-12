@@ -179,7 +179,7 @@ function renderDashboardInsights(){
  const health=rows.length?dashboardPct((progress*0.55)+(accuracy*0.45)):progress;
  const net=rows.reduce((sum,x)=>sum+(Number(x.variance_value)||0),0);
  $("auditHealthValue").textContent=`${health.toFixed(0)}%`; $("accuracyValue").textContent=`${accuracy.toFixed(0)}%`; $("completionValue").textContent=`${progress.toFixed(0)}%`;
- $("auditHealthLabel").textContent=health>=90?"Excellent":health>=70?"Healthy":health>0?"In progress":"Awaiting count";
+ $("auditHealthLabel").textContent=progress>=100&&rows.length?"Audit completed":health>=90?"Excellent":health>=70?"Healthy":health>0?"In progress":"Awaiting count";
  $("accuracyLabel").textContent=rows.length?(accuracy>=95?"Strong match rate":accuracy>=80?"Review variances":"Variance review needed"):"No reconciled lines";
  $("completionLabel").textContent=progress>=100?"Counting complete":progress>0?"Counting in progress":"Not started";
  setDashboardRing("auditHealthRing",health,"#0f766e");setDashboardRing("accuracyRing",accuracy,"#2563eb");setDashboardRing("completionRing",progress,"#f59e0b");
