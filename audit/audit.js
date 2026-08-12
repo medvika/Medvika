@@ -499,11 +499,14 @@ async function loadRecentCounts(){
     const physicalDisplay=pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack");
     const systemDisplay=(r.system_qty===null||r.system_qty===undefined)?"—":pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack");
     const varianceDisplay=(r.system_qty===null||r.system_qty===undefined)?"—":varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size);
-    return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(physicalDisplay)}</td><td>${esc(systemDisplay)}</td><td class="${cls}">${esc(varianceDisplay)}</td><td>${esc(r.count_status)}</td><td><button type="button" class="btn secondary admin-delete-count" data-id="${r.id}" data-item="${esc(r.item_name)}" data-batch="${esc(r.batch_no||"")}">Delete</button></td></tr>`;
+    return `<tr><td>${fmtDate(r.counted_at)}</td><td>${esc(r.item_name)}</td><td>${esc(r.batch_no||"—")}</td><td>${esc(physicalDisplay)}</td><td>${esc(systemDisplay)}</td><td class="${cls}">${esc(varianceDisplay)}</td><td>${esc(r.count_status)}</td><td><button type="button" class="btn secondary admin-edit-count" data-id="${r.id}">Edit / Recount</button> <button type="button" class="btn secondary admin-delete-count" data-id="${r.id}" data-item="${esc(r.item_name)}" data-batch="${esc(r.batch_no||"")}">Delete</button></td></tr>`;
   }).join(""):'<tr><td colspan="8" class="empty">No count entries yet.</td></tr>';
 
   $("recentCountBody").querySelectorAll(".admin-delete-count").forEach(btn=>{
     btn.addEventListener("click",()=>deleteAdminCount(Number(btn.dataset.id),btn.dataset.item||"",btn.dataset.batch||""));
+  });
+  $("recentCountBody").querySelectorAll(".admin-edit-count").forEach(btn=>{
+    btn.addEventListener("click",()=>editAdminCount(rows.find(r=>String(r.id)===String(btn.dataset.id))));
   });
 
   $("mobileCountList").innerHTML=rows.length?rows.map(r=>{
@@ -511,6 +514,18 @@ async function loadRecentCounts(){
     const varianceDisplay=(r.system_qty===null||r.system_qty===undefined)?null:varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size);
     return `<div class="count-entry"><div class="count-entry-head"><h4>${esc(r.item_name)}</h4><span class="qty">${esc(physicalDisplay)}</span></div><p>${esc(r.item_code||"No code")} • Batch ${esc(r.batch_no||"—")} • ${esc(r.condition.replaceAll("_"," "))}${varianceDisplay===null?"":` • Var: ${esc(varianceDisplay)}`}</p></div>`;
   }).join(""):'<div class="empty">No count entries yet.</div>';
+}
+
+async function editAdminCount(r){
+  if(!r||!currentAuditId)return;
+  const ps=Math.max(1,Number(r.pack_size||1)),units=Math.round(Number(r.physical_qty||0)*ps);
+  const packs=prompt(`Recount ${r.item_name}\nPack size: ${ps}\nEnter full packs:`,String(Math.floor(units/ps)));if(packs===null)return;
+  const loose=prompt(`Enter loose units (0 to ${ps-1}):`,String(units%ps));if(loose===null)return;
+  const reason=prompt("Enter recount/correction reason:","Quantity corrected after recount");if(reason===null)return;
+  const {error}=await sb.rpc("medvika_update_physical_count",{p_audit_id:currentAuditId,p_count_id:Number(r.id),p_full_packs:Number(packs),p_loose_units:Number(loose),p_reason:reason});
+  if(error){toast(error.message,"error");return;}
+  toast("Physical count updated after recount.","success");
+  await Promise.all([loadRecentCounts(),loadDashboard(),loadReconciliation()]);
 }
 
 async function deleteAdminCount(countId,itemName="",batchNo=""){
