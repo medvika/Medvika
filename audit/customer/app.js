@@ -442,8 +442,8 @@ function renderCustomerReport(){
 }
 function exportCustomerReport(){
  if(!currentAudit)return;
- const head=["Finding","Item","Batch","System Qty","Physical Qty","Variance","Purchase Rate Ex-GST","Variance Value","Condition"];
- const data=[head,...(reconRows||[]).map(r=>[r.finding,r.item_name,r.batch_no,r.system_qty,r.physical_qty,crN(r.physical_qty)-crN(r.system_qty),r.purchase_rate,r.variance_value,r.condition])];
+ const head=["Finding","Item","Batch","System Qty (Practical)","Physical Qty (Practical)","Variance (Smallest Units)","System Qty (Pack Decimal)","Physical Qty (Pack Decimal)","Purchase Rate Ex-GST","Variance Value","Condition"];
+ const data=[head,...(reconRows||[]).map(r=>[r.finding,r.item_name,r.batch_no,pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack"),pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack"),varianceUnitDisplay(r.physical_qty,r.system_qty,r.pack_size),r.system_qty,r.physical_qty,r.purchase_rate,r.variance_value,r.condition])];
  const csv=data.map(row=>row.map(crCsv).join(",")).join("\n");
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`Medvika_Final_Report_${currentAudit.project_code||"Audit"}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
