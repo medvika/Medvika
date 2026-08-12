@@ -99,6 +99,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   authMsg("Login system loaded.");
   bindCustomerNavigation();
   $("loginBtn").addEventListener("click",doLogin);
+  $("createLoginBtn").addEventListener("click",doSignup);
   $("forgotBtn").addEventListener("click",doForgot);
   $("savePasswordBtn").addEventListener("click",savePassword);
   $("cancelRecoveryBtn").addEventListener("click",async()=>{sessionStorage.removeItem("medvika_password_recovery");history.replaceState(null,"",location.pathname);showAuth();});
