@@ -499,16 +499,20 @@ async function generateCustomerReportPdf(){
  const logo=await customerLogoDataUrl();
  const header=async(first=false)=>{
   if(logo){try{doc.addImage(logo,"PNG",margin,9,43,13);}catch(e){}}
-  doc.setTextColor(...navy);doc.setFont("helvetica","bold");doc.setFontSize(first?16:10);
-  doc.text(first?"STOCK AUDIT - FINAL REPORT":"MEDVIKA HEALTHCARE SOLUTIONS",first?margin+49:margin,first?16:12);
-  if(first){doc.setFontSize(8);doc.setTextColor(...green);doc.text("Independent verification | Inventory control | Actionable reporting",margin+49,21);}
+  doc.setTextColor(...navy);doc.setFont("helvetica","bold");doc.setFontSize(first?16:12);
+  doc.text("STOCK AUDIT - FINAL REPORT",margin+49,16);
+  doc.setFontSize(8);doc.setTextColor(...green);
+  doc.text(first?"Independent verification | Inventory control | Actionable reporting":"Continuation | Medvika Healthcare Solutions",margin+49,21);
   doc.setDrawColor(215,225,231);doc.line(margin,27,pageW-margin,27);y=33;
  };
  const addTitle=(title)=>{doc.setTextColor(...navy);doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(title,margin,y);y+=3;};
  const ensure=(limit=235)=>{if(y>limit){doc.addPage();y=33;return true;}return false;};
  await header(true);
+ const reportStatus=(reconRows||[]).length>0
+   ? ((reconRows||[]).length>=(currentStockRows||[]).length?"Reconciliation completed":"Counting in progress")
+   : String(currentAudit.status||"Planning").replaceAll("_"," ");
  doc.autoTable({startY:y,head:[["Engagement","Details"]],body:[
-  ["Project",currentAudit.project_code||""],["Audit",currentAudit.project_name||""],["Audit Date",currentAudit.audit_date||""],["Location",currentAudit.location||""],["Status",String(currentAudit.status||"").replaceAll("_"," ")]
+  ["Project",currentAudit.project_code||""],["Audit",currentAudit.project_name||""],["Audit Date",currentAudit.audit_date||""],["Location",currentAudit.location||""],["Status",reportStatus]
  ],theme:"grid",styles:{fontSize:8,cellPadding:2.2},headStyles:{fillColor:navy,textColor:[255,255,255]},columnStyles:{0:{fontStyle:"bold",cellWidth:35}}});
  y=doc.lastAutoTable.finalY+7;
  const rows=reconRows||[];
@@ -546,7 +550,7 @@ async function generateCustomerReportPdf(){
  doc.autoTable({startY:y,head:[["Item","Batch","Expiry","Physical Qty","Condition"]],body:findings.map(r=>[crSafePdf(r.item_name||""),crSafePdf(r.batch_no||"-"),r.expiry_date||"-",crSafePdf(pharmacyQtyDisplay(r.physical_qty,r.pack_size,r.pack_uom||"Pack")),crSafePdf(r.condition||"")]),theme:"grid",styles:{fontSize:7,cellPadding:1.6},headStyles:{fillColor:green,textColor:[255,255,255]},margin:{left:margin,right:margin,top:31,bottom:15}});y=doc.lastAutoTable.finalY+7;
  if(ensure(220)){await header(false);} addTitle("Current Stock Expiry Exposure");
  doc.autoTable({startY:y,head:[["Item","Batch","Expiry","System Qty","Risk"]],body:[...expiredStock,...nearStock].slice(0,250).map(r=>[crSafePdf(r.item_name||""),crSafePdf(r.batch_no||"-"),r.expiry_date||"-",crSafePdf(pharmacyQtyDisplay(r.system_qty,r.pack_size,r.pack_uom||"Pack")),crExpiryState(r.expiry_date)==="expired"?"Expired":"Near Expiry"]),theme:"grid",styles:{fontSize:7,cellPadding:1.5},headStyles:{fillColor:navy,textColor:[255,255,255]},margin:{left:margin,right:margin,top:31,bottom:15}});y=doc.lastAutoTable.finalY+7;
- if(customerZones.length){if(ensure(220)){await header(false);} addTitle("Zone Completion / Setup");doc.autoTable({startY:y,head:[["Zone","Category","Status"]],body:customerZones.map(z=>[crSafePdf(`${z.zone_code||""} - ${z.zone_name||""}`),crSafePdf(z.category||"-"),crSafePdf(z.status||"-")]),theme:"grid",styles:{fontSize:7.5,cellPadding:1.8},headStyles:{fillColor:navy,textColor:[255,255,255]}});y=doc.lastAutoTable.finalY+7;}
+ if(customerZones.length){if(ensure(220)){await header(false);} addTitle("Zone Completion / Counting Method");const importedCountComplete=Number(dashboardSummary?.total_count_lines||0)>0&&(reconRows||[]).length>0;doc.autoTable({startY:y,head:[["Zone","Category","Status"]],body:customerZones.map(z=>[crSafePdf(`${z.zone_code||""} - ${z.zone_name||""}`),crSafePdf(z.category||"-"),crSafePdf(importedCountComplete?"Physical count imported / reconciled":(z.status||"Pending"))]),theme:"grid",styles:{fontSize:7.5,cellPadding:1.8},headStyles:{fillColor:navy,textColor:[255,255,255]}});y=doc.lastAutoTable.finalY+7;}
  if(ensure(225)){await header(false);} addTitle("Management Notes");
  doc.setTextColor(...dark);doc.setFont("helvetica","normal");doc.setFontSize(8);
  const notes=doc.splitTextToSize("This report is generated from the selected Medvika customer audit workspace. Quantities use the Smart Quantity normalization selected during import. Financial values use purchase rate excluding GST where available. Detailed item-and-batch reconciliation remains available in the CSV export.",180);doc.text(notes,margin,y);y+=notes.length*4+8;
