@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pharmacy Inventory Turnover Calculator | Medvika</title>
+
+    <meta
+        name="description"
+        content="Calculate pharmacy inventory turnover ratio, average stock value, stock holding period and inventory efficiency using monthly or annual figures."
+    >
+
+    <link
+        rel="canonical"
+        href="https://medvika.co.in/tools/pharmacy-inventory-turnover-calculator.html"
+    >
+
+    <link rel="icon" href="../logo.png">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #143d59;
+            --secondary: #16a085;
+            --secondary-dark: #11806c;
+            --background: #f5f9fb;
+            --white: #ffffff;
+            --text: #253746;
+            --muted: #657786;
+            --border: #dce6ec;
+            --warning: #b54708;
+            --danger: #b42318;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .site-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            width: min(1120px, 92%);
+            min-height: 76px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .logo img {
+            width: 150px;
+            height: auto;
+            display: block;
+        }
+
+        .home-link {
+            padding: 11px 18px;
+            border: 1px solid var(--secondary);
+            border-radius: 9px;
+            color: var(--secondary-dark);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .hero {
+            padding: 72px 20px 46px;
+            text-align: center;
+            color: var(--white);
+            background: linear-gradient(
+                135deg,
+                rgba(20, 61, 89, 0.98),
+                rgba(22, 160, 133, 0.92)
+            );
+        }
+
+        .hero-content {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            font-size: 0.84rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-bottom: 18px;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            line-height: 1.15;
+        }
+
+        .hero p {
+            max-width: 720px;
+            margin: auto;
+            font-size: 1.05rem;
+            opacity: 0.95;
+        }
+
+        .calculator-section {
+            padding: 55px 20px 80px;
+        }
+
+        .calculator-container {
+            width: min(1120px, 100%);
+            margin: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+            gap: 30px;
+            align-items: start;
+        }
+
+        .calculator-card,
+        .results-card,
+        .info-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 12px 34px rgba(20, 61, 89, 0.08);
+        }
+
+        .calculator-card {
+            padding: 32px;
+        }
+
+        .calculator-card h2,
+        .results-card h2 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .intro-text {
+            color: var(--muted);
+            margin-bottom: 25px;
+        }
+
+        .period-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 26px;
+            padding: 6px;
+            border-radius: 12px;
+            background: #eef4f6;
+        }
+
+        .period-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .period-option label {
+            display: block;
+            padding: 11px;
+            border-radius: 9px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .period-option input:checked + label {
+            background: var(--secondary);
+            color: var(--white);
+            box-shadow: 0 5px 14px rgba(22, 160, 133, 0.2);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .field-help {
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .currency-symbol,
+        .days-symbol {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .currency-symbol {
+            left: 15px;
+        }
+
+        .days-symbol {
+            right: 15px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            min-height: 50px;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .currency-input {
+            padding-left: 35px !important;
+        }
+
+        .days-input {
+            padding-right: 55px !important;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(22, 160, 133, 0.12);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 26px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .calculate-btn {
+            flex: 1;
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary-dark);
+        }
+
+        .reset-btn {
+            background: #eef4f6;
+            color: var(--primary);
+        }
+
+        .results-column {
+            display: grid;
+            gap: 24px;
+        }
+
+        .results-card {
+            overflow: hidden;
+        }
+
+        .results-heading {
+            padding: 27px 28px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-grid {
+            padding: 24px 28px 30px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .result-box {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: #f7fafb;
+        }
+
+        .result-box.highlight {
+            grid-column: 1 / -1;
+            background: rgba(22, 160, 133, 0.08);
+            border-color: rgba(22, 160, 133, 0.3);
+        }
+
+        .result-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .result-value {
+            display: block;
+            color: var(--primary);
+            font-size: 1.35rem;
+            line-height: 1.25;
+        }
+
+        .result-box.highlight .result-value {
+            color: var(--secondary-dark);
+            font-size: 1.7rem;
+        }
+
+        .result-note {
+            padding: 0 28px 28px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .status-good {
+            color: var(--secondary-dark) !important;
+        }
+
+        .status-warning {
+            color: var(--warning) !important;
+        }
+
+        .status-danger {
+            color: var(--danger) !important;
+        }
+
+        .info-card {
+            padding: 27px 28px;
+        }
+
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .info-card ul {
+            padding-left: 20px;
+            color: var(--muted);
+        }
+
+        .info-card li + li {
+            margin-top: 8px;
+        }
+
+        .consultation-box {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 13px;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .consultation-box h3 {
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .consultation-box p {
+            margin-bottom: 15px;
+            opacity: 0.92;
+        }
+
+        .whatsapp-btn {
+            display: inline-flex;
+            padding: 11px 17px;
+            border-radius: 9px;
+            background: var(--secondary);
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .disclaimer {
+            width: min(900px, 100%);
+            margin: 34px auto 0;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.88rem;
+        }
+
+        .site-footer {
+            padding: 28px 20px;
+            background: var(--primary);
+            color: rgba(255, 255, 255, 0.88);
+            text-align: center;
+        }
+
+        .site-footer a {
+            color: var(--white);
+        }
+
+        @media (max-width: 860px) {
+            .calculator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header-container {
+                min-height: 68px;
+            }
+
+            .logo img {
+                width: 125px;
+            }
+
+            .home-link {
+                padding: 9px 12px;
+                font-size: 0.9rem;
+            }
+
+            .hero {
+                padding: 55px 18px 38px;
+            }
+
+            .calculator-section {
+                padding: 35px 15px 60px;
+            }
+
+            .calculator-card {
+                padding: 24px 18px;
+            }
+
+            .form-grid,
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .result-box.highlight {
+                grid-column: auto;
+            }
+
+            .results-heading,
+            .results-grid,
+            .info-card {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+        }
+
+        /* Optional detailed-report lead capture */
+        .report-offer {
+            margin-top: 22px;
+            padding: 20px;
+            border: 1px solid rgba(22, 160, 133, 0.26);
+            border-radius: 13px;
+            background: rgba(22, 160, 133, 0.07);
+        }
+
+        .report-offer h3 {
+            color: var(--primary);
+            margin-bottom: 7px;
+        }
+
+        .report-offer p {
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 9px;
+            padding: 12px 17px;
+            background: var(--secondary);
+            color: var(--white);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .lead-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(13, 36, 52, 0.68);
+        }
+
+        .lead-modal.open {
+            display: flex;
+        }
+
+        .lead-dialog {
+            width: min(620px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            border-radius: 18px;
+            background: var(--white);
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.22);
+        }
+
+        .lead-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 24px 26px 17px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .lead-dialog-header h2 {
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .lead-dialog-header p {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .lead-close {
+            border: 0;
+            background: #eef4f6;
+            color: var(--primary);
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 1.3rem;
+        }
+
+        .lead-form {
+            padding: 24px 26px 28px;
+        }
+
+        .lead-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .lead-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .lead-form input[type="text"],
+        .lead-form input[type="tel"],
+        .lead-form input[type="email"] {
+            width: 100%;
+            min-height: 50px;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            font-size: 1rem;
+            color: var(--text);
+            background: var(--white);
+        }
+
+        .lead-form input:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(22, 160, 133, 0.12);
+        }
+
+        .lead-consent {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .lead-consent input {
+            width: auto;
+            min-height: auto;
+            margin-top: 4px;
+        }
+
+        .lead-submit {
+            width: 100%;
+            margin-top: 18px;
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .lead-status {
+            margin-top: 13px;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .lead-status.error {
+            color: var(--danger);
+        }
+
+        .detailed-report {
+            display: none;
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+        }
+
+        .detailed-report.visible {
+            display: block;
+        }
+
+        .detailed-report h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .detailed-report ul {
+            padding-left: 20px;
+            color: var(--muted);
+        }
+
+        .detailed-report li + li {
+            margin-top: 8px;
+        }
+
+        .report-print-btn {
+            margin-top: 16px;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .website-field {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+        }
+
+        @media (max-width: 600px) {
+            .lead-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lead-grid .full-width {
+                grid-column: auto;
+            }
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+
+            .detailed-report,
+            .detailed-report * {
+                visibility: visible !important;
+            }
+
+            .detailed-report {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none;
+                box-shadow: none;
+            }
+
+            .report-print-btn {
+                display: none !important;
+            }
+        }
+
+    </style>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Pharmacy Inventory Turnover Calculator",
+        "url": "https://medvika.co.in/tools/pharmacy-inventory-turnover-calculator.html",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Calculate pharmacy inventory turnover, average stock value and inventory holding period using monthly or annual figures.",
+        "provider": {
+            "@type": "Organization",
+            "name": "Medvika Healthcare Solutions",
+            "url": "https://medvika.co.in/"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="header-container">
+        <a href="../index.html" class="logo" aria-label="Medvika homepage">
+            <img src="../logo.png" alt="Medvika Healthcare Solutions">
+        </a>
+
+        <a href="../index.html" class="home-link">
+            Back to Home
+        </a>
+    </div>
+</header>
+
+<main>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span class="eyebrow">Free Pharmacy Business Tool</span>
+
+            <h1>Pharmacy Inventory Turnover Calculator</h1>
+
+            <p>
+                Measure how efficiently your pharmacy inventory is moving and
+                estimate the average number of days stock remains unsold.
+            </p>
+        </div>
+    </section>
+
+    <section class="calculator-section">
+        <div class="calculator-container">
+
+            <div class="calculator-card">
+                <h2>Enter Inventory Details</h2>
+
+                <p class="intro-text">
+                    Select whether your figures represent one month or a full year.
+                </p>
+
+                <form id="inventoryCalculator">
+
+                    <div class="period-selector">
+                        <div class="period-option">
+                            <input
+                                type="radio"
+                                id="monthlyPeriod"
+                                name="period"
+                                value="monthly"
+                                checked
+                            >
+                            <label for="monthlyPeriod">Monthly Figures</label>
+                        </div>
+
+                        <div class="period-option">
+                            <input
+                                type="radio"
+                                id="annualPeriod"
+                                name="period"
+                                value="annual"
+                            >
+                            <label for="annualPeriod">Annual Figures</label>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="openingInventory">
+                                Opening inventory value
+                            </label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="openingInventory"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="800000"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="closingInventory">
+                                Closing inventory value
+                            </label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="closingInventory"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="1000000"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="costOfGoods">
+                                <span id="costLabel">
+                                    Monthly cost of goods sold
+                                </span>
+                            </label>
+
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+
+                                <input
+                                    type="number"
+                                    id="costOfGoods"
+                                    class="currency-input"
+                                    min="0"
+                                    step="100"
+                                    placeholder="450000"
+                                    required
+                                >
+                            </div>
+
+                            <span class="field-help">
+                                Use the purchase cost of goods sold, not total sales.
+                            </span>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="targetDays">
+                                Target stock holding period
+                            </label>
+
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="targetDays"
+                                    class="days-input"
+                                    min="1"
+                                    max="365"
+                                    step="1"
+                                    value="60"
+                                >
+
+                                <span class="days-symbol">days</span>
+                            </div>
+
+                            <span class="field-help">
+                                Used to estimate the inventory value required for
+                                your preferred holding period.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="submit" class="calculate-btn">
+                            Calculate Inventory Turnover
+                        </button>
+
+                        <button type="reset" class="reset-btn">
+                            Reset
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="results-column">
+
+                <section class="results-card" aria-live="polite">
+
+                    <div class="results-heading">
+                        <h2>Estimated Results</h2>
+
+                        <p class="intro-text">
+                            Your inventory efficiency summary.
+                        </p>
+                    </div>
+
+                    <div class="results-grid">
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Average inventory value
+                            </span>
+
+                            <strong class="result-value" id="averageInventory">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Annualized cost of goods sold
+                            </span>
+
+                            <strong class="result-value" id="annualCogs">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box highlight">
+                            <span class="result-label">
+                                Inventory turnover ratio
+                            </span>
+
+                            <strong class="result-value" id="turnoverRatio">
+                                0 times per year
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Average stock holding period
+                            </span>
+
+                            <strong class="result-value" id="holdingDays">
+                                0 days
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Average monthly cost of goods
+                            </span>
+
+                            <strong class="result-value" id="monthlyCogs">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">
+                                Target inventory value
+                            </span>
+
+                            <strong class="result-value" id="targetInventory">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div class="result-box highlight">
+                            <span class="result-label">
+                                Inventory performance
+                            </span>
+
+                            <strong class="result-value" id="performanceStatus">
+                                Awaiting calculation
+                            </strong>
+                        </div>
+
+                    </div>
+
+                    <p class="result-note" id="resultMessage">
+                        Enter your inventory figures and select Calculate.
+                    </p>
+                </section>
+
+                <aside class="info-card">
+                    <h3>How the calculation works</h3>
+
+                    <ul>
+                        <li>
+                            Average inventory equals opening stock plus closing
+                            stock, divided by two.
+                        </li>
+
+                        <li>
+                            Inventory turnover equals annual cost of goods sold
+                            divided by average inventory.
+                        </li>
+
+                        <li>
+                            Holding period equals 365 divided by the inventory
+                            turnover ratio.
+                        </li>
+                    </ul>
+
+                    <div class="consultation-box">
+                        <h3>Need help reducing slow-moving stock?</h3>
+
+                        <p>
+                            Medvika can help review stock movement, expiry risk,
+                            purchasing patterns and inventory controls.
+                        </p>
+
+                        <a
+                            class="whatsapp-btn"
+                            href="https://wa.me/918979841035?text=Hello%20Medvika%2C%20I%20used%20the%20Inventory%20Turnover%20Calculator%20and%20would%20like%20an%20inventory%20assessment."
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            Request Inventory Assessment
+                        </a>
+                    </div>
+                </aside>
+
+                    <div class="report-offer" id="inventoryReportOffer" style="display:none;">
+                        <h3>Get Your Detailed Inventory Report</h3>
+                        <p>
+                            Your calculator results are already visible. Optionally generate
+                            an expanded interpretation with practical inventory-control priorities.
+                        </p>
+                        <button type="button" class="report-btn" id="detailedReportBtn">
+                            Get Detailed Report
+                        </button>
+                    </div>
+
+                    <div class="detailed-report" id="detailedReport">
+                        <h3>Medvika Pharmacy Inventory Report</h3>
+                        <p id="detailedReportIntro"></p>
+                        <ul id="detailedReportActions"></ul>
+                        <button type="button" class="report-print-btn" onclick="window.print()">
+                            Print / Save Report
+                        </button>
+                    </div>
+
+            </div>
+        </div>
+
+        <p class="disclaimer">
+            This calculator provides estimates for business planning purposes.
+            Results may be affected by expiry losses, stock returns, credit
+            purchases, seasonal demand, accounting methods and stock valuation
+            practices.
+        </p>
+    </section>
+
+</main>
+
+<footer class="site-footer">
+    <p>
+        © 2026 Medvika Healthcare Solutions ·
+        <a href="../pages/privacy-policy.html">Privacy Policy</a>
+    </p>
+</footer>
+
+<div class="lead-modal" id="toolLeadModal" aria-hidden="true">
+    <div class="lead-dialog" role="dialog" aria-modal="true" aria-labelledby="toolLeadTitle">
+        <div class="lead-dialog-header">
+            <div>
+                <h2 id="toolLeadTitle">Get Your Detailed Pharmacy Report</h2>
+                <p>
+                    Your calculator result remains free. Share your details only
+                    if you want the expanded report and Medvika follow-up.
+                </p>
+            </div>
+
+            <button type="button" class="lead-close" id="toolLeadClose" aria-label="Close">
+                ×
+            </button>
+        </div>
+
+        <form class="lead-form" id="toolLeadForm">
+            <div class="lead-grid">
+                <div class="form-group">
+                    <label for="leadFullName">Your name *</label>
+                    <input id="leadFullName" name="full_name" type="text" maxlength="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="leadPharmacyName">Pharmacy / business name</label>
+                    <input id="leadPharmacyName" name="pharmacy_name" type="text" maxlength="160">
+                </div>
+
+                <div class="form-group">
+                    <label for="leadCity">City *</label>
+                    <input id="leadCity" name="city" type="text" maxlength="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="leadPhone">WhatsApp / mobile *</label>
+                    <input id="leadPhone" name="phone" type="tel" maxlength="20" inputmode="tel" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="leadEmail">Email (optional)</label>
+                    <input id="leadEmail" name="email" type="email" maxlength="180">
+                </div>
+
+                <div class="website-field" aria-hidden="true">
+                    <label for="leadWebsite">Website</label>
+                    <input id="leadWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+                </div>
+            </div>
+
+            <label class="lead-consent">
+                <input id="leadConsent" type="checkbox" required>
+                <span>
+                    I agree that Medvika Healthcare Solutions may contact me about
+                    this assessment/report and related pharmacy consulting services.
+                </span>
+            </label>
+
+            <button type="submit" class="lead-submit" id="toolLeadSubmit">
+                Generate Detailed Report
+            </button>
+
+            <p class="lead-status" id="toolLeadStatus"></p>
+        </form>
+    </div>
+</div>
+
+<script>
+    const calculator = document.getElementById("inventoryCalculator");
+    let latestInventoryResult = null;
+    const periodInputs = document.querySelectorAll('input[name="period"]');
+    const costLabel = document.getElementById("costLabel");
+    const costInput = document.getElementById("costOfGoods");
+
+    const outputs = {
+        averageInventory: document.getElementById("averageInventory"),
+        annualCogs: document.getElementById("annualCogs"),
+        turnoverRatio: document.getElementById("turnoverRatio"),
+        holdingDays: document.getElementById("holdingDays"),
+        monthlyCogs: document.getElementById("monthlyCogs"),
+        targetInventory: document.getElementById("targetInventory"),
+        performanceStatus: document.getElementById("performanceStatus"),
+        resultMessage: document.getElementById("resultMessage")
+    };
+
+    function getNumber(id) {
+        const value = Number.parseFloat(
+            document.getElementById(id).value
+        );
+
+        return Number.isFinite(value) && value >= 0 ? value : 0;
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function getSelectedPeriod() {
+        return document.querySelector(
+            'input[name="period"]:checked'
+        ).value;
+    }
+
+    function updatePeriodText() {
+        const period = getSelectedPeriod();
+
+        if (period === "monthly") {
+            costLabel.textContent = "Monthly cost of goods sold";
+            costInput.placeholder = "450000";
+        } else {
+            costLabel.textContent = "Annual cost of goods sold";
+            costInput.placeholder = "5400000";
+        }
+    }
+
+    function clearStatusClasses() {
+        outputs.performanceStatus.classList.remove(
+            "status-good",
+            "status-warning",
+            "status-danger"
+        );
+    }
+
+    periodInputs.forEach(function (input) {
+        input.addEventListener("change", updatePeriodText);
+    });
+
+    calculator.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const openingInventory = getNumber("openingInventory");
+        const closingInventory = getNumber("closingInventory");
+        const enteredCogs = getNumber("costOfGoods");
+        const targetDays = getNumber("targetDays") || 60;
+        const period = getSelectedPeriod();
+
+        if (
+            openingInventory <= 0 ||
+            closingInventory <= 0 ||
+            enteredCogs <= 0
+        ) {
+            outputs.resultMessage.textContent =
+                "Please enter valid inventory and cost figures greater than zero.";
+
+            return;
+        }
+
+        const averageInventory =
+            (openingInventory + closingInventory) / 2;
+
+        const annualCogs =
+            period === "monthly"
+                ? enteredCogs * 12
+                : enteredCogs;
+
+        const monthlyCogs = annualCogs / 12;
+
+        const turnoverRatio =
+            annualCogs / averageInventory;
+
+        const holdingDays =
+            turnoverRatio > 0
+                ? 365 / turnoverRatio
+                : 0;
+
+        const dailyCogs = annualCogs / 365;
+
+        const targetInventory =
+            dailyCogs * targetDays;
+
+        latestInventoryResult = {
+            period: period,
+            opening_inventory: openingInventory,
+            closing_inventory: closingInventory,
+            average_inventory: averageInventory,
+            entered_cogs: enteredCogs,
+            annual_cogs: annualCogs,
+            monthly_cogs: monthlyCogs,
+            turnover_ratio: Number(turnoverRatio.toFixed(2)),
+            holding_days: Number(holdingDays.toFixed(0)),
+            target_days: targetDays,
+            target_inventory: targetInventory
+        };
+
+        document.getElementById("inventoryReportOffer").style.display = "block";
+
+        outputs.averageInventory.textContent =
+            formatCurrency(averageInventory);
+
+        outputs.annualCogs.textContent =
+            formatCurrency(annualCogs);
+
+        outputs.turnoverRatio.textContent =
+            `${turnoverRatio.toFixed(2)} times per year`;
+
+        outputs.holdingDays.textContent =
+            `${holdingDays.toFixed(0)} days`;
+
+        outputs.monthlyCogs.textContent =
+            formatCurrency(monthlyCogs);
+
+        outputs.targetInventory.textContent =
+            formatCurrency(targetInventory);
+
+        clearStatusClasses();
+
+        if (holdingDays <= targetDays) {
+            outputs.performanceStatus.textContent =
+                "Within selected target";
+
+            outputs.performanceStatus.classList.add("status-good");
+
+            outputs.resultMessage.textContent =
+                "Your estimated stock holding period is within the selected target. Continue monitoring expiry risk, stock-outs and category-level movement.";
+        } else if (holdingDays <= targetDays * 1.35) {
+            outputs.performanceStatus.textContent =
+                "Slightly above target";
+
+            outputs.performanceStatus.classList.add("status-warning");
+
+            outputs.resultMessage.textContent =
+                "Your estimated stock holding period is above the selected target. Review slow-moving products, purchasing frequency and stock levels.";
+        } else {
+            outputs.performanceStatus.textContent =
+                "High stock holding period";
+
+            outputs.performanceStatus.classList.add("status-danger");
+
+            outputs.resultMessage.textContent =
+                "Your estimated holding period is substantially above the selected target. Consider a detailed review of non-moving stock, expiry exposure and purchasing controls.";
+        }
+
+        latestInventoryResult.performance_status =
+            outputs.performanceStatus.textContent;
+    });
+
+    calculator.addEventListener("reset", function () {
+        window.setTimeout(function () {
+            outputs.averageInventory.textContent = "₹0";
+            outputs.annualCogs.textContent = "₹0";
+            outputs.turnoverRatio.textContent = "0 times per year";
+            outputs.holdingDays.textContent = "0 days";
+            outputs.monthlyCogs.textContent = "₹0";
+            outputs.targetInventory.textContent = "₹0";
+            outputs.performanceStatus.textContent =
+                "Awaiting calculation";
+
+            outputs.resultMessage.textContent =
+                "Enter your inventory figures and select Calculate.";
+
+            clearStatusClasses();
+            updatePeriodText();
+            latestInventoryResult = null;
+            document.getElementById("inventoryReportOffer").style.display = "none";
+            document.getElementById("detailedReport").classList.remove("visible");
+        }, 0);
+    });
+
+
+    // ===== MEDVIKA TOOL LEAD CONFIGURATION =====
+    // Paste the SAME two public values used in the Health Score and Profit Calculator.
+    // Supabase > Project Settings > API
+    // Use Project URL + anon/public key only. NEVER use service_role.
+    const TOOL_SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL";
+    const TOOL_SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY";
+
+    function toolLeadConfigReady() {
+        return !TOOL_SUPABASE_URL.includes("PASTE_") &&
+               !TOOL_SUPABASE_ANON_KEY.includes("PASTE_");
+    }
+
+    async function insertToolLead(payload) {
+        if (!toolLeadConfigReady()) {
+            throw new Error(
+                "Lead capture is not configured yet. Add the Supabase Project URL and anon key."
+            );
+        }
+
+        const response = await fetch(
+            `${TOOL_SUPABASE_URL}/rest/v1/tool_leads`,
+            {
+                method: "POST",
+                headers: {
+                    "apikey": TOOL_SUPABASE_ANON_KEY,
+                    "Authorization": `Bearer ${TOOL_SUPABASE_ANON_KEY}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to save your request. Please try again.");
+        }
+    }
+
+    function setupToolLeadCapture() {
+        const modal = document.getElementById("toolLeadModal");
+        const closeBtn = document.getElementById("toolLeadClose");
+        const form = document.getElementById("toolLeadForm");
+        const status = document.getElementById("toolLeadStatus");
+        const submit = document.getElementById("toolLeadSubmit");
+        const offerBtn = document.getElementById("detailedReportBtn");
+
+        if (!modal || !closeBtn || !form || !status || !submit || !offerBtn) {
+            console.error("Medvika lead capture UI could not be initialized.");
+            return;
+        }
+
+        function openModal() {
+            status.textContent = "";
+            status.className = "lead-status";
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+        }
+
+        offerBtn.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal) closeModal();
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && modal.classList.contains("open")) {
+                closeModal();
+            }
+        });
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            if (document.getElementById("leadWebsite").value.trim()) {
+                closeModal();
+                return;
+            }
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            if (!latestInventoryResult) {
+                status.textContent = "Please calculate your inventory result first.";
+                status.className = "lead-status error";
+                return;
+            }
+
+            submit.disabled = true;
+            submit.textContent = "Generating Report...";
+            status.textContent = "";
+            status.className = "lead-status";
+
+            const payload = {
+                tool_name: "pharmacy_inventory_turnover_calculator",
+                full_name: document.getElementById("leadFullName").value.trim(),
+                pharmacy_name:
+                    document.getElementById("leadPharmacyName").value.trim() || null,
+                city: document.getElementById("leadCity").value.trim(),
+                phone: document.getElementById("leadPhone").value.trim(),
+                email: document.getElementById("leadEmail").value.trim() || null,
+                result_summary: latestInventoryResult,
+                consent_to_contact:
+                    document.getElementById("leadConsent").checked,
+                source_url: window.location.href,
+                user_agent: navigator.userAgent.slice(0, 500)
+            };
+
+            try {
+                await insertToolLead(payload);
+
+                const r = latestInventoryResult;
+                const report = document.getElementById("detailedReport");
+                const intro = document.getElementById("detailedReportIntro");
+                const actions = document.getElementById("detailedReportActions");
+
+                intro.textContent =
+                    `${payload.full_name}, ${payload.pharmacy_name || "your pharmacy"} has an estimated inventory turnover of ${r.turnover_ratio.toFixed(2)} times per year with an average stock holding period of ${r.holding_days} days. Current status: ${r.performance_status}.`;
+
+                const suggestions = [];
+
+                if (r.holding_days > r.target_days * 1.35) {
+                    suggestions.push(
+                        "Your estimated stock holding period is materially above the selected target. Prioritise non-moving stock, expiry exposure and purchase-frequency review."
+                    );
+                } else if (r.holding_days > r.target_days) {
+                    suggestions.push(
+                        "Your stock holding period is moderately above target. Review slow-moving categories and reduce excess replenishment."
+                    );
+                } else {
+                    suggestions.push(
+                        "Your overall holding period is within the selected target. Continue monitoring category-level movement, stock-outs and expiry risk."
+                    );
+                }
+
+                if (r.average_inventory > r.target_inventory) {
+                    const excess = r.average_inventory - r.target_inventory;
+                    suggestions.push(
+                        `Average inventory is approximately ${formatCurrency(excess)} above the target inventory implied by the selected holding period. Validate this at category and SKU level before reducing stock.`
+                    );
+                } else {
+                    suggestions.push(
+                        "Average inventory is not above the calculator's target estimate. Check service levels and stock-outs before considering further stock reduction."
+                    );
+                }
+
+                suggestions.push(
+                    `Estimated target inventory for ${r.target_days} holding days is ${formatCurrency(r.target_inventory)}.`
+                );
+
+                suggestions.push(
+                    "Run ABC/FSN analysis and review top-value non-moving products before changing purchasing limits."
+                );
+
+                suggestions.push(
+                    "Track near-expiry inventory, purchase returns and supplier schemes separately because turnover ratio alone can hide trapped working capital."
+                );
+
+                suggestions.push(
+                    "Use this as a screening result; validate decisions against actual SKU movement, seasonal demand, essential-product availability and pharmacy service requirements."
+                );
+
+                actions.innerHTML = "";
+
+                suggestions.forEach(function (item) {
+                    const li = document.createElement("li");
+                    li.textContent = item;
+                    actions.appendChild(li);
+                });
+
+                closeModal();
+                form.reset();
+
+                report.classList.add("visible");
+                report.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            } catch (error) {
+                status.textContent = error.message;
+                status.className = "lead-status error";
+            } finally {
+                submit.disabled = false;
+                submit.textContent = "Generate Detailed Report";
+            }
+        });
+    }
+
+    setupToolLeadCapture();
+
+</script>
+
+</body>
+</html>
