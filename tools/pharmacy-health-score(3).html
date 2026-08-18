@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pharmacy Health Score India | Medvika Healthcare Solutions</title>
+
+    <meta
+        name="description"
+        content="Use Medvika's free Pharmacy Health Score to assess profitability, inventory, working capital, operations, compliance and people & systems."
+    >
+
+    <link
+        rel="canonical"
+        href="https://medvika.co.in/tools/pharmacy-health-score.html"
+    >
+
+    <meta property="og:title" content="Free Pharmacy Health Score | Medvika">
+    <meta
+        property="og:description"
+        content="Get an instant 0-100 pharmacy business health score with practical improvement priorities."
+    >
+    <meta
+        property="og:url"
+        content="https://medvika.co.in/tools/pharmacy-health-score.html"
+    >
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="../logo.png">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #143d59;
+            --secondary: #16a085;
+            --secondary-dark: #11806c;
+            --background: #f5f9fb;
+            --white: #ffffff;
+            --text: #253746;
+            --muted: #657786;
+            --border: #dce6ec;
+            --danger: #b42318;
+            --warning: #b26a00;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .site-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            width: min(1120px, 92%);
+            margin: auto;
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .logo img {
+            width: 150px;
+            height: auto;
+            display: block;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 18px;
+            border: 1px solid var(--secondary);
+            border-radius: 9px;
+            color: var(--secondary-dark);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .hero {
+            padding: 72px 20px 45px;
+            text-align: center;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(20, 61, 89, 0.98),
+                    rgba(22, 160, 133, 0.92)
+                );
+            color: var(--white);
+        }
+
+        .hero-content {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            line-height: 1.15;
+            margin-bottom: 18px;
+        }
+
+        .hero p {
+            max-width: 760px;
+            margin: auto;
+            font-size: 1.05rem;
+            opacity: 0.95;
+        }
+
+        .calculator-section {
+            padding: 55px 20px 80px;
+        }
+
+        .calculator-container {
+            width: min(1120px, 100%);
+            margin: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+            gap: 30px;
+            align-items: start;
+        }
+
+        .calculator-card,
+        .results-card,
+        .info-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 12px 34px rgba(20, 61, 89, 0.08);
+        }
+
+        .calculator-card {
+            padding: 32px;
+        }
+
+        .calculator-card h2,
+        .results-card h2 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .intro-text {
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .field-help {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .currency-symbol,
+        .percent-symbol {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .currency-symbol {
+            left: 15px;
+        }
+
+        .percent-symbol {
+            right: 15px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 50px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            color: var(--text);
+            background: var(--white);
+            outline: none;
+            transition: 0.2s ease;
+        }
+
+        .currency-input {
+            padding-left: 35px;
+        }
+
+        .percentage-input {
+            padding-right: 38px;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(22, 160, 133, 0.12);
+        }
+
+        .section-divider {
+            grid-column: 1 / -1;
+            border-top: 1px solid var(--border);
+            margin: 3px 0;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 26px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .calculate-btn {
+            flex: 1;
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary-dark);
+        }
+
+        .reset-btn {
+            background: #eef4f6;
+            color: var(--primary);
+        }
+
+        .results-column {
+            display: grid;
+            gap: 24px;
+        }
+
+        .results-card {
+            overflow: hidden;
+        }
+
+        .results-heading {
+            padding: 27px 28px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .score-summary {
+            padding: 24px 28px 0;
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .score-ring {
+            width: 126px;
+            height: 126px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: conic-gradient(var(--secondary) 0deg, #e8eff2 0deg);
+            position: relative;
+        }
+
+        .score-ring::after {
+            content: "";
+            position: absolute;
+            width: 94px;
+            height: 94px;
+            border-radius: 50%;
+            background: var(--white);
+        }
+
+        .score-number {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: var(--primary);
+            line-height: 1.1;
+        }
+
+        .score-number strong {
+            display: block;
+            font-size: 2rem;
+        }
+
+        .score-number span {
+            font-size: 0.72rem;
+            color: var(--muted);
+        }
+
+        .score-grade h3 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .score-grade p {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .results-grid {
+            padding: 24px 28px 30px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .result-box {
+            background: #f7fafb;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 18px;
+        }
+
+        .result-box.highlight {
+            background: rgba(22, 160, 133, 0.08);
+            border-color: rgba(22, 160, 133, 0.28);
+        }
+
+        .result-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .result-value {
+            display: block;
+            color: var(--primary);
+            font-size: 1.35rem;
+            line-height: 1.25;
+        }
+
+        .result-box.highlight .result-value {
+            color: var(--secondary-dark);
+        }
+
+        .priority-section {
+            padding: 0 28px 28px;
+        }
+
+        .priority-section h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .priority-section ol {
+            padding-left: 21px;
+            color: var(--muted);
+        }
+
+        .priority-section li + li {
+            margin-top: 8px;
+        }
+
+        .info-card {
+            padding: 27px 28px;
+        }
+
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .info-card ul {
+            padding-left: 20px;
+            color: var(--muted);
+        }
+
+        .info-card li + li {
+            margin-top: 8px;
+        }
+
+        .consultation-box {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 13px;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .consultation-box h3 {
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .consultation-box p {
+            opacity: 0.92;
+            margin-bottom: 15px;
+        }
+
+        .whatsapp-btn {
+            display: inline-flex;
+            padding: 11px 17px;
+            border-radius: 9px;
+            background: var(--secondary);
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .disclaimer {
+            width: min(900px, 100%);
+            margin: 34px auto 0;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.88rem;
+        }
+
+        .site-footer {
+            padding: 28px 20px;
+            background: var(--primary);
+            color: rgba(255, 255, 255, 0.88);
+            text-align: center;
+        }
+
+        .site-footer a {
+            color: var(--white);
+        }
+
+        @media (max-width: 860px) {
+            .calculator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header-container {
+                min-height: 68px;
+            }
+
+            .logo img {
+                width: 125px;
+            }
+
+            .home-link {
+                padding: 9px 12px;
+                font-size: 0.9rem;
+            }
+
+            .hero {
+                padding: 55px 18px 38px;
+            }
+
+            .calculator-section {
+                padding: 35px 15px 60px;
+            }
+
+            .calculator-card {
+                padding: 24px 18px;
+            }
+
+            .form-grid,
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-divider {
+                grid-column: auto;
+            }
+
+            .results-heading,
+            .results-grid,
+            .info-card,
+            .priority-section {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .score-summary {
+                padding-left: 20px;
+                padding-right: 20px;
+                grid-template-columns: 104px 1fr;
+            }
+
+            .score-ring {
+                width: 100px;
+                height: 100px;
+            }
+
+            .score-ring::after {
+                width: 74px;
+                height: 74px;
+            }
+
+            .score-number strong {
+                font-size: 1.55rem;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+        }
+
+        /* Optional detailed-report lead capture */
+        .report-offer {
+            margin-top: 22px;
+            padding: 20px;
+            border: 1px solid rgba(22, 160, 133, 0.26);
+            border-radius: 13px;
+            background: rgba(22, 160, 133, 0.07);
+        }
+
+        .report-offer h3 {
+            color: var(--primary);
+            margin-bottom: 7px;
+        }
+
+        .report-offer p {
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 9px;
+            padding: 12px 17px;
+            background: var(--secondary);
+            color: var(--white);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .lead-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(13, 36, 52, 0.68);
+        }
+
+        .lead-modal.open {
+            display: flex;
+        }
+
+        .lead-dialog {
+            width: min(620px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            border-radius: 18px;
+            background: var(--white);
+            box-shadow: 0 22px 70px rgba(0,0,0,.22);
+        }
+
+        .lead-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 24px 26px 17px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .lead-dialog-header h2 {
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .lead-dialog-header p {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .lead-close {
+            border: 0;
+            background: #eef4f6;
+            color: var(--primary);
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 1.3rem;
+        }
+
+        .lead-form {
+            padding: 24px 26px 28px;
+        }
+
+        .lead-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 16px;
+        }
+
+        .lead-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .lead-form input {
+            width: 100%;
+        }
+
+        .lead-consent {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: .88rem;
+        }
+
+        .lead-consent input {
+            width: auto;
+            min-height: auto;
+            margin-top: 4px;
+        }
+
+        .lead-submit {
+            width: 100%;
+            margin-top: 18px;
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .lead-status {
+            margin-top: 13px;
+            font-size: .9rem;
+            color: var(--muted);
+        }
+
+        .lead-status.error {
+            color: var(--danger);
+        }
+
+        .detailed-report {
+            display: none;
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+        }
+
+        .detailed-report.visible {
+            display: block;
+        }
+
+        .detailed-report h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .detailed-report ul {
+            padding-left: 20px;
+            color: var(--muted);
+        }
+
+        .detailed-report li + li {
+            margin-top: 8px;
+        }
+
+        .report-print-btn {
+            margin-top: 16px;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .website-field {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+        }
+
+        @media (max-width: 600px) {
+            .lead-grid {
+                grid-template-columns: 1fr;
+            }
+            .lead-grid .full-width {
+                grid-column: auto;
+            }
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            .detailed-report,
+            .detailed-report * {
+                visibility: visible !important;
+            }
+            .detailed-report {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none;
+                box-shadow: none;
+            }
+            .report-print-btn {
+                display: none !important;
+            }
+        }
+
+    </style>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Pharmacy Health Score",
+      "url": "https://medvika.co.in/tools/pharmacy-health-score.html",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "A free pharmacy health assessment covering profitability, inventory, working capital, operations, compliance and people & systems.",
+      "provider": {
+        "@type": "Organization",
+        "name": "Medvika Healthcare Solutions",
+        "url": "https://medvika.co.in/"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "INR"
+      }
+    }
+    
+
+</script>
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="header-container">
+        <a href="../index.html" class="logo" aria-label="Medvika homepage">
+            <img src="../logo.png" alt="Medvika Healthcare Solutions">
+        </a>
+
+        <a href="../index.html" class="home-link">
+            Back to Home
+        </a>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero-content">
+            <span class="eyebrow">Free Pharmacy Business Tool</span>
+
+            <h1>Pharmacy Health Score</h1>
+
+            <p>
+                Assess your pharmacy across profitability, inventory, working
+                capital, operations, compliance and people & systems and get
+                an instant 0–100 business health score.
+            </p>
+        </div>
+    </section>
+
+    <section class="calculator-section">
+        <div class="calculator-container">
+
+            <div class="calculator-card">
+                <h2>Enter Pharmacy Business Details</h2>
+
+                <p class="intro-text">
+                    Use approximate monthly figures and select the operating
+                    practices that best describe your pharmacy.
+                </p>
+
+                <form id="healthCalculator">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="monthlySales">Average monthly sales</label>
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="monthlySales" class="currency-input" min="0" step="1000" placeholder="600000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="grossMargin">Gross margin</label>
+                            <div class="input-wrap">
+                                <input type="number" id="grossMargin" class="percentage-input" min="0" max="100" step="0.1" placeholder="18" required>
+                                <span class="percent-symbol">%</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="operatingExpenses">Monthly operating expenses</label>
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="operatingExpenses" class="currency-input" min="0" step="1000" placeholder="85000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inventoryValue">Total inventory at cost</label>
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="inventoryValue" class="currency-input" min="0" step="1000" placeholder="900000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nearExpiry">Near-expiry inventory</label>
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="nearExpiry" class="currency-input" min="0" step="500" placeholder="35000" required>
+                            </div>
+                            <span class="field-help">Use the value of stock approaching expiry under your normal internal review window.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="deadStock">Dead / non-moving inventory</label>
+                            <div class="input-wrap">
+                                <span class="currency-symbol">₹</span>
+                                <input type="number" id="deadStock" class="currency-input" min="0" step="500" placeholder="70000" required>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <div class="form-group">
+                            <label for="stockout">Important product stock-outs</label>
+                            <select id="stockout">
+                                <option value="100">Rarely / almost never</option>
+                                <option value="78" selected>A few times a month</option>
+                                <option value="48">Several times a week</option>
+                                <option value="18">Almost daily</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="counting">Physical stock verification</label>
+                            <select id="counting">
+                                <option value="100">Cycle counts + periodic full audit</option>
+                                <option value="82" selected>Monthly / quarterly</option>
+                                <option value="55">Occasionally</option>
+                                <option value="22">Rarely / never</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sop">SOP implementation</label>
+                            <select id="sop">
+                                <option value="100">Documented, trained and followed</option>
+                                <option value="76" selected>Some documented processes</option>
+                                <option value="48">Mostly verbal / informal</option>
+                                <option value="18">No defined SOPs</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="training">Staff training & role clarity</label>
+                            <select id="training">
+                                <option value="100">Structured and regularly reviewed</option>
+                                <option value="76" selected>Basic onboarding / occasional training</option>
+                                <option value="48">Limited training</option>
+                                <option value="18">No structured training</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reporting">Management reporting</label>
+                            <select id="reporting">
+                                <option value="100">Weekly dashboard + monthly review</option>
+                                <option value="80" selected>Monthly reports reviewed</option>
+                                <option value="50">Reports exist but rarely reviewed</option>
+                                <option value="20">No useful business reporting</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="compliance">Licence / compliance tracker</label>
+                            <select id="compliance">
+                                <option value="100">Current, documented and reminder-controlled</option>
+                                <option value="82" selected>Current but mostly manually tracked</option>
+                                <option value="50">Some gaps / uncertain records</option>
+                                <option value="10">Known overdue or material gaps</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="returns">Expiry / purchase-return process</label>
+                            <select id="returns">
+                                <option value="100">FEFO + near-expiry + return tracker</option>
+                                <option value="78" selected>Basic expiry review and returns</option>
+                                <option value="48">Inconsistent follow-up</option>
+                                <option value="18">No structured process</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reconciliation">Daily cash / payment reconciliation</label>
+                            <select id="reconciliation">
+                                <option value="100">Daily with exception review</option>
+                                <option value="78" selected>Usually completed</option>
+                                <option value="48">Irregular</option>
+                                <option value="18">No formal reconciliation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="button-row">
+                        <button type="submit" class="calculate-btn">
+                            Calculate Pharmacy Health Score
+                        </button>
+
+                        <button type="reset" class="reset-btn">
+                            Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="results-column">
+
+                <section class="results-card" aria-live="polite">
+                    <div class="results-heading">
+                        <h2>Pharmacy Health Results</h2>
+                        <p class="intro-text">
+                            Your business health score and category assessment.
+                        </p>
+                    </div>
+
+                    <div class="score-summary">
+                        <div class="score-ring" id="scoreRing">
+                            <div class="score-number">
+                                <strong id="overallScore">0</strong>
+                                <span>OUT OF 100</span>
+                            </div>
+                        </div>
+
+                        <div class="score-grade">
+                            <h3 id="scoreGrade">Complete the assessment</h3>
+                            <p id="scoreMessage">Enter your pharmacy details and select Calculate.</p>
+                        </div>
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-box">
+                            <span class="result-label">Profitability</span>
+                            <strong class="result-value" id="profitabilityScore">0/100</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Inventory</span>
+                            <strong class="result-value" id="inventoryScore">0/100</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Working capital</span>
+                            <strong class="result-value" id="capitalScore">0/100</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Operations</span>
+                            <strong class="result-value" id="operationsScore">0/100</strong>
+                        </div>
+
+                        <div class="result-box">
+                            <span class="result-label">Compliance</span>
+                            <strong class="result-value" id="complianceScore">0/100</strong>
+                        </div>
+
+                        <div class="result-box highlight">
+                            <span class="result-label">People & systems</span>
+                            <strong class="result-value" id="peopleScore">0/100</strong>
+                        </div>
+                    </div>
+
+                    <div class="priority-section">
+                        <h3>Your priority actions</h3>
+                        <ol id="priorityList">
+                            <li>Calculate your score to generate recommendations.</li>
+                        </ol>
+                    </div>
+                </section>
+
+                <aside class="info-card">
+                    <h3>How to interpret the score</h3>
+
+                    <ul>
+                        <li><strong>85–100:</strong> strong operating health; focus on optimisation and scale.</li>
+                        <li><strong>70–84:</strong> broadly healthy with specific improvement opportunities.</li>
+                        <li><strong>55–69:</strong> moderate risk; structured corrective action is advisable.</li>
+                        <li><strong>Below 55:</strong> significant operating or financial weaknesses need attention.</li>
+                    </ul>
+
+                    <div class="consultation-box">
+                        <h3>Need a detailed pharmacy assessment?</h3>
+
+                        <p>
+                            Medvika can help review inventory, profitability,
+                            operating controls and pharmacy improvement priorities.
+                        </p>
+
+                        <a
+                            class="whatsapp-btn"
+                            id="whatsappBtn"
+                            href="https://wa.me/918979841035"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            Request Consultation
+                        </a>
+                    </div>
+                </aside>
+
+                    <div class="report-offer" id="healthReportOffer" style="display:none;">
+                        <h3>Get Your Detailed Pharmacy Health Report</h3>
+                        <p>Your score is already visible. Optionally generate an expanded report with your weakest dimensions and practical priorities.</p>
+                        <button type="button" class="report-btn" id="detailedReportBtn">
+                            Get Detailed Report
+                        </button>
+                    </div>
+
+                    <div class="detailed-report" id="detailedReport">
+                        <h3>Medvika Pharmacy Health Report</h3>
+                        <p id="detailedReportIntro"></p>
+                        <ul id="detailedReportActions"></ul>
+                        <button type="button" class="report-print-btn" onclick="window.print()">
+                            Print / Save Report
+                        </button>
+                    </div>
+            </div>
+        </div>
+
+        <p class="disclaimer">
+            This tool provides an indicative business-health assessment for
+            planning purposes. It is not a statutory audit, accounting opinion,
+            valuation or compliance certification. Results depend on the
+            information entered and the operating practices selected.
+        </p>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <p>
+        © 2026 Medvika Healthcare Solutions ·
+        <a href="../pages/privacy-policy.html">Privacy Policy</a>
+    </p>
+</footer>
+
+<div class="lead-modal" id="toolLeadModal" aria-hidden="true">
+    <div class="lead-dialog" role="dialog" aria-modal="true" aria-labelledby="toolLeadTitle">
+        <div class="lead-dialog-header">
+            <div>
+                <h2 id="toolLeadTitle">Get Your Detailed Pharmacy Report</h2>
+                <p>Your calculator result remains free. Share your details only if you want the expanded report and Medvika follow-up.</p>
+            </div>
+            <button type="button" class="lead-close" id="toolLeadClose" aria-label="Close">×</button>
+        </div>
+
+        <form class="lead-form" id="toolLeadForm">
+            <div class="lead-grid">
+                <div class="form-group">
+                    <label for="leadFullName">Your name *</label>
+                    <input id="leadFullName" name="full_name" type="text" maxlength="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="leadPharmacyName">Pharmacy / business name</label>
+                    <input id="leadPharmacyName" name="pharmacy_name" type="text" maxlength="160">
+                </div>
+
+                <div class="form-group">
+                    <label for="leadCity">City *</label>
+                    <input id="leadCity" name="city" type="text" maxlength="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="leadPhone">WhatsApp / mobile *</label>
+                    <input id="leadPhone" name="phone" type="tel" maxlength="20" inputmode="tel" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="leadEmail">Email (optional)</label>
+                    <input id="leadEmail" name="email" type="email" maxlength="180">
+                </div>
+
+                <div class="website-field" aria-hidden="true">
+                    <label for="leadWebsite">Website</label>
+                    <input id="leadWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+                </div>
+            </div>
+
+            <label class="lead-consent">
+                <input id="leadConsent" type="checkbox" required>
+                <span>I agree that Medvika Healthcare Solutions may contact me about this assessment/report and related pharmacy consulting services.</span>
+            </label>
+
+            <button type="submit" class="lead-submit" id="toolLeadSubmit">
+                Generate Detailed Report
+            </button>
+
+            <p class="lead-status" id="toolLeadStatus"></p>
+        </form>
+    </div>
+</div>
+
+<script>
+    const calculator = document.getElementById("healthCalculator");
+    let latestHealthResult = null;
+
+    function getNumber(id) {
+        const value = Number.parseFloat(document.getElementById(id).value);
+        return Number.isFinite(value) && value >= 0 ? value : 0;
+    }
+
+    function getSelectScore(id) {
+        return Number.parseFloat(document.getElementById(id).value) || 0;
+    }
+
+    function clamp(value, min = 0, max = 100) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function ascendingScore(value, bands) {
+        for (const band of bands) {
+            if (value >= band[0]) return band[1];
+        }
+        return bands[bands.length - 1][1];
+    }
+
+    function descendingScore(value, bands) {
+        for (const band of bands) {
+            if (value <= band[0]) return band[1];
+        }
+        return bands[bands.length - 1][1];
+    }
+
+    function calculateScore() {
+        const monthlySales = getNumber("monthlySales");
+        const grossMargin = getNumber("grossMargin");
+        const operatingExpenses = getNumber("operatingExpenses");
+        const inventoryValue = getNumber("inventoryValue");
+        const nearExpiry = getNumber("nearExpiry");
+        const deadStock = getNumber("deadStock");
+
+        if (monthlySales <= 0 || inventoryValue <= 0) {
+            document.getElementById("scoreMessage").textContent =
+                "Please enter monthly sales and inventory values greater than zero.";
+            return;
+        }
+
+        const grossProfit = monthlySales * (grossMargin / 100);
+        const estimatedOperatingProfit = grossProfit - operatingExpenses;
+        const estimatedNetMargin =
+            monthlySales > 0 ? (estimatedOperatingProfit / monthlySales) * 100 : 0;
+
+        const monthlyCOGS = monthlySales * (1 - grossMargin / 100);
+        const annualTurns =
+            inventoryValue > 0 ? (monthlyCOGS * 12) / inventoryValue : 0;
+        const stockMonths =
+            monthlyCOGS > 0 ? inventoryValue / monthlyCOGS : 99;
+
+        const nearExpiryPct =
+            inventoryValue > 0 ? (nearExpiry / inventoryValue) * 100 : 0;
+        const deadStockPct =
+            inventoryValue > 0 ? (deadStock / inventoryValue) * 100 : 0;
+
+        const marginScore = ascendingScore(grossMargin, [
+            [22, 100], [18, 82], [15, 64], [12, 44], [0, 20]
+        ]);
+
+        const netScore = ascendingScore(estimatedNetMargin, [
+            [8, 100], [5, 82], [2, 62], [0, 42], [-999, 15]
+        ]);
+
+        const profitability = clamp(
+            marginScore * 0.45 + netScore * 0.55
+        );
+
+        const turnoverScore = ascendingScore(annualTurns, [
+            [8, 100], [6, 86], [4, 68], [2.5, 45], [0, 22]
+        ]);
+
+        const nearExpiryScore = descendingScore(nearExpiryPct, [
+            [1.5, 100], [3, 82], [5, 62], [8, 40], [999, 18]
+        ]);
+
+        const deadStockScore = descendingScore(deadStockPct, [
+            [3, 100], [6, 82], [10, 60], [15, 38], [999, 15]
+        ]);
+
+        const inventory = clamp(
+            turnoverScore * 0.28 +
+            nearExpiryScore * 0.20 +
+            deadStockScore * 0.22 +
+            getSelectScore("stockout") * 0.16 +
+            getSelectScore("counting") * 0.14
+        );
+
+        const stockMonthsScore = descendingScore(stockMonths, [
+            [1.5, 100], [2, 88], [3, 70], [4, 52], [6, 32], [999, 15]
+        ]);
+
+        const capital = clamp(
+            stockMonthsScore * 0.65 + deadStockScore * 0.35
+        );
+
+        const operations = clamp(
+            getSelectScore("sop") * 0.55 +
+            getSelectScore("reconciliation") * 0.45
+        );
+
+        const compliance = clamp(
+            getSelectScore("compliance") * 0.60 +
+            getSelectScore("returns") * 0.40
+        );
+
+        const people = clamp(
+            getSelectScore("training") * 0.50 +
+            getSelectScore("reporting") * 0.50
+        );
+
+        const overall = Math.round(
+            profitability * 0.20 +
+            inventory * 0.25 +
+            capital * 0.15 +
+            operations * 0.15 +
+            compliance * 0.15 +
+            people * 0.10
+        );
+
+        const dimensions = [
+            {
+                name: "Profitability",
+                score: Math.round(profitability),
+                action: "Review gross margin, discounting and operating expenses and create a monthly profit bridge."
+            },
+            {
+                name: "Inventory",
+                score: Math.round(inventory),
+                action: "Run an ABC/FSN review and tighten near-expiry, dead-stock, stock-out and cycle-count controls."
+            },
+            {
+                name: "Working capital",
+                score: Math.round(capital),
+                action: "Reduce cash blocked in excess and non-moving stock and align reorder levels with actual demand."
+            },
+            {
+                name: "Operations",
+                score: Math.round(operations),
+                action: "Document critical SOPs and enforce daily cash/payment reconciliation with clear ownership."
+            },
+            {
+                name: "Compliance",
+                score: Math.round(compliance),
+                action: "Maintain a licence tracker and a documented FEFO, quarantine and purchase-return workflow."
+            },
+            {
+                name: "People & systems",
+                score: Math.round(people),
+                action: "Define staff roles, practical training checkpoints and a regular management review dashboard."
+            }
+        ];
+
+        document.getElementById("overallScore").textContent = overall;
+        document.getElementById("profitabilityScore").textContent =
+            `${Math.round(profitability)}/100`;
+        document.getElementById("inventoryScore").textContent =
+            `${Math.round(inventory)}/100`;
+        document.getElementById("capitalScore").textContent =
+            `${Math.round(capital)}/100`;
+        document.getElementById("operationsScore").textContent =
+            `${Math.round(operations)}/100`;
+        document.getElementById("complianceScore").textContent =
+            `${Math.round(compliance)}/100`;
+        document.getElementById("peopleScore").textContent =
+            `${Math.round(people)}/100`;
+
+        document.getElementById("scoreRing").style.background =
+            `conic-gradient(var(--secondary) ${overall * 3.6}deg, #e8eff2 0deg)`;
+
+        let grade;
+        let message;
+
+        if (overall >= 85) {
+            grade = "Excellent operating health";
+            message = "Strong fundamentals. Focus on optimisation and scalable operating controls.";
+        } else if (overall >= 70) {
+            grade = "Healthy, with improvement areas";
+            message = "The pharmacy is broadly healthy, but selected gaps may still leak profit or working capital.";
+        } else if (overall >= 55) {
+            grade = "Moderate business risk";
+            message = "Several weaknesses deserve structured corrective action and regular management review.";
+        } else if (overall >= 40) {
+            grade = "High business risk";
+            message = "Material operating gaps may be affecting profitability, inventory control or business resilience.";
+        } else {
+            grade = "Critical attention needed";
+            message = "Prioritise a structured operational and financial review before pursuing aggressive growth.";
+        }
+
+        document.getElementById("scoreGrade").textContent = grade;
+        document.getElementById("scoreMessage").textContent = message;
+
+        const priorityList = document.getElementById("priorityList");
+        priorityList.innerHTML = "";
+
+        dimensions
+            .sort((a, b) => a.score - b.score)
+            .slice(0, 4)
+            .forEach(function (dimension) {
+                const li = document.createElement("li");
+                li.textContent = dimension.action;
+                priorityList.appendChild(li);
+            });
+
+        if (nearExpiryPct > 5) {
+            const li = document.createElement("li");
+            li.textContent =
+                `Near-expiry stock is approximately ${nearExpiryPct.toFixed(1)}% of inventory value. Start product-wise expiry action immediately.`;
+            priorityList.appendChild(li);
+        }
+
+        if (deadStockPct > 10) {
+            const li = document.createElement("li");
+            li.textContent =
+                `Dead/non-moving stock is approximately ${deadStockPct.toFixed(1)}% of inventory value. Freeze avoidable repurchases and create a return/liquidation plan.`;
+            priorityList.appendChild(li);
+        }
+
+        const lowest = [...dimensions]
+            .sort((a, b) => a.score - b.score)
+            .slice(0, 2)
+            .map(item => item.name)
+            .join(" and ");
+
+
+        latestHealthResult = {
+            overall_score: overall,
+            grade: grade,
+            profitability_score: Math.round(profitability),
+            inventory_score: Math.round(inventory),
+            working_capital_score: Math.round(capital),
+            operations_score: Math.round(operations),
+            compliance_score: Math.round(compliance),
+            people_systems_score: Math.round(people),
+            estimated_net_margin_percent: Number(estimatedNetMargin.toFixed(2)),
+            annual_inventory_turns: Number(annualTurns.toFixed(2)),
+            near_expiry_percent: Number(nearExpiryPct.toFixed(2)),
+            dead_stock_percent: Number(deadStockPct.toFixed(2)),
+            lowest_dimensions: lowest
+        };
+
+        document.getElementById("healthReportOffer").style.display = "block";
+
+        const whatsappMessage =
+            `Hello Medvika, I completed the Pharmacy Health Score and received ${overall}/100 (${grade}). My lowest areas are ${lowest}. I would like to discuss improvement priorities.`;
+
+        document.getElementById("whatsappBtn").href =
+            "https://wa.me/918979841035?text=" +
+            encodeURIComponent(whatsappMessage);
+    }
+
+    calculator.addEventListener("submit", function (event) {
+        event.preventDefault();
+        calculateScore();
+    });
+
+    calculator.addEventListener("reset", function () {
+        window.setTimeout(function () {
+            document.getElementById("overallScore").textContent = "0";
+            document.getElementById("profitabilityScore").textContent = "0/100";
+            document.getElementById("inventoryScore").textContent = "0/100";
+            document.getElementById("capitalScore").textContent = "0/100";
+            document.getElementById("operationsScore").textContent = "0/100";
+            document.getElementById("complianceScore").textContent = "0/100";
+            document.getElementById("peopleScore").textContent = "0/100";
+            document.getElementById("scoreGrade").textContent =
+                "Complete the assessment";
+            document.getElementById("scoreMessage").textContent =
+                "Enter your pharmacy details and select Calculate.";
+            document.getElementById("scoreRing").style.background =
+                "conic-gradient(var(--secondary) 0deg, #e8eff2 0deg)";
+            document.getElementById("priorityList").innerHTML =
+                "<li>Calculate your score to generate recommendations.</li>";
+            document.getElementById("whatsappBtn").href =
+                "https://wa.me/918979841035";
+            latestHealthResult = null;
+            document.getElementById("healthReportOffer").style.display = "none";
+            document.getElementById("detailedReport").classList.remove("visible");
+        }, 0);
+    });
+
+    // ===== MEDVIKA TOOL LEAD CONFIGURATION =====
+    // Paste the SAME two public values into all three tools.
+    // Supabase > Project Settings > API
+    // Use Project URL + anon/public key only. NEVER use service_role.
+    const TOOL_SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL";
+    const TOOL_SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY";
+
+    function toolLeadConfigReady() {
+        return !TOOL_SUPABASE_URL.includes("PASTE_") &&
+               !TOOL_SUPABASE_ANON_KEY.includes("PASTE_");
+    }
+
+    async function insertToolLead(payload) {
+        if (!toolLeadConfigReady()) {
+            throw new Error("Lead capture is not configured yet. Add the Supabase Project URL and anon key.");
+        }
+
+        const response = await fetch(
+            `${TOOL_SUPABASE_URL}/rest/v1/tool_leads`,
+            {
+                method: "POST",
+                headers: {
+                    "apikey": TOOL_SUPABASE_ANON_KEY,
+                    "Authorization": `Bearer ${TOOL_SUPABASE_ANON_KEY}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        if (!response.ok) {
+            let detail = "";
+            try { detail = await response.text(); } catch (_) {}
+            throw new Error("Unable to save your request. Please try again." + (detail ? " " + detail : ""));
+        }
+    }
+
+    function setupToolLeadCapture(options) {
+        const modal = document.getElementById("toolLeadModal");
+        const closeBtn = document.getElementById("toolLeadClose");
+        const form = document.getElementById("toolLeadForm");
+        const status = document.getElementById("toolLeadStatus");
+        const submit = document.getElementById("toolLeadSubmit");
+        const offerBtn = document.getElementById("detailedReportBtn");
+
+        function openModal() {
+            status.textContent = "";
+            status.className = "lead-status";
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+        }
+
+        if (!modal || !closeBtn || !form || !status || !submit || !offerBtn) {
+            console.error("Medvika lead capture UI could not be initialized.");
+            return;
+        }
+
+        offerBtn.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+        modal.addEventListener("click", e => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+        });
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+
+            if (document.getElementById("leadWebsite").value.trim()) {
+                closeModal();
+                return;
+            }
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const resultSummary = options.getResultSummary();
+            if (!resultSummary) {
+                status.textContent = "Please calculate your result first.";
+                status.className = "lead-status error";
+                return;
+            }
+
+            submit.disabled = true;
+            submit.textContent = "Generating Report...";
+            status.textContent = "";
+            status.className = "lead-status";
+
+            const payload = {
+                tool_name: options.toolName,
+                full_name: document.getElementById("leadFullName").value.trim(),
+                pharmacy_name: document.getElementById("leadPharmacyName").value.trim() || null,
+                city: document.getElementById("leadCity").value.trim(),
+                phone: document.getElementById("leadPhone").value.trim(),
+                email: document.getElementById("leadEmail").value.trim() || null,
+                result_summary: resultSummary,
+                consent_to_contact: document.getElementById("leadConsent").checked,
+                source_url: window.location.href,
+                user_agent: navigator.userAgent.slice(0, 500)
+            };
+
+            try {
+                await insertToolLead(payload);
+                options.renderDetailedReport(payload);
+                closeModal();
+                form.reset();
+            } catch (error) {
+                status.textContent = error.message;
+                status.className = "lead-status error";
+            } finally {
+                submit.disabled = false;
+                submit.textContent = "Generate Detailed Report";
+            }
+        });
+    }
+
+    setupToolLeadCapture({
+        toolName: "pharmacy_health_score",
+
+        getResultSummary: function () {
+            return latestHealthResult;
+        },
+
+        renderDetailedReport: function (lead) {
+            const r = latestHealthResult;
+            const report = document.getElementById("detailedReport");
+            const intro = document.getElementById("detailedReportIntro");
+            const actions = document.getElementById("detailedReportActions");
+
+            intro.textContent =
+                `${lead.full_name}, ${lead.pharmacy_name || "your pharmacy"} scored ${r.overall_score}/100 (${r.grade}). The lowest assessed areas are ${r.lowest_dimensions}.`;
+
+            const scores = [
+                ["Profitability", r.profitability_score],
+                ["Inventory", r.inventory_score],
+                ["Working capital", r.working_capital_score],
+                ["Operations", r.operations_score],
+                ["Compliance", r.compliance_score],
+                ["People & systems", r.people_systems_score]
+            ].sort((a,b)=>a[1]-b[1]);
+
+            const suggestions = [
+                `Priority 1 — ${scores[0][0]}: this is the lowest dimension at ${scores[0][1]}/100 and should be reviewed first.`,
+                `Priority 2 — ${scores[1][0]}: the second-lowest dimension is ${scores[1][1]}/100.`,
+                `Near-expiry stock entered is approximately ${r.near_expiry_percent.toFixed(1)}% of inventory value; use a product-wise expiry action tracker if this exposure is material.`,
+                `Dead/non-moving stock entered is approximately ${r.dead_stock_percent.toFixed(1)}% of inventory value; align repurchasing and return decisions with actual movement.`,
+                `Estimated inventory turnover from the entered figures is ${r.annual_inventory_turns.toFixed(2)} times per year. Review this together with category-level movement rather than relying only on the overall ratio.`,
+                "Use the score as a prioritisation tool, then validate the findings with actual pharmacy records, physical stock, SOP evidence and management reports."
+            ];
+
+            actions.innerHTML = "";
+            suggestions.forEach(text => {
+                const li = document.createElement("li");
+                li.textContent = text;
+                actions.appendChild(li);
+            });
+
+            report.classList.add("visible");
+            report.scrollIntoView({behavior:"smooth", block:"start"});
+        }
+    });
+
+</script>
+
+</body>
+</html>
