@@ -550,6 +550,215 @@
                 flex-direction: column;
             }
         }
+
+        /* Optional detailed-report lead capture */
+        .report-offer {
+            margin-top: 22px;
+            padding: 20px;
+            border: 1px solid rgba(22, 160, 133, 0.26);
+            border-radius: 13px;
+            background: rgba(22, 160, 133, 0.07);
+        }
+
+        .report-offer h3 {
+            color: var(--primary);
+            margin-bottom: 7px;
+        }
+
+        .report-offer p {
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 9px;
+            padding: 12px 17px;
+            background: var(--secondary);
+            color: var(--white);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .lead-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(13, 36, 52, 0.68);
+        }
+
+        .lead-modal.open {
+            display: flex;
+        }
+
+        .lead-dialog {
+            width: min(620px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            border-radius: 18px;
+            background: var(--white);
+            box-shadow: 0 22px 70px rgba(0,0,0,.22);
+        }
+
+        .lead-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 24px 26px 17px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .lead-dialog-header h2 {
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .lead-dialog-header p {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .lead-close {
+            border: 0;
+            background: #eef4f6;
+            color: var(--primary);
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 1.3rem;
+        }
+
+        .lead-form {
+            padding: 24px 26px 28px;
+        }
+
+        .lead-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 16px;
+        }
+
+        .lead-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .lead-form input {
+            width: 100%;
+        }
+
+        .lead-consent {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: .88rem;
+        }
+
+        .lead-consent input {
+            width: auto;
+            min-height: auto;
+            margin-top: 4px;
+        }
+
+        .lead-submit {
+            width: 100%;
+            margin-top: 18px;
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .lead-status {
+            margin-top: 13px;
+            font-size: .9rem;
+            color: var(--muted);
+        }
+
+        .lead-status.error {
+            color: var(--danger);
+        }
+
+        .detailed-report {
+            display: none;
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+        }
+
+        .detailed-report.visible {
+            display: block;
+        }
+
+        .detailed-report h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .detailed-report ul {
+            padding-left: 20px;
+            color: var(--muted);
+        }
+
+        .detailed-report li + li {
+            margin-top: 8px;
+        }
+
+        .report-print-btn {
+            margin-top: 16px;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .website-field {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+        }
+
+        @media (max-width: 600px) {
+            .lead-grid {
+                grid-template-columns: 1fr;
+            }
+            .lead-grid .full-width {
+                grid-column: auto;
+            }
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            .detailed-report,
+            .detailed-report * {
+                visibility: visible !important;
+            }
+            .detailed-report {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none;
+                box-shadow: none;
+            }
+            .report-print-btn {
+                display: none !important;
+            }
+        }
+
     </style>
 
     <script type="application/ld+json">
@@ -572,7 +781,176 @@
         "priceCurrency": "INR"
       }
     }
-    </script>
+    
+    // ===== MEDVIKA TOOL LEAD CONFIGURATION =====
+    // Paste the SAME two public values into all three tools.
+    // Supabase > Project Settings > API
+    // Use Project URL + anon/public key only. NEVER use service_role.
+    const TOOL_SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL";
+    const TOOL_SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY";
+
+    function toolLeadConfigReady() {
+        return !TOOL_SUPABASE_URL.includes("PASTE_") &&
+               !TOOL_SUPABASE_ANON_KEY.includes("PASTE_");
+    }
+
+    async function insertToolLead(payload) {
+        if (!toolLeadConfigReady()) {
+            throw new Error("Lead capture is not configured yet. Add the Supabase Project URL and anon key.");
+        }
+
+        const response = await fetch(
+            `${TOOL_SUPABASE_URL}/rest/v1/tool_leads`,
+            {
+                method: "POST",
+                headers: {
+                    "apikey": TOOL_SUPABASE_ANON_KEY,
+                    "Authorization": `Bearer ${TOOL_SUPABASE_ANON_KEY}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        if (!response.ok) {
+            let detail = "";
+            try { detail = await response.text(); } catch (_) {}
+            throw new Error("Unable to save your request. Please try again." + (detail ? " " + detail : ""));
+        }
+    }
+
+    function setupToolLeadCapture(options) {
+        const modal = document.getElementById("toolLeadModal");
+        const closeBtn = document.getElementById("toolLeadClose");
+        const form = document.getElementById("toolLeadForm");
+        const status = document.getElementById("toolLeadStatus");
+        const submit = document.getElementById("toolLeadSubmit");
+        const offerBtn = document.getElementById("detailedReportBtn");
+
+        function openModal() {
+            status.textContent = "";
+            status.className = "lead-status";
+            modal.classList.add("open");
+            modal.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() {
+            modal.classList.remove("open");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+        }
+
+        offerBtn.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+        modal.addEventListener("click", e => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+        });
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+
+            if (document.getElementById("leadWebsite").value.trim()) {
+                closeModal();
+                return;
+            }
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const resultSummary = options.getResultSummary();
+            if (!resultSummary) {
+                status.textContent = "Please calculate your result first.";
+                status.className = "lead-status error";
+                return;
+            }
+
+            submit.disabled = true;
+            submit.textContent = "Generating Report...";
+            status.textContent = "";
+            status.className = "lead-status";
+
+            const payload = {
+                tool_name: options.toolName,
+                full_name: document.getElementById("leadFullName").value.trim(),
+                pharmacy_name: document.getElementById("leadPharmacyName").value.trim() || null,
+                city: document.getElementById("leadCity").value.trim(),
+                phone: document.getElementById("leadPhone").value.trim(),
+                email: document.getElementById("leadEmail").value.trim() || null,
+                result_summary: resultSummary,
+                consent_to_contact: document.getElementById("leadConsent").checked,
+                source_url: window.location.href,
+                user_agent: navigator.userAgent.slice(0, 500)
+            };
+
+            try {
+                await insertToolLead(payload);
+                options.renderDetailedReport(payload);
+                closeModal();
+                form.reset();
+            } catch (error) {
+                status.textContent = error.message;
+                status.className = "lead-status error";
+            } finally {
+                submit.disabled = false;
+                submit.textContent = "Generate Detailed Report";
+            }
+        });
+    }
+
+    setupToolLeadCapture({
+        toolName: "pharmacy_health_score",
+
+        getResultSummary: function () {
+            return latestHealthResult;
+        },
+
+        renderDetailedReport: function (lead) {
+            const r = latestHealthResult;
+            const report = document.getElementById("detailedReport");
+            const intro = document.getElementById("detailedReportIntro");
+            const actions = document.getElementById("detailedReportActions");
+
+            intro.textContent =
+                `${lead.full_name}, ${lead.pharmacy_name || "your pharmacy"} scored ${r.overall_score}/100 (${r.grade}). The lowest assessed areas are ${r.lowest_dimensions}.`;
+
+            const scores = [
+                ["Profitability", r.profitability_score],
+                ["Inventory", r.inventory_score],
+                ["Working capital", r.working_capital_score],
+                ["Operations", r.operations_score],
+                ["Compliance", r.compliance_score],
+                ["People & systems", r.people_systems_score]
+            ].sort((a,b)=>a[1]-b[1]);
+
+            const suggestions = [
+                `Priority 1 — ${scores[0][0]}: this is the lowest dimension at ${scores[0][1]}/100 and should be reviewed first.`,
+                `Priority 2 — ${scores[1][0]}: the second-lowest dimension is ${scores[1][1]}/100.`,
+                `Near-expiry stock entered is approximately ${r.near_expiry_percent.toFixed(1)}% of inventory value; use a product-wise expiry action tracker if this exposure is material.`,
+                `Dead/non-moving stock entered is approximately ${r.dead_stock_percent.toFixed(1)}% of inventory value; align repurchasing and return decisions with actual movement.`,
+                `Estimated inventory turnover from the entered figures is ${r.annual_inventory_turns.toFixed(2)} times per year. Review this together with category-level movement rather than relying only on the overall ratio.`,
+                "Use the score as a prioritisation tool, then validate the findings with actual pharmacy records, physical stock, SOP evidence and management reports."
+            ];
+
+            actions.innerHTML = "";
+            suggestions.forEach(text => {
+                const li = document.createElement("li");
+                li.textContent = text;
+                actions.appendChild(li);
+            });
+
+            report.classList.add("visible");
+            report.scrollIntoView({behavior:"smooth", block:"start"});
+        }
+    });
+
+</script>
 </head>
 
 <body>
@@ -855,6 +1233,23 @@
                         </a>
                     </div>
                 </aside>
+
+                    <div class="report-offer" id="healthReportOffer" style="display:none;">
+                        <h3>Get Your Detailed Pharmacy Health Report</h3>
+                        <p>Your score is already visible. Optionally generate an expanded report with your weakest dimensions and practical priorities.</p>
+                        <button type="button" class="report-btn" id="detailedReportBtn">
+                            Get Detailed Report
+                        </button>
+                    </div>
+
+                    <div class="detailed-report" id="detailedReport">
+                        <h3>Medvika Pharmacy Health Report</h3>
+                        <p id="detailedReportIntro"></p>
+                        <ul id="detailedReportActions"></ul>
+                        <button type="button" class="report-print-btn" onclick="window.print()">
+                            Print / Save Report
+                        </button>
+                    </div>
             </div>
         </div>
 
@@ -874,8 +1269,66 @@
     </p>
 </footer>
 
+<div class="lead-modal" id="toolLeadModal" aria-hidden="true">
+    <div class="lead-dialog" role="dialog" aria-modal="true" aria-labelledby="toolLeadTitle">
+        <div class="lead-dialog-header">
+            <div>
+                <h2 id="toolLeadTitle">Get Your Detailed Pharmacy Report</h2>
+                <p>Your calculator result remains free. Share your details only if you want the expanded report and Medvika follow-up.</p>
+            </div>
+            <button type="button" class="lead-close" id="toolLeadClose" aria-label="Close">×</button>
+        </div>
+
+        <form class="lead-form" id="toolLeadForm">
+            <div class="lead-grid">
+                <div class="form-group">
+                    <label for="leadFullName">Your name *</label>
+                    <input id="leadFullName" name="full_name" type="text" maxlength="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="leadPharmacyName">Pharmacy / business name</label>
+                    <input id="leadPharmacyName" name="pharmacy_name" type="text" maxlength="160">
+                </div>
+
+                <div class="form-group">
+                    <label for="leadCity">City *</label>
+                    <input id="leadCity" name="city" type="text" maxlength="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="leadPhone">WhatsApp / mobile *</label>
+                    <input id="leadPhone" name="phone" type="tel" maxlength="20" inputmode="tel" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="leadEmail">Email (optional)</label>
+                    <input id="leadEmail" name="email" type="email" maxlength="180">
+                </div>
+
+                <div class="website-field" aria-hidden="true">
+                    <label for="leadWebsite">Website</label>
+                    <input id="leadWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+                </div>
+            </div>
+
+            <label class="lead-consent">
+                <input id="leadConsent" type="checkbox" required>
+                <span>I agree that Medvika Healthcare Solutions may contact me about this assessment/report and related pharmacy consulting services.</span>
+            </label>
+
+            <button type="submit" class="lead-submit" id="toolLeadSubmit">
+                Generate Detailed Report
+            </button>
+
+            <p class="lead-status" id="toolLeadStatus"></p>
+        </form>
+    </div>
+</div>
+
 <script>
     const calculator = document.getElementById("healthCalculator");
+    let latestHealthResult = null;
 
     function getNumber(id) {
         const value = Number.parseFloat(document.getElementById(id).value);
@@ -1103,6 +1556,25 @@
             .map(item => item.name)
             .join(" and ");
 
+
+        latestHealthResult = {
+            overall_score: overall,
+            grade: grade,
+            profitability_score: Math.round(profitability),
+            inventory_score: Math.round(inventory),
+            working_capital_score: Math.round(capital),
+            operations_score: Math.round(operations),
+            compliance_score: Math.round(compliance),
+            people_systems_score: Math.round(people),
+            estimated_net_margin_percent: Number(estimatedNetMargin.toFixed(2)),
+            annual_inventory_turns: Number(annualTurns.toFixed(2)),
+            near_expiry_percent: Number(nearExpiryPct.toFixed(2)),
+            dead_stock_percent: Number(deadStockPct.toFixed(2)),
+            lowest_dimensions: lowest
+        };
+
+        document.getElementById("healthReportOffer").style.display = "block";
+
         const whatsappMessage =
             `Hello Medvika, I completed the Pharmacy Health Score and received ${overall}/100 (${grade}). My lowest areas are ${lowest}. I would like to discuss improvement priorities.`;
 
@@ -1135,6 +1607,9 @@
                 "<li>Calculate your score to generate recommendations.</li>";
             document.getElementById("whatsappBtn").href =
                 "https://wa.me/918979841035";
+            latestHealthResult = null;
+            document.getElementById("healthReportOffer").style.display = "none";
+            document.getElementById("detailedReport").classList.remove("visible");
         }, 0);
     });
 </script>
