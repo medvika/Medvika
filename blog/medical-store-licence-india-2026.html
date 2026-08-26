@@ -21,10 +21,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
       /* Prevent table headings from floating above the Medvika site header. */
-      .article-content .article-table thead {
+      .article-content .article-table,
+      .article-content .article-table thead,
+      .article-content .article-table tbody,
+      .article-content .article-table tr,
+      .article-content .article-table th,
+      .article-content .article-table td {
         position: static !important;
         top: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        transform: none !important;
       }
+      .article-content .article-table th { z-index: auto !important; }
     </style>
     <script type="application/ld+json">{
   "@context": "https://schema.org",
