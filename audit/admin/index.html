@@ -18,7 +18,7 @@
       <span class="eyebrow">Medvika Only</span>
       <h1>Audit SaaS Admin</h1>
     </div>
-    <div class="top-actions"><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
+    <div class="top-actions"><a class="btn secondary" href="./leads.html">📋 Audit Leads</a><button id="logoutBtn" class="btn secondary" hidden>Sign out</button></div>
   </div>
 
   <div id="loginCard" class="card">
@@ -178,44 +178,30 @@
       </select>
     </label>
     <label id="allocationValue1Label">From
-      <input id="allocationValue1" placeholder="A">
+      <input id="allocationValue1">
     </label>
     <label id="allocationValue2Label">To
-      <input id="allocationValue2" placeholder="M">
+      <input id="allocationValue2">
     </label>
+    <button id="allocateBtn" class="btn primary">Allocate</button>
   </div>
 
-  <div class="allocation-actions">
-    <button id="previewAllocation" class="btn secondary">Preview Items</button>
-    <button id="applyAllocation" class="btn primary">Allocate Matching Items</button>
-  </div>
-
-  <div id="allocationPreview"></div>
-
-  <h3>Allocation Summary</h3>
-  <div id="allocationSummary"></div>
+  <div id="allocationPreview" class="muted"></div>
+  <div id="allocationList"></div>
 </div>
 
 <div id="modal" class="modal" hidden aria-hidden="true">
-    <div class="modal-card">
-      <h3>Create Audit for Client</h3>
-      <div class="grid">
-        <label>Audit Name<input id="newAuditName"></label>
-        <label>Location<input id="newAuditLocation"></label>
-        <label>Audit Date<input id="newAuditDate" type="date"></label>
-        <label>Expected Items<input id="newAuditItems" type="number" value="20000"></label>
-      </div>
-      <div class="actions">
-        <button id="cancelModal" class="btn secondary">Cancel</button>
-        <button id="confirmAudit" class="btn primary">Create</button>
-      </div>
+  <div class="modal-card">
+    <div class="section-head"><h2>Create Audit</h2><button id="cancelModal" class="btn secondary">Close</button></div>
+    <div class="grid">
+      <label>Project Name<input id="newAuditName"></label>
+      <label>Location<input id="newAuditLocation"></label>
+      <label>Audit Date<input id="newAuditDate" type="date"></label>
     </div>
+    <button id="confirmAudit" class="btn primary">Create Audit</button>
   </div>
-
-  <p id="msg" class="muted"></p>
 </div>
-<script src="./importer.js"></script>
-<script src="./allocation.js"></script>
-<script src="./app.js?v=12"></script>
+
+<script src="./app.js?v=11"></script>
 </body>
 </html>
