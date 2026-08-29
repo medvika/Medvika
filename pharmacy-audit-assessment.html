@@ -41,120 +41,98 @@
 .form-submit{text-align:center;padding-top:8px}
 .form-submit button{border:0;cursor:pointer;font:inherit;font-weight:600;padding:14px 26px;border-radius:10px;background:#0f766e;color:#fff;box-shadow:0 8px 20px rgba(15,118,110,.18)}
 .form-submit button:hover{filter:brightness(.96)}
+.form-submit button:disabled{opacity:.65;cursor:wait}
 .form-submit p{font-size:12px;color:#747d86;margin:12px 0 0}
-.success-message{display:none;margin-top:18px;padding:16px;border-radius:12px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;line-height:1.6}
+.success-message,.error-message{display:none;margin-top:18px;padding:16px;border-radius:12px;line-height:1.6}
+.success-message{background:#ecfdf5;border:1px solid #bbf7d0;color:#166534}
+.error-message{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
 @media(max-width:700px){.form-grid,.check-grid{grid-template-columns:1fr}.form-field.full{grid-column:auto}.assessment-form{border-radius:14px}.audit-assessment{padding-top:100px}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header class="header">
-  <div class="container nav-container">
-    <a href="index.html" class="logo" aria-label="Medvika Healthcare Solutions home"><img src="logo.png" alt="Medvika Healthcare Solutions"></a>
-    <nav class="navbar" aria-label="Primary navigation">
-      <ul>
-        <li><a href="index.html#home">Home</a></li>
-        <li><a href="index.html#about">About</a></li>
-        <li><a href="index.html#services">Services</a></li>
-        <li><a href="blog/">Blog</a></li>
-        <li><a href="index.html#contact">Contact</a></li>
-      </ul>
-    </nav>
-    <a href="https://wa.me/918979841035" class="quote-btn" target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
-  </div>
+<div class="container nav-container">
+<a href="index.html" class="logo" aria-label="Medvika Healthcare Solutions home"><img src="logo.png" alt="Medvika Healthcare Solutions"></a>
+<nav class="navbar" aria-label="Primary navigation"><ul>
+<li><a href="index.html#home">Home</a></li><li><a href="index.html#about">About</a></li><li><a href="index.html#services">Services</a></li><li><a href="blog/">Blog</a></li><li><a href="index.html#contact">Contact</a></li>
+</ul></nav>
+<a href="https://wa.me/918979841035" class="quote-btn" target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
+</div>
 </header>
 
 <main class="audit-assessment">
 <div class="container assessment-wrap">
-  <div class="assessment-hero">
-    <span class="section-tag">Pharmacy Audit Services</span>
-    <h1>Plan Your Pharmacy Audit</h1>
-    <p>Don't have pharmacy software or an exact stock count? That's okay. Share the information you currently have and Medvika will use it to understand the likely audit scope, manpower and timeline.</p>
-    <div class="assessment-note"><i class="fa-solid fa-circle-info"></i><div><strong>Approximate information is acceptable.</strong><br>You do not need an exact SKU count to submit this assessment.</div></div>
-  </div>
-
-  <form class="assessment-form" id="auditAssessmentForm">
-    <section class="form-section">
-      <h2><i class="fa-solid fa-store"></i> Business Details</h2>
-      <div class="form-grid">
-        <div class="form-field"><label for="businessName">Pharmacy / Business Name *</label><input id="businessName" name="businessName" required></div>
-        <div class="form-field"><label for="contactName">Contact Person *</label><input id="contactName" name="contactName" required></div>
-        <div class="form-field"><label for="phone">WhatsApp / Mobile Number *</label><input id="phone" name="phone" type="tel" inputmode="tel" required></div>
-        <div class="form-field"><label for="email">Email <span>(optional)</span></label><input id="email" name="email" type="email"></div>
-        <div class="form-field"><label for="city">City *</label><input id="city" name="city" placeholder="e.g. Varanasi" required></div>
-        <div class="form-field"><label for="area">Area / Locality <span>(optional)</span></label><input id="area" name="area"></div>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <h2><i class="fa-solid fa-pills"></i> Pharmacy & Inventory</h2>
-      <div class="form-grid">
-        <div class="form-field"><label for="type">Pharmacy Type *</label><select id="type" name="type" required><option value="">Select</option><option>Retail Pharmacy</option><option>Hospital Pharmacy</option><option>Clinic Pharmacy</option><option>Wholesale / Distribution</option><option>Other</option></select></div>
-        <div class="form-field"><label for="software">Current Software *</label><select id="software" name="software" required><option value="">Select</option><option>No software</option><option>Billing software only</option><option>Pharmacy ERP / Management software</option><option>Excel / Google Sheets</option><option>Manual records</option><option>Other</option></select></div>
-        <div class="form-field"><label for="inventoryValue">Approx. Inventory Value *</label><select id="inventoryValue" name="inventoryValue" required><option value="">Select</option><option>Below ₹2 lakh</option><option>₹2–5 lakh</option><option>₹5–10 lakh</option><option>₹10–25 lakh</option><option>₹25–50 lakh</option><option>₹50 lakh–₹1 crore</option><option>Above ₹1 crore</option><option>Not known</option></select></div>
-        <div class="form-field"><label for="skuCount">Approx. Number of SKUs / Products *</label><select id="skuCount" name="skuCount" required><option value="">Select</option><option>Below 1,000</option><option>1,000–3,000</option><option>3,000–5,000</option><option>5,000–10,000</option><option>10,000–20,000</option><option>More than 20,000</option><option>Not known</option></select></div>
-        <div class="form-field full"><label>Inventory Categories</label><div class="check-grid"><label class="check-option"><input type="checkbox" name="categories" value="Medicines"> Medicines</label><label class="check-option"><input type="checkbox" name="categories" value="Injections"> Injections</label><label class="check-option"><input type="checkbox" name="categories" value="Surgical / Consumables"> Surgical / Consumables</label><label class="check-option"><input type="checkbox" name="categories" value="Medical Devices"> Medical Devices</label><label class="check-option"><input type="checkbox" name="categories" value="OTC / FMCG"> OTC / FMCG</label><label class="check-option"><input type="checkbox" name="categories" value="Orthopedic"> Orthopedic Products</label><label class="check-option"><input type="checkbox" name="categories" value="Diagnostics"> Diagnostics / Testing Kits</label><label class="check-option"><input type="checkbox" name="categories" value="Other"> Other</label></div></div>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <h2><i class="fa-solid fa-clipboard-check"></i> Audit Requirement</h2>
-      <div class="check-grid">
-        <label class="check-option"><input type="checkbox" name="scope" value="Complete physical stock verification"> Complete physical stock verification</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="Batch-wise verification"> Batch-wise verification</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="Expiry / near-expiry identification"> Expiry / near-expiry identification</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="Damaged / non-saleable stock"> Damaged / non-saleable stock</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="Inventory valuation"> Inventory valuation</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="System vs physical reconciliation"> System vs physical reconciliation</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="Profit / loss assessment"> Profit / loss assessment</label>
-        <label class="check-option"><input type="checkbox" name="scope" value="Other"> Other requirement</label>
-      </div>
-      <div class="form-grid" style="margin-top:18px">
-        <div class="form-field"><label for="timing">Preferred Audit Timing</label><select id="timing" name="timing"><option>Flexible</option><option>Daytime</option><option>After business hours</option><option>Overnight</option></select></div>
-        <div class="form-field"><label for="staff">Staff Available to Assist <span>(approx.)</span></label><input id="staff" name="staff" type="number" min="0"></div>
-        <div class="form-field full"><label for="date">Preferred Audit Date / Period <span>(optional)</span></label><input id="date" name="date" placeholder="e.g. 10–15 September 2026"></div>
-      </div>
-    </section>
-
-    <section class="form-section">
-      <h2><i class="fa-solid fa-file-lines"></i> Records & Files</h2>
-      <div class="form-field full"><label>Records Currently Available</label><div class="check-grid"><label class="check-option"><input type="checkbox" name="records" value="Stock Excel / CSV"> Stock Excel / CSV</label><label class="check-option"><input type="checkbox" name="records" value="Billing / software report"> Billing / software report</label><label class="check-option"><input type="checkbox" name="records" value="Purchase records"> Purchase records</label><label class="check-option"><input type="checkbox" name="records" value="Sales records"> Sales records</label><label class="check-option"><input type="checkbox" name="records" value="Manual stock records"> Manual stock records</label><label class="check-option"><input type="checkbox" name="records" value="No organized records"> No organized records</label></div></div>
-      <div class="form-field full" style="margin-top:18px"><label for="file">Upload Inventory / Stock Report <span>(optional)</span></label><div class="upload-box"><input id="file" name="file" type="file" accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"><small>Excel, CSV, PDF or clear screenshots are acceptable. If you don't have a file, simply leave this blank.</small></div></div>
-    </section>
-
-    <section class="form-section">
-      <h2><i class="fa-solid fa-comment-medical"></i> Additional Information</h2>
-      <div class="form-field"><label for="message">Anything else we should know?</label><textarea id="message" name="message" placeholder="Tell us about any specific concern, stock complexity, multiple locations, warehouse, takeover, etc."></textarea></div>
-    </section>
-
-    <div class="form-submit">
-      <button type="submit"><i class="fa-brands fa-whatsapp"></i> Submit Assessment</button>
-      <p>Your assessment will open in WhatsApp so our team can receive the details and discuss the next step.</p>
-      <div class="success-message" id="successMessage">Your assessment details have been prepared. Please send the WhatsApp message to Medvika to complete the enquiry.</div>
-    </div>
-  </form>
+<div class="assessment-hero">
+<span class="section-tag">Pharmacy Audit Services</span>
+<h1>Plan Your Pharmacy Audit</h1>
+<p>Don't have pharmacy software or an exact stock count? That's okay. Share the information you currently have and Medvika will use it to understand the likely audit scope, manpower and timeline.</p>
+<div class="assessment-note"><i class="fa-solid fa-circle-info"></i><div><strong>Approximate information is acceptable.</strong><br>You do not need an exact SKU count to submit this assessment.</div></div>
 </div>
-</main>
 
-<footer class="footer">
-<div class="container">
-<h3>Medvika Healthcare Solutions</h3>
-<p>Professional healthcare and pharmacy business support solutions.</p>
-<div class="footer-links"><a href="index.html#home">Home</a><a href="index.html#about">About</a><a href="index.html#services">Services</a><a href="index.html#contact">Contact</a><a href="blog/">Blog</a></div>
-<a href="pages/privacy-policy.html">Privacy Policy</a>
-<a href="pages/terms.html">Terms &amp; Conditions</a>
-</div>
-</footer>
+<form class="assessment-form" id="auditAssessmentForm">
+<section class="form-section"><h2><i class="fa-solid fa-store"></i> Business Details</h2><div class="form-grid">
+<div class="form-field"><label for="businessName">Pharmacy / Business Name *</label><input id="businessName" required></div>
+<div class="form-field"><label for="contactName">Contact Person *</label><input id="contactName" required></div>
+<div class="form-field"><label for="phone">WhatsApp / Mobile Number *</label><input id="phone" type="tel" inputmode="tel" required></div>
+<div class="form-field"><label for="email">Email <span>(optional)</span></label><input id="email" type="email"></div>
+<div class="form-field"><label for="city">City *</label><input id="city" placeholder="e.g. Varanasi" required></div>
+<div class="form-field"><label for="area">Area / Locality <span>(optional)</span></label><input id="area"></div>
+</div></section>
+
+<section class="form-section"><h2><i class="fa-solid fa-pills"></i> Pharmacy & Inventory</h2><div class="form-grid">
+<div class="form-field"><label for="type">Pharmacy Type *</label><select id="type" required><option value="">Select</option><option>Retail Pharmacy</option><option>Hospital Pharmacy</option><option>Clinic Pharmacy</option><option>Wholesale / Distribution</option><option>Other</option></select></div>
+<div class="form-field"><label for="software">Current Software *</label><select id="software" required><option value="">Select</option><option>No software</option><option>Billing software only</option><option>Pharmacy ERP / Management software</option><option>Excel / Google Sheets</option><option>Manual records</option><option>Other</option></select></div>
+<div class="form-field"><label for="inventoryValue">Approx. Inventory Value *</label><select id="inventoryValue" required><option value="">Select</option><option>Below ₹2 lakh</option><option>₹2–5 lakh</option><option>₹5–10 lakh</option><option>₹10–25 lakh</option><option>₹25–50 lakh</option><option>₹50 lakh–₹1 crore</option><option>Above ₹1 crore</option><option>Not known</option></select></div>
+<div class="form-field"><label for="skuCount">Approx. Number of SKUs / Products *</label><select id="skuCount" required><option value="">Select</option><option>Below 1,000</option><option>1,000–3,000</option><option>3,000–5,000</option><option>5,000–10,000</option><option>10,000–20,000</option><option>More than 20,000</option><option>Not known</option></select></div>
+<div class="form-field full"><label>Inventory Categories</label><div class="check-grid">
+<label class="check-option"><input type="checkbox" name="categories" value="Medicines"> Medicines</label><label class="check-option"><input type="checkbox" name="categories" value="Injections"> Injections</label><label class="check-option"><input type="checkbox" name="categories" value="Surgical / Consumables"> Surgical / Consumables</label><label class="check-option"><input type="checkbox" name="categories" value="Medical Devices"> Medical Devices</label><label class="check-option"><input type="checkbox" name="categories" value="OTC / FMCG"> OTC / FMCG</label><label class="check-option"><input type="checkbox" name="categories" value="Orthopedic"> Orthopedic Products</label><label class="check-option"><input type="checkbox" name="categories" value="Diagnostics"> Diagnostics / Testing Kits</label><label class="check-option"><input type="checkbox" name="categories" value="Other"> Other</label>
+</div></div></div></section>
+
+<section class="form-section"><h2><i class="fa-solid fa-clipboard-check"></i> Audit Requirement</h2><div class="check-grid">
+<label class="check-option"><input type="checkbox" name="scope" value="Complete physical stock verification"> Complete physical stock verification</label><label class="check-option"><input type="checkbox" name="scope" value="Batch-wise verification"> Batch-wise verification</label><label class="check-option"><input type="checkbox" name="scope" value="Expiry / near-expiry identification"> Expiry / near-expiry identification</label><label class="check-option"><input type="checkbox" name="scope" value="Damaged / non-saleable stock"> Damaged / non-saleable stock</label><label class="check-option"><input type="checkbox" name="scope" value="Inventory valuation"> Inventory valuation</label><label class="check-option"><input type="checkbox" name="scope" value="System vs physical reconciliation"> System vs physical reconciliation</label><label class="check-option"><input type="checkbox" name="scope" value="Profit / loss assessment"> Profit / loss assessment</label><label class="check-option"><input type="checkbox" name="scope" value="Other"> Other requirement</label>
+</div><div class="form-grid" style="margin-top:18px">
+<div class="form-field"><label for="timing">Preferred Audit Timing</label><select id="timing"><option>Flexible</option><option>Daytime</option><option>After business hours</option><option>Overnight</option></select></div>
+<div class="form-field"><label for="staff">Staff Available to Assist <span>(approx.)</span></label><input id="staff" type="number" min="0"></div>
+<div class="form-field full"><label for="date">Preferred Audit Date / Period <span>(optional)</span></label><input id="date" placeholder="e.g. 10–15 September 2026"></div>
+</div></section>
+
+<section class="form-section"><h2><i class="fa-solid fa-file-lines"></i> Records & Files</h2>
+<div class="form-field full"><label>Records Currently Available</label><div class="check-grid"><label class="check-option"><input type="checkbox" name="records" value="Stock Excel / CSV"> Stock Excel / CSV</label><label class="check-option"><input type="checkbox" name="records" value="Billing / software report"> Billing / software report</label><label class="check-option"><input type="checkbox" name="records" value="Purchase records"> Purchase records</label><label class="check-option"><input type="checkbox" name="records" value="Sales records"> Sales records</label><label class="check-option"><input type="checkbox" name="records" value="Manual stock records"> Manual stock records</label><label class="check-option"><input type="checkbox" name="records" value="No organized records"> No organized records</label></div></div>
+<div class="form-field full" style="margin-top:18px"><label for="file">Upload Inventory / Stock Report <span>(optional)</span></label><div class="upload-box"><input id="file" type="file" accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png"><small>Excel, CSV, PDF or clear screenshots are acceptable. The assessment will be saved first; file storage will be added in the next step.</small></div></div>
+</section>
+
+<section class="form-section"><h2><i class="fa-solid fa-comment-medical"></i> Additional Information</h2><div class="form-field"><label for="message">Anything else we should know?</label><textarea id="message" placeholder="Tell us about any specific concern, stock complexity, multiple locations, warehouse, takeover, etc."></textarea></div></section>
+
+<div class="form-submit"><button type="submit" id="submitButton"><i class="fa-solid fa-paper-plane"></i> Submit Assessment</button><p>Your assessment will be securely recorded with Medvika. WhatsApp will then open with the same summary for faster follow-up.</p><div class="success-message" id="successMessage">Assessment submitted successfully. Your details have been saved with Medvika. Please send the WhatsApp message that opens next.</div><div class="error-message" id="errorMessage">We couldn't save the assessment right now. Please try again or contact Medvika directly on WhatsApp.</div></div>
+</form></div></main>
+
+<footer class="footer"><div class="container"><h3>Medvika Healthcare Solutions</h3><p>Professional healthcare and pharmacy business support solutions.</p><div class="footer-links"><a href="index.html#home">Home</a><a href="index.html#about">About</a><a href="index.html#services">Services</a><a href="index.html#contact">Contact</a><a href="blog/">Blog</a></div><a href="pages/privacy-policy.html">Privacy Policy</a> <a href="pages/terms.html">Terms &amp; Conditions</a></div></footer>
 
 <script>
-document.getElementById('auditAssessmentForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const f=new FormData(this);
-  const val=n=>f.get(n)||'Not provided';
-  const checked=n=>[...document.querySelectorAll('input[name="'+n+'"]:checked')].map(x=>x.value).join(', ')||'None selected';
-  const text=`MEDVIKA PHARMACY AUDIT ASSESSMENT\n\nBUSINESS\nPharmacy: ${val('businessName')}\nContact: ${val('contactName')}\nMobile: ${val('phone')}\nEmail: ${val('email')}\nCity: ${val('city')}\nArea: ${val('area')}\n\nPHARMACY & INVENTORY\nType: ${val('type')}\nSoftware: ${val('software')}\nInventory value: ${val('inventoryValue')}\nApprox. SKUs: ${val('skuCount')}\nCategories: ${checked('categories')}\n\nAUDIT REQUIREMENT\nScope: ${checked('scope')}\nTiming: ${val('timing')}\nStaff available: ${val('staff')}\nPreferred date/period: ${val('date')}\n\nRECORDS\nAvailable: ${checked('records')}\nFile: ${document.getElementById('file').files.length?'Available separately / attached by user':'No file'}\n\nADDITIONAL INFORMATION\n${val('message')}`;
-  document.getElementById('successMessage').style.display='block';
-  const url='https://wa.me/918979841035?text='+encodeURIComponent(text);
-  window.open(url,'_blank','noopener,noreferrer');
+const SUPABASE_URL='https://etevzodzxhsdwidtrmwv.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_iKWBOAxrWTZfU6Qb5PYd5Q_0y80GEOw';
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const form=document.getElementById('auditAssessmentForm');
+const submitButton=document.getElementById('submitButton');
+const successMessage=document.getElementById('successMessage');
+const errorMessage=document.getElementById('errorMessage');
+const val=id=>{const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():null;};
+const checked=name=>[...document.querySelectorAll('input[name="'+name+'"]:checked')].map(x=>x.value);
+
+form.addEventListener('submit',async e=>{
+ e.preventDefault();
+ successMessage.style.display='none'; errorMessage.style.display='none';
+ submitButton.disabled=true; submitButton.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+ const categories=checked('categories');
+ const scope=checked('scope');
+ const records=checked('records');
+ const payload={business_name:val('businessName'),contact_name:val('contactName'),phone:val('phone'),email:val('email'),city:val('city'),area:val('area'),pharmacy_type:val('type'),software_status:val('software'),inventory_value_range:val('inventoryValue'),sku_range:val('skuCount'),inventory_categories:categories,audit_scope:scope,preferred_timing:val('timing'),staff_available:val('staff')?Number(val('staff')):null,preferred_audit_period:val('date'),available_records:records,additional_information:val('message'),source:'website_audit_assessment',status:'new'};
+ const {error}=await supabaseClient.from('pharmacy_audit_leads').insert(payload);
+ if(error){console.error(error);errorMessage.style.display='block';submitButton.disabled=false;submitButton.innerHTML='<i class="fa-solid fa-paper-plane"></i> Submit Assessment';return;}
+ successMessage.style.display='block';submitButton.innerHTML='<i class="fa-solid fa-check"></i> Assessment Saved';
+ const text=`MEDVIKA PHARMACY AUDIT ASSESSMENT\n\nBUSINESS\nPharmacy: ${val('businessName')||'Not provided'}\nContact: ${val('contactName')||'Not provided'}\nMobile: ${val('phone')||'Not provided'}\nEmail: ${val('email')||'Not provided'}\nCity: ${val('city')||'Not provided'}\nArea: ${val('area')||'Not provided'}\n\nPHARMACY & INVENTORY\nType: ${val('type')||'Not provided'}\nSoftware: ${val('software')||'Not provided'}\nInventory value: ${val('inventoryValue')||'Not provided'}\nApprox. SKUs: ${val('skuCount')||'Not provided'}\nCategories: ${categories.join(', ')||'None selected'}\n\nAUDIT REQUIREMENT\nScope: ${scope.join(', ')||'None selected'}\nTiming: ${val('timing')||'Not provided'}\nStaff available: ${val('staff')||'Not provided'}\nPreferred date/period: ${val('date')||'Not provided'}\n\nRECORDS\nAvailable: ${records.join(', ')||'None selected'}\nStock file selected: ${document.getElementById('file').files.length?'Yes':'No'}\n\nADDITIONAL INFORMATION\n${val('message')||'None'}`;
+ window.open('https://wa.me/918979841035?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');
 });
 </script>
 </body>
