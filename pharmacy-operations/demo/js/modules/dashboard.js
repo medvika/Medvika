@@ -44,7 +44,21 @@ function renderLineChart(points){
   svg.innerHTML=`<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14b8a6" stop-opacity=".22"/><stop offset="1" stop-color="#14b8a6" stop-opacity="0"/></linearGradient><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#818cf8" stop-opacity=".18"/><stop offset="1" stop-color="#818cf8" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area("sales")}" fill="url(#sg)"/><path d="${area("purchases")}" fill="url(#pg)"/><path d="${path("sales")}" fill="none" stroke="#14b8a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="${path("purchases")}" fill="none" stroke="#818cf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${points.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.sales)}" r="3" fill="#fff" stroke="#14b8a6" stroke-width="2"/><circle cx="${x(i)}" cy="${y(p.purchases)}" r="3" fill="#fff" stroke="#818cf8" stroke-width="2"/>`).join("")}${labels}`;
 }
 
+function renderPublicDemo(){
+  pharmacyName="Medvika Demo Pharmacy";branchCode="DEMO";
+  $("dashboardPharmacyHero").textContent=pharmacyName;$("dashboardBranchContext").textContent=pharmacyName+" · "+branchCode;
+  const values={kpiSales:"₹38,650.00",kpiSalesMeta:"42 bills",kpiPurchases:"₹21,480.00",kpiPurchaseMeta:"6 invoices",kpiProfit:"₹8,430.00",kpiMargin:"21.8% margin",kpiStock:"₹8,42,300.00",kpiStockMeta:"1,286 active batches",kpiExpiry:"₹24,680.00",kpiExpiryMeta:"24 near-expiry batches",kpiSupplierDue:"₹67,450.00",pulseLowStock:"37",pulseNearExpiry:"24",pulseCustomerDue:"₹18,750.00",pulseAvgBill:"₹920.24",inventoryLowStock:"37",inventoryNearExpiry:"₹24,680.00",inventoryExpired:"₹4,320.00",inventoryMrpValue:"₹11,76,850.00",actionExpiredCount:"3",actionExpiredValue:"₹4,320.00 exposure",actionCriticalExpiryCount:"8",actionCriticalExpiryValue:"₹9,780.00 exposure",actionNearExpiryCount:"16",actionNearExpiryValue:"₹14,900.00 exposure",actionLowStockCount:"37",actionSupplierDueCount:"5",actionSupplierDueValue:"₹67,450.00 payable",actionCustomerDueCount:"7",actionCustomerDueValue:"₹18,750.00 receivable",actionExpiryFollowupCount:"4",actionExpiryFollowupValue:"2 new cases",actionPriorityCount:"6 areas need attention",cashSupplier:"₹67,450.00",cashCustomer:"₹18,750.00",cashSalesReturns:"₹1,240.00",cashPurchaseReturns:"₹2,860.00",healthScore:"82"};
+  Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el)el.textContent=value});
+  const nc=document.getElementById("notificationCount");if(nc)nc.textContent="4";const ring=document.querySelector(".pulse-ring");if(ring)ring.style.setProperty("--health","82%");
+  const sb=$("supplierBar"),cb=$("customerBar");if(sb)sb.style.width="100%";if(cb)cb.style.width="28%";
+  $("topMedicines").innerHTML=[["Dolo 650","54 units","₹3,240"],["Pan 40","38 units","₹4,180"],["Telma 40","31 units","₹5,425"],["Azithral 500","22 units","₹4,290"],["Shelcal 500","27 units","₹3,105"]].map((x,i)=>'<div class="rank-row"><span class="rank-num">'+(i+1)+'</span><div class="rank-main"><b>'+x[0]+'</b><small>'+x[1]+'</small></div><span class="rank-value">'+x[2]+'</span><div class="rank-track"><i style="width:'+(100-i*14)+'%"></i></div></div>').join("");
+  $("recentSalesBody").innerHTML='<tr><td><b>INV-1048</b></td><td>Walk-in</td><td>31 Aug</td><td>₹1,245</td></tr><tr><td><b>INV-1047</b></td><td>R. Sharma</td><td>31 Aug</td><td>₹2,860</td></tr><tr><td><b>INV-1046</b></td><td>A. Singh</td><td>31 Aug</td><td>₹785</td></tr>';
+  $("recentPurchasesBody").innerHTML='<tr><td><b>PUR-216</b></td><td>Health Distributors</td><td>31 Aug</td><td>₹8,420</td></tr><tr><td><b>PUR-215</b></td><td>Medico Pharma</td><td>30 Aug</td><td>₹13,060</td></tr>';
+  const now=new Date(),points=[];for(let i=6;i>=0;i--){const day=new Date(now);day.setDate(now.getDate()-i);points.push({label:dayKey(day),sales:4200+(6-i)*430+(i%2)*900,purchases:i===5?7200:i===2?5600:0})}renderLineChart(points);
+}
+
 async function loadDashboard(){
+  if(Auth?.user?.email==="demo@medvika.co.in"){renderPublicDemo();return}
   if(!pid){UI?.toast?.("Operational pharmacy not found.","warning");return}
   const{start,end}=rangeDates(),s=start.toISOString(),e=end.toISOString();
 
