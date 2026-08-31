@@ -10,10 +10,10 @@ window.MedvikaConfig = {
     dashboard: {
   title: "Dashboard",
   breadcrumb: "Home / Dashboard",
-  file: "pages/dashboard.html?v=20260830-4",
+  file: "pages/dashboard.html?v=20260831-5",
   permission: "dashboard.view",
-  script: "js/modules/dashboard.js?v=20260830-4",
-  style: "css/modules/dashboard.css?v=20260830-4"
+  script: "js/modules/dashboard.js?v=20260831-5",
+  style: "css/modules/dashboard.css?v=20260831-5"
 },
 
     // =========================================================
