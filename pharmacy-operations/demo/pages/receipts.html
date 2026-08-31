@@ -1,0 +1,51 @@
+<section class="account-register-module">
+  <section class="erp-card">
+    <div class="module-heading">
+      <div>
+        <h2>Receipts</h2>
+        <p>Review customer and sales receipts recorded against invoices.</p>
+      </div>
+      <button id="receiptsRefreshButton" type="button">Refresh</button>
+    </div>
+
+    <div class="register-toolbar receipts-toolbar">
+      <label>From<input id="receiptsFrom" type="date"></label>
+      <label>To<input id="receiptsTo" type="date"></label>
+      <label>Payment Mode
+        <select id="receiptsMode">
+          <option value="">All Modes</option>
+          <option value="CASH">Cash</option>
+          <option value="UPI">UPI</option>
+          <option value="CARD">Card</option>
+          <option value="BANK_TRANSFER">Bank Transfer</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </label>
+      <div class="toolbar-actions">
+        <button id="receiptsApplyButton" type="button">Apply</button>
+        <button id="receiptsExportButton" class="primary" type="button">Export CSV</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <div class="summary-card"><small>Total Receipts</small><strong id="receiptsTotal">₹0.00</strong></div>
+    <div class="summary-card"><small>Transactions</small><strong id="receiptsCount">0</strong></div>
+    <div class="summary-card"><small>Cash</small><strong id="receiptsCash">₹0.00</strong></div>
+    <div class="summary-card"><small>Non-Cash</small><strong id="receiptsDigital">₹0.00</strong></div>
+  </section>
+
+  <section class="erp-card">
+    <div class="section-heading">
+      <div><h3>Receipt Register</h3><p>Invoice-wise receipt history with customer details.</p></div>
+      <span id="receiptsResultCount" class="result-count">0 rows</span>
+    </div>
+    <div class="register-search"><input id="receiptsSearch" type="search" placeholder="Search invoice, patient, customer or transaction reference"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Invoice</th><th>Customer / Patient</th><th>Mode</th><th>Transaction Ref</th><th>Amount</th></tr></thead>
+        <tbody id="receiptsTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</section>

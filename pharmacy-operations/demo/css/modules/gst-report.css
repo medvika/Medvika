@@ -1,0 +1,21 @@
+.gst-report-module{display:grid;gap:18px}
+.gst-report-module .erp-card{background:#fff;border:1px solid var(--border,#e5e7eb);border-radius:16px;padding:18px;box-shadow:0 4px 14px rgba(15,45,63,.04)}
+.gst-report-module h2,.gst-report-module h3{margin:0 0 7px}
+.gst-report-module p{margin:0;color:#667085;line-height:1.5}
+.gst-workspace-intro{background:linear-gradient(135deg,#f0fdf8 0%,#fff 70%)!important}
+.gst-workspace-kicker{display:inline-block;margin-bottom:8px;color:#0f766e;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.section-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.gst-report-workspace{display:grid;gap:14px}
+.gst-report-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.gst-report-links button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:108px;padding:15px;border:1px solid #d8e4df;border-radius:12px;background:#f8fbfa;color:#1f2937;text-align:left;cursor:pointer}
+.gst-report-links button:hover,.gst-report-links button:focus{border-color:#0f8b68;background:#eef9f5;outline:none}
+.gst-report-links button b{color:#0f766e;font-size:15px}
+.gst-report-links button span{color:#667085;font-size:12px;line-height:1.45}
+.gst-workflow ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0 0;padding:0;list-style:none;counter-reset:gst-step}
+.gst-workflow li{counter-increment:gst-step;display:grid;grid-template-columns:30px 1fr;column-gap:9px;align-items:start;padding:13px;border:1px solid #e5e7eb;border-radius:11px;background:#fff}
+.gst-workflow li:before{content:counter(gst-step);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#0f766e;color:#fff;font-weight:800}
+.gst-workflow li b,.gst-workflow li span{grid-column:2}
+.gst-workflow li span{margin-top:4px;color:#667085;font-size:12px;line-height:1.4}
+.gst-note{padding:13px 15px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#667085;font-size:12px}
+@media(max-width:1000px){.gst-report-links,.gst-workflow ol{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.gst-report-links,.gst-workflow ol{grid-template-columns:1fr}.gst-report-links button{min-height:88px}}

@@ -1,0 +1,247 @@
+<section class="pr-memo-module">
+  <section class="erp-card">
+    <div class="pr-title-row">
+      <div>
+        <h2>Create Purchase Return Memo</h2>
+        <p>
+          Select a supplier, find returnable medicines and batches,
+          then issue a PR Memo. Later, settle it through Purchase Return using the supplier Credit Note as reference.
+        </p>
+      </div>
+
+      <button id="refreshPrMemosButton" type="button">
+        Refresh Memos
+      </button>
+    </div>
+
+    <div class="erp-grid erp-grid-3">
+      <label class="erp-field">
+        Supplier *
+        <select id="prSupplierId">
+          <option value="">Select supplier</option>
+        </select>
+      </label>
+
+      <label class="erp-field">
+        Search Medicine / Batch
+        <input
+          id="prMedicineSearch"
+          placeholder="Type medicine, generic, barcode or batch"
+          autocomplete="off"
+        >
+        <small id="prSearchHint">
+          Load supplier stock once, then this search filters instantly.
+        </small>
+      </label>
+
+      <label class="erp-field">
+        Return Stock Filter
+        <select id="prStockFilter">
+          <option value="all">All returnable stock</option>
+          <option value="expired">Expired</option>
+          <option value="near_expiry_90">Near expiry: 90 days</option>
+          <option value="near_expiry_180">Near expiry: 180 days</option>
+          <option value="damaged">Damaged / blocked batches</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="pr-filter-actions">
+      <button id="loadSupplierStockButton" type="button">
+        Load Supplier Stock
+      </button>
+    </div>
+  </section>
+
+  <section class="erp-card">
+    <h2>Supplier-wise Returnable Items</h2>
+
+    <div class="table">
+      <table id="prMemoItemsTable">
+        <thead>
+          <tr>
+            <th>Select</th>
+            <th>Medicine / Batch</th>
+            <th>Supplier Invoice</th>
+            <th>Purchase Date</th>
+            <th>Purchased</th>
+            <th>Free</th>
+            <th>Already Memoed</th>
+            <th>Current Stock</th>
+            <th>Paid Return Qty</th>
+            <th>Free Return Qty</th>
+            <th>PTR</th>
+            <th>Purchase Disc %</th>
+            <th>GST %</th>
+            <th>Expected Deduction %</th>
+            <th>Expected Claim</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td colspan="15" class="pr-empty">
+              Select a supplier and load stock.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="pr-layout">
+    <section class="erp-card">
+      <h2>PR Memo Details</h2>
+
+      <div class="erp-grid erp-grid-2">
+        <label class="erp-field">
+          Memo Date *
+          <input id="prMemoDate" type="datetime-local">
+        </label>
+
+        <label class="erp-field">
+          Dispatch / Courier Reference
+          <input id="prDispatchReference">
+        </label>
+
+        <label class="erp-field">
+          Return Reason *
+          <select id="prReason">
+            <option value="">Select reason</option>
+            <option value="Expired stock">Expired stock</option>
+            <option value="Near expiry stock">Near expiry stock</option>
+            <option value="Damaged stock">Damaged stock</option>
+            <option value="Wrong item supplied">Wrong item supplied</option>
+            <option value="Excess quantity supplied">Excess quantity supplied</option>
+            <option value="Quality complaint">Quality complaint</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
+        <label class="erp-field">
+          Notes
+          <textarea id="prNotes" rows="3"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <aside class="erp-card pr-summary-card">
+      <h2>Memo Summary</h2>
+
+      <div class="erp-summary">
+        <div class="erp-summary-card">
+          <small>Selected Lines</small>
+          <strong id="prSelectedLines">0</strong>
+        </div>
+
+        <div class="erp-summary-card">
+          <small>Total Return Qty</small>
+          <strong id="prTotalReturnQty">0</strong>
+        </div>
+      </div>
+
+      <div class="pr-claim-total">
+        <small>Expected Claim Value</small>
+        <strong id="prExpectedClaim">₹0.00</strong>
+      </div>
+
+      <div class="erp-alert erp-alert-warning">
+        Issuing a PR Memo moves stock to return-pending status.
+        Supplier outstanding and GST remain unchanged until CN posting.
+      </div>
+
+      <button id="issuePrMemoButton" type="button">
+        Issue PR Memo
+      </button>
+    </aside>
+  </div>
+
+
+  <section id="prMemoOperationsPanel" class="erp-card" hidden>
+    <div class="pr-title-row">
+      <div>
+        <h2 id="prOperationsMemoNumber">PR Memo Operations</h2>
+        <p id="prOperationsMemoStatus">Select a memo from Recent PR Memos.</p>
+      </div>
+
+      <button id="closePrOperationsButton" type="button" class="erp-btn-danger">
+        Close
+      </button>
+    </div>
+
+    <div class="erp-grid erp-grid-3">
+      <label class="erp-field">
+        Dispatch Date
+        <input id="prDispatchDate" type="datetime-local">
+      </label>
+
+      <label class="erp-field">
+        Courier / Transporter
+        <input id="prCourierName" placeholder="Courier or transporter">
+      </label>
+
+      <label class="erp-field">
+        Docket / LR Number
+        <input id="prDocketNumber" placeholder="Docket, LR or tracking number">
+      </label>
+    </div>
+
+    <div class="pr-operation-buttons">
+      <button id="printPrMemoButton" type="button">
+        Print PR Memo
+      </button>
+
+      <button id="markPrDispatchedButton" type="button">
+        Mark Dispatched
+      </button>
+
+      <button id="cancelPrMemoButton" type="button" class="erp-btn-danger">
+        Cancel PR Memo
+      </button>
+    </div>
+
+    <div class="table pr-history-table-wrap">
+      <table id="prMemoStatusHistoryTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" class="pr-empty">No status history loaded.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="erp-card">
+    <h2>Recent PR Memos</h2>
+
+    <div class="table">
+      <table id="recentPrMemosTable">
+        <thead>
+          <tr>
+            <th>PR Memo</th>
+            <th>Date</th>
+            <th>Supplier</th>
+            <th>Lines</th>
+            <th>Expected Claim</th>
+            <th>Status</th>
+            <th>Age</th>
+            <th>Dispatch</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td colspan="9" class="pr-empty">No PR memos loaded.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

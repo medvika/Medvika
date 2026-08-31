@@ -1,0 +1,6 @@
+<section class="chain-page"><section class="erp-card">
+<div class="section-head"><div><h2>Create Staff Login</h2><p>Create username/password staff accounts.</p></div></div>
+<div class="grid"><label>Username *<input id="uaUsername"></label><label>Full Name *<input id="uaName"></label><label>Password *<input id="uaPassword" type="password"></label><label>Role<select id="uaRole"><option value="pharmacist">Pharmacist</option><option value="inventory_staff">Inventory Staff</option><option value="cashier">Cashier</option><option value="viewer">Management Viewer</option><option value="pharmacy_admin">Pharmacy Admin</option></select></label><label>Primary Store<select id="uaStore"></select></label></div>
+<button id="uaCreate" class="primary">Create Staff Account</button>
+<div class="note"><b>Security:</b> Passwords are not stored in ERP tables. Account creation must be handled by a secure Supabase Edge Function/server-side admin endpoint.</div>
+</section></section>

@@ -1,0 +1,197 @@
+<section class="sales-return-module">
+  <section class="erp-card">
+    <h2>Find Original Invoice</h2>
+
+    <div class="return-search-row">
+      <input
+        id="invoiceSearch"
+        type="text"
+        placeholder="Enter invoice number, patient name or customer mobile"
+        autocomplete="off"
+      >
+      <button id="searchInvoiceButton" type="button">Search Invoice</button>
+    </div>
+
+    <div id="searchResults" class="search-results"></div>
+  </section>
+
+  <section id="returnWorkspace" class="return-workspace" hidden>
+    <div class="return-main">
+      <section class="erp-card">
+        <div class="return-heading-row">
+          <div>
+            <h2 id="selectedInvoiceNumber">Selected Invoice</h2>
+            <div id="selectedInvoiceStatus"></div>
+          </div>
+
+          <button
+            id="clearInvoiceButton"
+            class="erp-btn-danger"
+            type="button"
+          >
+            Change Invoice
+          </button>
+        </div>
+
+        <div class="invoice-meta">
+          <div>
+            <small>Invoice Date</small>
+            <strong id="invoiceDateText">—</strong>
+          </div>
+
+          <div>
+            <small>Customer / Patient</small>
+            <strong id="customerText">—</strong>
+          </div>
+
+          <div>
+            <small>Invoice Total</small>
+            <strong id="invoiceTotalText">₹0.00</strong>
+          </div>
+
+          <div>
+            <small>Previously Returned</small>
+            <strong id="previousReturnText">₹0.00</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="erp-card">
+        <h2>Select Returned Items</h2>
+
+        <div class="table">
+          <table id="returnItemsTable">
+            <thead>
+              <tr>
+                <th>Return</th>
+                <th>Medicine / Batch</th>
+                <th>Sold</th>
+                <th>Already Returned</th>
+                <th>Available</th>
+                <th>Strip Return</th>
+                <th>Tab Return</th>
+                <th>Stock Action</th>
+                <th>Refund</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="9" class="return-empty">Select an invoice.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="erp-card">
+        <h2>Previous Returns for This Invoice</h2>
+
+        <div class="table">
+          <table id="previousReturnsTable">
+            <thead>
+              <tr>
+                <th>Return No.</th>
+                <th>Date</th>
+                <th>Reason</th>
+                <th>Refund Mode</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="5" class="return-empty">No previous returns.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="return-side">
+      <form id="returnForm" class="erp-card">
+        <h2>Return Summary</h2>
+
+        <label class="erp-field">
+          Return Reason *
+          <select id="returnReason" required>
+            <option value="">Select reason</option>
+            <option value="Customer returned medicine">Customer returned medicine</option>
+            <option value="Wrong medicine billed">Wrong medicine billed</option>
+            <option value="Billing error">Billing error</option>
+            <option value="Damaged product">Damaged product</option>
+            <option value="Quality complaint">Quality complaint</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
+        <label class="erp-field">
+          Refund Mode *
+          <select id="refundMode" required>
+            <option value="CASH">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="CARD">Card</option>
+            <option value="BANK_TRANSFER">Bank Transfer</option>
+            <option value="CREDIT_NOTE">Credit Note</option>
+            <option value="WALLET">Wallet</option>
+            <option value="NO_REFUND">No Refund</option>
+          </select>
+        </label>
+
+        <label class="erp-field">
+          Notes
+          <textarea
+            id="returnNotes"
+            rows="3"
+            placeholder="Optional return notes"
+          ></textarea>
+        </label>
+
+        <div class="erp-summary">
+          <div class="erp-summary-card">
+            <small>Selected Lines</small>
+            <strong id="selectedLinesText">0</strong>
+          </div>
+
+          <div class="erp-summary-card">
+            <small>Return Quantity</small>
+            <strong id="returnQuantityText">0</strong>
+          </div>
+        </div>
+
+        <div class="refund-total-wrap">
+          <small>Estimated Refund</small>
+          <strong id="refundTotalText">₹0.00</strong>
+        </div>
+
+        <div class="erp-alert erp-alert-warning">
+          Only <b>Return to Stock</b> increases saleable inventory.
+          Damaged and quarantine items remain outside saleable stock.
+        </div>
+
+        <button
+  id="saveReturnButton"
+  type="submit"
+  style="
+    display:block;
+    width:100%;
+    min-height:52px;
+    margin-top:18px;
+    padding:14px 18px;
+    background:#16a34a;
+    color:#ffffff;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 4px 12px rgba(22,163,74,.25);
+  "
+>
+  Confirm Sales Return
+        </button>
+      </form>
+
+      <div id="returnSuccess" class="return-success" hidden></div>
+    </aside>
+  </section>
+</section>

@@ -1,0 +1,71 @@
+window.MedvikaConfig = {
+  appName: "Medvika ERP",
+  version: "0.3",
+  defaultRoute: "dashboard",
+
+  routes: {
+    dashboard: { title: "Dashboard", breadcrumb: "Home / Dashboard", file: "pages/dashboard.html", permission: "dashboard.view" },
+
+    medicines: { title: "Medicines", breadcrumb: "Masters / Medicines", file: "pages/medicines.html", permission: "masters.view", script: "js/modules/medicines.js", style: "css/modules/medicines.css" },
+    manufacturers: { title: "Manufacturers", breadcrumb: "Masters / Manufacturers", file: "pages/manufacturers.html", permission: "masters.view", script: "js/modules/manufacturers.js", style: "css/modules/manufacturers.css" },
+    suppliers: { title: "Suppliers", breadcrumb: "Masters / Suppliers", file: "pages/suppliers.html", permission: "masters.view", script: "js/modules/suppliers.js", style: "css/modules/suppliers.css" },
+    customers: { title: "Customers", breadcrumb: "Masters / Customers", file: "pages/customers.html", permission: "masters.view", script: "js/modules/customers.js", style: "css/modules/customers.css" },
+    doctors: { title: "Doctors", breadcrumb: "Masters / Doctors", file: "pages/doctors.html", permission: "masters.view", script: "js/modules/doctors.js", style: "css/modules/doctors.css" },
+
+    purchase: { title: "Purchase", breadcrumb: "Transactions / Purchase", file: "pages/purchase.html", permission: "purchase.view",script: "js/modules/purchase.js", style: "css/modules/purchase.css"},
+    "pr-memo": { title: "PR Memo", breadcrumb: "Transactions / PR Memo", file: "pages/pr-memo.html", permission: "purchase.view",script: "js/modules/pr-memo.js", style: "css/modules/pr-memo.css"},
+    "purchase-return": { title: "Purchase Return", breadcrumb: "Transactions / Purchase Return", file: "pages/purchase-return.html", permission: "purchase.view",script: "js/modules/purchase-return.js", style: "css/modules/pr-memo.css"},
+    "purchase-order": { title: "Purchase Order", breadcrumb: "Transactions / Purchase Order", file: "pages/purchase-order.html", permission: "purchase.view", script: "js/modules/purchase-order.js", style: "css/modules/purchase-order.css" },
+    sales: { title: "Sales Billing", breadcrumb: "Transactions / Sales Billing", file: "pages/sales.html", permission: "sales.view", script: "js/modules/sales.js", style: "css/modules/sales.css" },
+    "sales-return": { title: "Sales Return", breadcrumb: "Transactions / Sales Return", file: "pages/sales-return.html", permission: "sales.view", script: "js/modules/sales-return.js", style: "css/modules/sales-return.css" },
+    "cancelled-sales": { title: "Cancelled Sales", breadcrumb: "Transactions / Cancelled Sales", file: "pages/cancelled-sales.html", permission: "sales.view", script: "js/modules/cancelled-sales.js", style: "css/modules/cancelled-sales.css" },
+
+    inventory: { title: "Inventory", breadcrumb: "Stock / Inventory", file: "pages/inventory.html", permission: "inventory.view", script: "js/modules/inventory.js", style: "css/modules/inventory.css" },
+    "batch-stock": { title: "Batch Stock", breadcrumb: "Stock / Batch Stock", file: "pages/inventory.html", permission: "inventory.view", script: "js/modules/inventory.js", style: "css/modules/inventory.css" },
+    "stock-adjustment": { title: "Stock Adjustment", breadcrumb: "Stock / Stock Adjustment", file: "pages/stock-adjustment.html", permission: "inventory.view", script: "js/modules/stock-adjustment.js", style: "css/modules/stock-adjustment.css" },
+    "damage-expiry": { title: "Damage & Expiry", breadcrumb: "Stock / Damage & Expiry", file: "pages/damage-expiry.html", permission: "inventory.view", script: "js/modules/damage-expiry.js", style: "css/modules/damage-expiry.css" },
+    "stock-audit": { title: "Physical Stock Verification", breadcrumb: "Stock / Physical Stock Verification", file: "pages/stock-audit.html", permission: "inventory.view", script: "js/modules/stock-audit.js", style: "css/modules/stock-audit.css" },
+    "stock-transfer": { title: "Stock Transfer", breadcrumb: "Stock / Stock Transfer", file: "pages/coming-soon.html", permission: "inventory.view" },
+    "near-expiry": { title: "Near Expiry Automation", breadcrumb: "Stock / Near Expiry Automation", file: "pages/near-expiry.html", permission: "inventory.view", script: "js/modules/near-expiry.js", style: "css/modules/near-expiry.css" },
+    
+    expenses: { title: "Expenses", breadcrumb: "Accounts / Expenses", file: "pages/expenses.html", permission: "expenses.view", script: "js/modules/expenses.js", style: "css/modules/expenses.css" },
+    cashbook: { title: "Cash Book", breadcrumb: "Accounts / Cash Book", file: "pages/cashbook.html", permission: "expenses.view", script: "js/modules/cashbook.js", style: "css/modules/cashbook.css" },
+    "supplier-ledger": { title: "Supplier Ledger", breadcrumb: "Accounts / Supplier Ledger", file: "pages/supplier-ledger.html", permission: "supplier.ledger", script: "js/modules/supplier-ledger.js", style: "css/modules/supplier-ledger.css" },
+    "customer-ledger": { title: "Customer Ledger", breadcrumb: "Accounts / Customer Ledger", file: "pages/customer-ledger.html", permission: "sales.view", script: "js/modules/customer-ledger.js", style: "css/modules/customer-ledger.css" },
+    payments: { title: "Payments", breadcrumb: "Accounts / Payments", file: "pages/payments.html", permission: "expenses.view", script: "js/modules/payments.js", style: "css/modules/payments.css" },
+    receipts: { title: "Receipts", breadcrumb: "Accounts / Receipts", file: "pages/receipts.html", permission: "expenses.view", script: "js/modules/receipts.js", style: "css/modules/receipts.css" },
+
+    "sales-report": { title: "Sales Report", breadcrumb: "Reports / Sales Report", file: "pages/sales-report.html", permission: "reports.view", script: "js/modules/sales-report.js", style: "css/modules/sales-report.css" },
+    "purchase-report": { title: "Purchase Report", breadcrumb: "Reports / Purchase Report", file: "pages/purchase-report.html", permission: "reports.view", script: "js/modules/purchase-report.js", style: "css/modules/purchase-report.css" },
+    "profit-report": { title: "Profit & Loss", breadcrumb: "Reports / Profit & Loss", file: "pages/profit-report.html", permission: "reports.view", script: "js/modules/profit-report.js", style: "css/modules/profit-report.css" },
+    "gst-report": { title: "GST & Tax Reports", breadcrumb: "Reports / GST & Tax Reports", file: "pages/gst-report.html", permission: "reports.view", script: "js/modules/gst-report.js", style: "css/modules/gst-report.css" },
+    "gstr1": { title: "GSTR-1", breadcrumb: "Reports / GSTR-1", file: "pages/gstr1.html", permission: "reports.view", script: "js/modules/gstr1.js", style: "css/modules/gstr1.css" },
+    "gstr3b": { title: "GSTR-3B Working", breadcrumb: "Reports / GSTR-3B Working", file: "pages/gstr3b.html", permission: "reports.view", script: "js/modules/gstr3b.js", style: "css/modules/gstr3b.css" },
+    "input-gst": { title: "Input GST / ITC", breadcrumb: "Reports / Input GST / ITC", file: "pages/input-gst.html", permission: "reports.view", script: "js/modules/input-gst.js", style: "css/modules/input-gst.css" },
+    "accountant-gst": { title: "Accountant GST Reports", breadcrumb: "Reports / Accountant GST Reports", file: "pages/accountant-gst.html", permission: "reports.view", script: "js/modules/accountant-gst.js", style: "css/modules/accountant-gst.css" },
+    "gst-control-center": { title: "GST Control Center", breadcrumb: "Reports / GST Control Center", file: "pages/gst-control-center.html", permission: "reports.view", script: "js/modules/gst-control-center.js", style: "css/modules/gst-control-center.css" },
+    "stock-report": { title: "Stock Report", breadcrumb: "Reports / Stock Report", file: "pages/stock-report.html", permission: "reports.view", script: "js/modules/stock-report.js", style: "css/modules/stock-report.css" },
+    "expiry-report": { title: "Expiry Report", breadcrumb: "Reports / Expiry Report", file: "pages/expiry-report.html", permission: "reports.view", script: "js/modules/expiry-report.js", style: "css/modules/expiry-report.css" },
+    "return-report": { title: "Return Report", breadcrumb: "Reports / Return Report", file: "pages/return-report.html", permission: "reports.view", script: "js/modules/return-report.js", style: "css/modules/return-report.css" },
+    "bounce-report": { title: "Lost Sales / Bounce Report", breadcrumb: "Reports / Lost Sales / Bounce Report", file: "pages/bounce-report.html", permission: "reports.view", script: "js/modules/bounce-report.js", style: "css/modules/bounce-report.css" },
+    "margin-report": { title: "Margin Report", breadcrumb: "Reports / Margin Report", file: "pages/margin-report.html", permission: "reports.view", script: "js/modules/margin-report.js", style: "css/modules/margin-report.css" },
+    
+    "compliance": { title:"Registers", breadcrumb:"Compliance / Registers", file:"pages/registers.html", permission:"reports.view", script:"js/modules/registers.js", style:"css/modules/compliance.css" },
+"h1-register": { title:"Schedule H1 Register", breadcrumb:"Compliance / Schedule H1 Register", file:"pages/schedule-h1-register.html", permission:"reports.view", script:"js/modules/compliance-register.js", style:"css/modules/compliance.css" },
+"nrx-register": { title:"NRx Register", breadcrumb:"Compliance / NRx Register", file:"pages/nrx-register.html", permission:"reports.view", script:"js/modules/compliance-register.js", style:"css/modules/compliance.css" },
+"controlled-drugs": { title:"Controlled Drugs", breadcrumb:"Compliance / Controlled Drugs", file:"pages/controlled-drugs.html", permission:"reports.view", script:"js/modules/compliance-register.js", style:"css/modules/compliance.css" },
+"audit-log": { title:"Audit Log", breadcrumb:"Compliance / Audit Log", file:"pages/audit-log.html", permission:"reports.view", script:"js/modules/audit-log.js", style:"css/modules/compliance.css" },
+
+    users: { title: "Users & Staff", breadcrumb: "Administration / Users & Staff", file: "pages/users.html", permission: "users.manage", script: "js/modules/users.js", style: "css/modules/users.css" },
+    permissions: { title: "Roles & Permissions", breadcrumb: "Administration / Roles & Permissions", file: "pages/permissions.html", permission: "permissions.manage", script: "js/modules/permissions.js", style: "css/modules/permissions.css" },
+    "pharmacy-profile": { title: "Pharmacy Profile", breadcrumb: "Administration / Pharmacy Profile", file: "pages/company-settings.html", permission: "settings.manage", script: "js/modules/company-settings.js", style: "css/modules/company-settings.css" },
+    settings: { title: "Company Settings", breadcrumb: "Administration / Company Settings", file: "pages/company-settings.html", permission: "settings.manage", script: "js/modules/company-settings.js", style: "css/modules/company-settings.css" },
+    backup: { title: "Backup & Restore", breadcrumb: "Administration / Backup & Restore", file: "pages/backup.html", permission: "settings.manage", script: "js/modules/backup.js", style: "css/modules/backup.css" },
+    "organization": { title:"Organization", breadcrumb:"Administration / Organization", file:"pages/organization.html", permission:"settings.manage", script:"js/modules/organization.js", style:"css/modules/chain.css" },
+"stores": { title:"Stores / Branches", breadcrumb:"Administration / Stores", file:"pages/stores.html", permission:"settings.manage", script:"js/modules/stores.js", style:"css/modules/chain.css" },
+"user-store-assignment": { title:"User Store Assignment", breadcrumb:"Administration / User Store Assignment", file:"pages/user-store-assignment.html", permission:"users.manage", script:"js/modules/user-store-assignment.js", style:"css/modules/chain.css" },
+"username-accounts": { title:"Create Staff Login", breadcrumb:"Administration / Create Staff Login", file:"pages/username-accounts.html", permission:"users.manage", script:"js/modules/username-accounts.js", style:"css/modules/chain.css" },
+"store-switcher": { title:"Switch Store", breadcrumb:"Account / Switch Store", file:"pages/store-switcher.html", permission:"dashboard.view", script:"js/modules/store-switcher.js", style:"css/modules/chain.css" },
+    profile: { title: "My Profile", breadcrumb: "Account / My Profile", file: "pages/coming-soon.html", permission: "dashboard.view" }
+  }
+};

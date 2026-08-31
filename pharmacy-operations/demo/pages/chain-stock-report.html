@@ -1,0 +1,70 @@
+<section class="chain-stock-module">
+  <section class="erp-card">
+    <div class="module-heading">
+      <div>
+        <h2>Chain Stock Report</h2>
+        <p>Review item-wise or batch-wise stock across every active branch.</p>
+      </div>
+      <button id="cstRefresh" type="button">Refresh</button>
+    </div>
+    <div class="chain-stock-filters">
+      <label>View
+        <select id="cstView">
+          <option value="ITEM">Item-wise</option>
+          <option value="BATCH">Batch-wise Audit</option>
+        </select>
+      </label>
+      <label>Branch
+        <select id="cstBranch"><option value="">All Branches</option></select>
+      </label>
+      <label>Stock Status
+        <select id="cstStatus">
+          <option value="AVAILABLE">Available Stock</option>
+          <option value="LOW">Low Stock</option>
+          <option value="EXPIRING">Expiring in 90 Days</option>
+          <option value="EXPIRED">Expired Stock</option>
+          <option value="BLOCKED">Blocked Stock</option>
+          <option value="ZERO">Zero Stock Batches</option>
+          <option value="ALL">All Batches</option>
+        </select>
+      </label>
+      <label>Medicine / Batch
+        <input id="cstSearch" type="search" placeholder="Brand, generic, barcode or batch">
+      </label>
+      <button id="cstApply" class="primary" type="button">Apply</button>
+      <button id="cstExport" type="button">Export CSV</button>
+    </div>
+  </section>
+
+  <section class="chain-stock-summary">
+    <div><small>Branches</small><strong id="cstBranches">0</strong></div>
+    <div><small>Medicines</small><strong id="cstMedicines">0</strong></div>
+    <div><small>Batches</small><strong id="cstBatches">0</strong></div>
+    <div><small>Available Qty (Packs)</small><strong id="cstQuantity">0</strong></div>
+    <div><small>Purchase Value</small><strong id="cstPurchaseValue">₹0.00</strong></div>
+    <div><small>MRP Value</small><strong id="cstMrpValue">₹0.00</strong></div>
+  </section>
+
+  <section class="erp-card">
+    <div class="module-heading">
+      <div>
+        <h2 id="cstTableTitle">Item-wise Stock</h2>
+        <small id="cstCount">0 records</small>
+      </div>
+      <label class="rows-control">Rows
+        <select id="cstPageSize"><option>25</option><option>50</option><option>100</option></select>
+      </label>
+    </div>
+    <div class="table">
+      <table>
+        <thead id="cstHead"></thead>
+        <tbody id="cstBody"><tr><td class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button id="cstPrevious" type="button">Previous</button>
+      <strong id="cstPageLabel">Page 1 of 1</strong>
+      <button id="cstNext" type="button">Next</button>
+    </div>
+  </section>
+</section>

@@ -1,0 +1,142 @@
+<section class="reports-hub-module">
+  <section class="erp-card hero-card">
+    <div class="module-heading">
+      <div>
+        <h2>Reports & Export</h2>
+        <p>Central reporting dashboard for sales, purchases, profitability, tax, stock, expiry, returns and lost sales.</p>
+      </div>
+      <button id="reportsHubRefresh" type="button">Refresh</button>
+    </div>
+
+    <div class="period-toolbar">
+      <label>From<input id="reportsHubFrom" type="date"></label>
+      <label>To<input id="reportsHubTo" type="date"></label>
+      <div class="quick-periods">
+        <button type="button" data-period="today">Today</button>
+        <button type="button" data-period="month">This Month</button>
+        <button type="button" data-period="fy">This FY</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <div class="summary-card">
+      <small>Sales</small>
+      <strong id="hubSales">₹0.00</strong>
+      <span id="hubInvoices">0 invoices</span>
+    </div>
+    <div class="summary-card">
+      <small>Purchases</small>
+      <strong id="hubPurchases">₹0.00</strong>
+      <span id="hubPurchaseInvoices">0 invoices</span>
+    </div>
+    <div class="summary-card positive">
+      <small>Gross Profit</small>
+      <strong id="hubGrossProfit">₹0.00</strong>
+      <span id="hubGrossMargin">0.00% margin</span>
+    </div>
+    <div class="summary-card">
+      <small>Operating Expenses</small>
+      <strong id="hubExpenses">₹0.00</strong>
+      <span>Posted expenses</span>
+    </div>
+    <div class="summary-card emphasis">
+      <small>Operating Profit</small>
+      <strong id="hubOperatingProfit">₹0.00</strong>
+      <span>Gross profit − expenses</span>
+    </div>
+    <div class="summary-card negative">
+      <small>Lost Sales Requests</small>
+      <strong id="hubBounces">0</strong>
+      <span id="hubBounceQty">0 qty requested</span>
+    </div>
+  </section>
+
+  <section class="erp-card">
+    <div class="section-heading">
+      <div>
+        <h3>Report Library</h3>
+        <p>Open a detailed report or export its filtered data.</p>
+      </div>
+      <span>9 reports</span>
+    </div>
+
+    <div class="report-grid">
+      <button class="report-card" data-route="sales-report" type="button">
+        <span class="report-icon">📈</span>
+        <strong>Sales Report</strong>
+        <small>Invoices, collections and outstanding</small>
+      </button>
+
+      <button class="report-card" data-route="purchase-report" type="button">
+        <span class="report-icon">📉</span>
+        <strong>Purchase Report</strong>
+        <small>Supplier invoices, paid and outstanding</small>
+      </button>
+
+      <button class="report-card" data-route="profit-report" type="button">
+        <span class="report-icon">💹</span>
+        <strong>Profit Report</strong>
+        <small>Gross and operating profitability</small>
+      </button>
+
+      <button class="report-card" data-route="margin-report" type="button">
+        <span class="report-icon">📊</span>
+        <strong>Margin Report</strong>
+        <small>Medicine, invoice, category and manufacturer margin</small>
+      </button>
+
+      <button class="report-card" data-route="gst-report" type="button">
+        <span class="report-icon">🧾</span>
+        <strong>GST Report</strong>
+        <small>Input, output and taxable values</small>
+      </button>
+
+      <button class="report-card" data-route="stock-report" type="button">
+        <span class="report-icon">📦</span>
+        <strong>Stock Report</strong>
+        <small>Stock quantity, valuation and reorder exposure</small>
+      </button>
+
+      <button class="report-card" data-route="expiry-report" type="button">
+        <span class="report-icon">⏳</span>
+        <strong>Expiry Report</strong>
+        <small>Batch-wise expiry risk and value exposure</small>
+      </button>
+
+      <button class="report-card" data-route="return-report" type="button">
+        <span class="report-icon">🔄</span>
+        <strong>Return Report</strong>
+        <small>Sales and purchase returns</small>
+      </button>
+
+      <button class="report-card" data-route="bounce-report" type="button">
+        <span class="report-icon">📉</span>
+        <strong>Lost Sales / Bounce</strong>
+        <small>Unavailable requests and lost demand</small>
+      </button>
+    </div>
+  </section>
+
+  <section class="erp-card">
+    <div class="section-heading">
+      <div>
+        <h3>Quick Export</h3>
+        <p>Export core operational registers for the selected period.</p>
+      </div>
+    </div>
+
+    <div class="export-grid">
+      <button type="button" data-export="sales">Export Sales CSV</button>
+      <button type="button" data-export="purchases">Export Purchases CSV</button>
+      <button type="button" data-export="payments">Export Payments CSV</button>
+      <button type="button" data-export="receipts">Export Receipts CSV</button>
+      <button type="button" data-export="expenses">Export Expenses CSV</button>
+      <button type="button" data-export="bounces">Export Bounce CSV</button>
+    </div>
+  </section>
+
+  <div class="reports-note">
+    Dashboard profitability uses GST-exclusive taxable sales compared with GST-exclusive purchase cost. GST remains separately reported in the GST Report.
+  </div>
+</section>

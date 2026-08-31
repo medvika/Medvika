@@ -1,0 +1,17 @@
+<section class="comp-page"><section class="erp-card"><h2>Compliance Registers</h2><p>Compliance workspace for regulated-drug rules and register review.</p><div class="comp-grid">
+<a data-route="schedule-h1-register"><b>Schedule H1 Register</b><span>Separate supply register and missing-data review.</span></a>
+<a data-route="nrx-register"><b>NRx Register</b><span>NRx-classified transaction working register.</span></a>
+<a data-route="controlled-drugs"><b>Controlled Drugs</b><span>Schedule X / controlled-drug working register.</span></a>
+<a data-route="audit-log"><b>Audit Log</b><span>Compliance-rule and record activity.</span></a>
+</div></section>
+<section class="erp-card"><h3>Generic / Salt Compliance Rules</h3><p>Rules are generic-based. Brand names are not the source of truth.</p>
+<div class="toolbar"><input id="crSearch" placeholder="Search generic / salt"><button id="crAdd" class="primary">Add Rule</button></div>
+<div class="table-wrap"><table><thead><tr><th>Generic / Salt</th><th>H1</th><th>NRx</th><th>Schedule X</th><th>Controlled</th><th>Effective</th><th>Source</th><th></th></tr></thead><tbody id="crBody"></tbody></table></div>
+</section>
+<div id="crModal" class="comp-modal" hidden><div class="dialog"><div class="section-head"><h3>Compliance Rule</h3><button id="crClose">×</button></div>
+<label>Generic / Salt *<input id="crName"></label><div class="checks">
+<label><input id="crH1" type="checkbox"> Schedule H1</label><label><input id="crNrx" type="checkbox"> NRx</label>
+<label><input id="crX" type="checkbox"> Schedule X</label><label><input id="crControlled" type="checkbox"> Controlled</label></div>
+<label>Effective From<input id="crFrom" type="date"></label><label>Effective To<input id="crTo" type="date"></label>
+<label>Source / Notification<input id="crSource" placeholder="Gazette / CDSCO reference"></label><label>Notes<textarea id="crNotes"></textarea></label>
+<button id="crSave" class="primary">Save Rule</button></div></div></section>

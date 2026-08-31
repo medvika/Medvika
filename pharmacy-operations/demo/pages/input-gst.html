@@ -1,0 +1,92 @@
+<section class="itc-module">
+<section class="erp-card gstr2b-import-card">
+ <div class="itc-head">
+  <div><h2>GSTR-2B & Input GST / ITC</h2><p>Import the GST portal statement, validate it, then reconcile supplier invoices.</p></div>
+ </div>
+ <div class="gstr2b-import-grid">
+  <label>Return Period *<input id="gstr2bPeriod" type="month"></label>
+  <label>GSTR-2B File *<input id="gstr2bFile" type="file" accept=".xlsx,.xls,.json,application/json"></label>
+  <div class="gstr2b-import-actions"><button id="gstr2bValidate" type="button">Validate File</button><button id="gstr2bImport" class="primary" type="button" disabled>Import Validated Statement</button></div>
+ </div>
+ <p class="import-help">Accepted: GST portal Excel (.xlsx/.xls) or JSON. The original row data, file name and import totals are retained for audit.</p>
+ <div id="gstr2bPreview" class="gstr2b-preview" hidden>
+  <div class="preview-summary">
+   <div><small>Valid Documents</small><strong id="gstr2bValidCount">0</strong></div>
+   <div><small>Invalid Rows</small><strong id="gstr2bInvalidCount">0</strong></div>
+   <div><small>Taxable Value</small><strong id="gstr2bTaxable">₹0.00</strong></div>
+   <div><small>Total ITC</small><strong id="gstr2bTax">₹0.00</strong></div>
+  </div>
+  <div id="gstr2bValidationMessage" class="validation-message"></div>
+  <div class="table-wrap"><table class="gstr2b-preview-table"><thead><tr><th>GSTIN</th><th>Supplier</th><th>Document</th><th>Date</th><th>Taxable</th><th>IGST</th><th>CGST</th><th>SGST</th><th>Cess</th></tr></thead><tbody id="gstr2bPreviewBody"></tbody></table></div>
+ </div>
+</section>
+
+<section class="erp-card">
+ <div class="section-head"><div><h3>GSTR-2B Import History</h3><p>Each source file is retained as a separate auditable import batch.</p></div><span id="gstr2bImportCount">0 imports</span></div>
+ <div class="table-wrap"><table class="gstr2b-history-table"><thead><tr><th>Period</th><th>File</th><th>Format</th><th>Documents</th><th>Taxable</th><th>ITC</th><th>Status</th><th>Imported</th><th>Action</th></tr></thead><tbody id="gstr2bImportBody"><tr><td colspan="9" class="empty">No GSTR-2B files imported.</td></tr></tbody></table></div>
+</section>
+
+<section class="erp-card gstr2b-reconciliation">
+ <div class="section-head">
+  <div><h3>GSTR-2B Reconciliation Results</h3><p>Review automatic matches and resolve exceptions before marking ITC eligible.</p></div>
+  <div class="recon-controls"><input id="gstr2bReconPeriod" type="month" aria-label="Reconciliation period"><select id="gstr2bMatchFilter"><option value="">All statuses</option><option>MATCHED</option><option>MANUAL_MATCH</option><option>VALUE_MISMATCH</option><option>DATE_MISMATCH</option><option>GSTIN_MISMATCH</option><option>MULTIPLE_CANDIDATES</option><option>UNMATCHED</option><option>IGNORED</option></select><button id="gstr2bReconCsv" type="button">Export Reconciliation CSV</button><span id="gstr2bReconCount">0 documents</span></div>
+ </div>
+ <div class="recon-summary">
+  <div><small>Matched</small><strong id="gstr2bMatchedCount">0</strong></div>
+  <div><small>Needs Review</small><strong id="gstr2bReviewCount">0</strong></div>
+  <div><small>Unmatched</small><strong id="gstr2bUnmatchedCount">0</strong></div>
+ </div>
+ <div class="table-wrap"><table class="gstr2b-recon-table"><thead><tr><th>Period</th><th>Supplier GSTIN</th><th>Portal Document</th><th>Date</th><th>Taxable</th><th>ITC</th><th>Status</th><th>ERP Purchase</th><th>Review Note</th><th>Action</th></tr></thead><tbody id="gstr2bReconBody"><tr><td colspan="10" class="empty">No imported documents.</td></tr></tbody></table></div>
+</section>
+
+<div id="gstr2bReviewModal" class="itc-modal" hidden>
+ <div class="itc-dialog">
+  <div class="section-head"><h3>Review GSTR-2B Match</h3><button id="gstr2bReviewClose" type="button">×</button></div>
+  <p id="gstr2bReviewLabel"></p>
+  <label>ERP Purchase Invoice<select id="gstr2bPurchaseCandidate"></select></label>
+  <label>Review Notes<textarea id="gstr2bReviewNotes" rows="3" placeholder="Reason for manual match or ignore"></textarea></label>
+  <div class="review-actions"><button id="gstr2bIgnore" type="button">Ignore Portal Row</button><button id="gstr2bApprove" class="primary" type="button">Approve Manual Match</button></div>
+ </div>
+</div>
+
+<section class="erp-card">
+ <div class="itc-head">
+  <div><h3>Input GST / ITC Register</h3><p>Purchase invoice-wise GST and ITC working register.</p></div>
+  <div class="actions"><button id="itcRefresh">Refresh</button><button id="itcPrint">Print</button><button id="itcCsv" class="primary">Export ERP ITC Register</button></div>
+ </div>
+ <div class="filters">
+  <label>From<input id="itcFrom" type="date"></label>
+  <label>To<input id="itcTo" type="date"></label>
+  <label>ITC Status<select id="itcStatusFilter"><option value="">All</option><option>Pending</option><option>Eligible</option><option>Reversed</option><option>Blocked</option></select></label>
+ </div>
+</section>
+
+<section class="summary-grid">
+ <div><small>Purchase Taxable</small><strong id="itcTaxable">₹0.00</strong></div>
+ <div><small>Purchase GST</small><strong id="itcGross">₹0.00</strong></div>
+ <div><small>Eligible ITC</small><strong id="itcEligible">₹0.00</strong></div>
+ <div><small>Pending Review</small><strong id="itcPending">₹0.00</strong></div>
+ <div><small>Reversed / Blocked</small><strong id="itcRestricted">₹0.00</strong></div>
+</section>
+
+<section class="erp-card">
+ <div class="section-head"><div><h3>Invoice-wise ITC Register</h3><p>Use Review to classify ITC only after reconciliation with GSTR-2B.</p></div><span id="itcCount">0 invoices</span></div>
+ <div class="table-wrap"><table>
+  <thead><tr><th>Purchase No.</th><th>Supplier Invoice</th><th>Date</th><th>Supplier</th><th>Supplier GSTIN</th><th>POS</th><th>Taxable</th><th>IGST</th><th>CGST</th><th>SGST</th><th>Total GST</th><th>ITC Status</th><th>2B</th><th>Action</th></tr></thead>
+  <tbody id="itcBody"></tbody>
+ </table></div>
+</section>
+
+<div id="itcModal" class="itc-modal" hidden>
+ <div class="itc-dialog">
+  <div class="section-head"><h3>Review ITC</h3><button id="itcClose" type="button">×</button></div>
+  <p id="itcInvoiceLabel"></p>
+  <label>ITC Status<select id="itcEditStatus"><option>Pending</option><option>Eligible</option><option>Reversed</option><option>Blocked</option></select></label>
+  <label class="check"><input id="itc2bMatched" type="checkbox" disabled> GSTR-2B match status (controlled through Reconciliation Results)</label>
+  <label>Reason / Notes<textarea id="itcReason" rows="3" placeholder="Required for Reversed / Blocked"></textarea></label>
+  <button id="itcSave" class="primary" type="button">Save Review</button>
+ </div>
+</div>
+
+<div class="note"><b>Control:</b> Importing GSTR-2B does not automatically claim ITC. Matching and eligibility review remain separate controlled steps.</div>
+</section>

@@ -1,0 +1,113 @@
+<section class="chain-page">
+  <section class="erp-card">
+    <div class="section-head">
+      <div>
+        <h2>Stores / Branches</h2>
+        <p>Create and manage pharmacy locations for your organization.</p>
+      </div>
+      <button id="storeNew" class="primary">+ New Store</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Store</th>
+            <th>Code</th>
+            <th>City</th>
+            <th>State</th>
+            <th>GSTIN</th>
+            <th>Drug Licence</th>
+            <th>Main</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="storeBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="storeModal" class="chain-modal" hidden>
+    <div class="dialog">
+      <div class="section-head">
+        <div>
+          <h3 id="storeModalTitle">New Store</h3>
+          <p id="storeModalHint">Create a pharmacy location in this organization.</p>
+        </div>
+        <button id="storeClose" type="button">×</button>
+      </div>
+
+      <input id="storeEditId" type="hidden">
+
+      <div class="grid">
+        <label>
+          Store Name *
+          <input id="storeName">
+        </label>
+
+        <label>
+          Store Code *
+          <input id="storeCode">
+        </label>
+
+        <label>
+          GSTIN
+          <input id="storeGstin">
+        </label>
+
+        <label>
+          Registered State
+          <input id="storeRegisteredState">
+        </label>
+
+        <label>
+          GST State Code
+          <input id="storeGstCode">
+        </label>
+
+        <label>
+          Drug Licence
+          <input id="storeDrugLicence">
+        </label>
+
+        <label>
+          Phone
+          <input id="storePhone">
+        </label>
+
+        <label>
+          Email
+          <input id="storeEmail" type="email">
+        </label>
+
+        <label>
+          Address Line 1
+          <input id="storeAddress1">
+        </label>
+
+        <label>
+          Address Line 2
+          <input id="storeAddress2">
+        </label>
+
+        <label>
+          City
+          <input id="storeCity">
+        </label>
+
+        <label>
+          State
+          <input id="storeState">
+        </label>
+
+        <label>
+          PIN Code
+          <input id="storePin">
+        </label>
+      </div>
+
+      <button id="storeSave" class="primary" type="button">Create Store</button>
+    </div>
+  </div>
+</section>

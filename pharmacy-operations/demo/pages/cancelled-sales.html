@@ -1,0 +1,30 @@
+<section class="cancelled-sales">
+<section class="erp-card">
+  <div class="cs-head">
+    <div><h2>Cancelled Sales</h2><p>Read-only register of cancelled sales invoices.</p></div>
+    <div class="actions"><button id="csRefresh">Refresh</button><button id="csPrint">Print</button><button id="csCsv" class="primary">Export CSV</button></div>
+  </div>
+  <div class="filters">
+    <label>From<input id="csFrom" type="date"></label>
+    <label>To<input id="csTo" type="date"></label>
+    <label>Search<input id="csSearch" placeholder="Invoice, customer, patient, reason..."></label>
+  </div>
+</section>
+
+<section class="summary-grid">
+  <div><small>Cancelled Invoices</small><strong id="csCountCard">0</strong></div>
+  <div><small>Cancelled Value</small><strong id="csValueCard">₹0.00</strong></div>
+  <div><small>Amount Previously Paid</small><strong id="csPaidCard">₹0.00</strong></div>
+  <div><small>With Reason</small><strong id="csReasonCard">0</strong></div>
+</section>
+
+<section class="erp-card">
+  <div class="section-head"><div><h3>Cancellation Register</h3><p>This page does not cancel, restore, edit or repost invoices.</p></div><span id="csRows">0 rows</span></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Invoice</th><th>Original Sale Date</th><th>Cancellation Date</th><th>Customer / Patient</th><th>Sale Type</th><th>Invoice Value</th><th>Paid</th><th>Payment Status</th><th>Reason</th><th>Cancelled By</th><th>Action</th></tr></thead>
+    <tbody id="csBody"></tbody>
+  </table></div>
+</section>
+
+<div class="note"><b>Important:</b> Cancellation Date and Cancelled By are shown only when those fields exist in the saved invoice. The report does not invent missing audit data.</div>
+</section>

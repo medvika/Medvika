@@ -1,0 +1,180 @@
+.org-stock-page{
+  display:grid;
+  gap:18px;
+}
+
+.org-stock-header h2{
+  margin:0 0 6px;
+  color:#17212b;
+}
+
+.org-stock-header p{
+  margin:0;
+  color:#667085;
+}
+
+.org-stock-search-card,
+.org-stock-product{
+  background:#fff;
+  border:1px solid #dfe7e4;
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 8px 24px rgba(15,45,63,.05);
+}
+
+.org-stock-search-card label{
+  display:block;
+  margin-bottom:8px;
+  color:#344054;
+  font-weight:700;
+}
+
+.org-stock-search-row{
+  display:flex;
+  gap:10px;
+}
+
+.org-stock-search-row input{
+  flex:1;
+  min-width:0;
+  padding:12px 13px;
+  border:1px solid #cfdad6;
+  border-radius:10px;
+  font:inherit;
+}
+
+.org-stock-search-row button{
+  padding:12px 18px;
+  border:0;
+  border-radius:10px;
+  background:#0f8b68;
+  color:#fff;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.org-stock-search-row button:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+.org-stock-help{
+  margin:10px 0 0;
+  color:#667085;
+  font-size:13px;
+}
+
+.org-stock-message{
+  padding:12px 14px;
+  border-radius:10px;
+}
+
+.org-stock-message.info{
+  background:#eef6ff;
+  color:#175cd3;
+}
+
+.org-stock-message.warning{
+  background:#fff7e6;
+  color:#9a6700;
+}
+
+.org-stock-message.error{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.org-stock-results{
+  display:grid;
+  gap:14px;
+}
+
+.org-stock-product-head{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.org-stock-product-head h3{
+  margin:0 0 4px;
+  color:#17212b;
+}
+
+.org-stock-product-head p{
+  margin:0 0 4px;
+  color:#475467;
+}
+
+.org-stock-product-head small{
+  color:#667085;
+}
+
+.readonly-badge{
+  height:max-content;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.org-stock-branch-list{
+  display:grid;
+  gap:8px;
+}
+
+.org-stock-branch{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:11px 12px;
+  border:1px solid #e8eeeb;
+  border-radius:10px;
+  background:#fafcfb;
+}
+
+.org-stock-branch strong{
+  display:block;
+  color:#344054;
+}
+
+.org-stock-branch span{
+  display:block;
+  margin-top:2px;
+  color:#667085;
+  font-size:12px;
+}
+
+.org-stock-qty{
+  min-width:72px;
+  text-align:right;
+  font-size:18px;
+  font-weight:800;
+}
+
+.org-stock-qty.available{
+  color:#087a55;
+}
+
+.org-stock-qty.empty{
+  color:#98a2b3;
+}
+
+@media(max-width:640px){
+  .org-stock-search-row{
+    flex-direction:column;
+  }
+
+  .org-stock-search-row button{
+    width:100%;
+  }
+
+  .org-stock-product-head{
+    align-items:flex-start;
+  }
+}

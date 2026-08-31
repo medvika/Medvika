@@ -1,0 +1,164 @@
+<section class="purchase-module">
+<div class="purchase-layout">
+<section class="purchase-main">
+<section class="erp-card purchase-entry-card">
+<div class="erp-grid erp-grid-3 purchase-primary-fields">
+<label class="erp-field">Supplier *<select id="purchaseSupplierId"><option value="">Select supplier</option></select></label>
+<label class="erp-field">Supplier GSTIN<input id="purchaseSupplierGstin" readonly placeholder="Auto from Supplier Master"></label>
+<label class="erp-field">Payment Terms<select id="paymentTerms"><option value="cash">Cash</option><option value="credit">Credit</option><option value="partial">Partial</option></select></label>
+<label class="erp-field">Supplier Invoice Number *<input id="supplierInvoiceNumber"></label>
+<label class="erp-field">Supplier Invoice Date *<input id="supplierInvoiceDate" type="date"></label>
+<label class="erp-field">Purchase Date *<input id="purchaseDate" type="datetime-local"></label>
+</div>
+<details class="purchase-more-details">
+<summary>More Purchase Details <span>Tax, terms and references</span></summary>
+<div class="erp-grid erp-grid-3 purchase-more-grid">
+<label class="erp-field">Supplier DL Number<input id="purchaseSupplierDl" readonly placeholder="Auto from Supplier Master"></label>
+<label class="erp-field">Supplier Contact Number<input id="purchaseSupplierContact" readonly placeholder="Auto from Supplier Master"></label>
+<label class="erp-field">Supplier State / POS<input id="purchaseSupplierPos" readonly placeholder="Auto from Supplier Master"></label>
+<label class="erp-field">Tax Type<input id="purchaseTaxType" readonly placeholder="CGST + SGST / IGST"></label>
+<label class="erp-field">GRN Number<input id="grnNumber"></label>
+<label class="erp-field">Purchase Type<select id="purchaseType"><option value="regular">Regular</option><option value="opening_stock">Opening Stock</option><option value="replacement">Replacement</option></select></label>
+<label class="erp-field">Credit Days<input id="creditDays" type="number" min="0" value="0"></label>
+<label class="erp-field">Due Date<input id="dueDate" type="date"></label>
+</div>
+</details>
+</section>
+<section id="purchasePOContext" class="erp-card purchase-po-context" hidden>
+  <div>
+    <strong id="purchasePOContextTitle">Purchase Order</strong>
+    <p id="purchasePOContextText">Actual supplier may be changed. Only received quantities will settle the PO.</p>
+  </div>
+  <button id="clearPurchasePOContext" type="button">Remove PO Link</button>
+</section>
+<section class="erp-card purchase-medicine-workspace">
+<div class="purchase-section-heading">
+<div><h2>Add Medicines</h2><p style="margin:.25rem 0 0;color:var(--erp-muted,#64748b)">Search local medicines and Medvika catalogue together. Missing medicines can be created here.</p></div>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap">
+<button id="purchaseScanOpen" type="button">Scan Pack / Barcode</button>
+<button id="purchaseInvoiceScanOpen" type="button" hidden>Scan Invoice</button>
+<button id="purchaseImportOpen" type="button">Import CSV</button>
+</div>
+</div>
+<div class="medicine-search-wrap">
+<input id="purchaseMedicineSearch" placeholder="Search medicine by brand, generic or barcode..." autocomplete="off">
+<div id="purchaseMedicineResults" class="search-results"></div>
+</div>
+<div id="purchaseInlineMedicineCard" class="erp-card" hidden style="margin-top:1rem"><div class="purchase-section-heading"><div><h3>Create Medicine During Purchase</h3><p>Creates it in this pharmacy and submits it to the Medvika catalogue candidate queue.</p></div><button id="purchaseInlineMedicineClose" type="button">Close</button></div><div class="erp-grid erp-grid-3"><label class="erp-field">Brand Name *<input id="purchaseInlineBrand"></label><label class="erp-field">Manufacturer<input id="purchaseInlineManufacturer"></label><label class="erp-field">Composition<input id="purchaseInlineComposition"></label><label class="erp-field">Pack Size<input id="purchaseInlinePack"></label><label class="erp-field">Barcode (Optional)<input id="purchaseInlineBarcode" inputmode="numeric" autocomplete="off"></label><label class="erp-field">HSN<input id="purchaseInlineHsn" inputmode="numeric"></label><label class="erp-field">GST %<select id="purchaseInlineGst"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select></label></div><button id="purchaseInlineMedicineSave" class="primary" type="button">Create & Add</button></div>
+
+<div id="purchaseScanCard" class="erp-card" hidden style="margin-top:1rem">
+  <div class="purchase-section-heading">
+    <div>
+      <h3>Scan Medicine Pack</h3>
+      <p style="margin:.25rem 0 0;color:var(--erp-muted,#64748b)">Take a clear photo of the medicine pack. Medvika will try barcode detection first, then OCR for MRP, batch and expiry. Always verify before saving.</p>
+    </div>
+    <button id="purchaseScanClose" type="button">Close</button>
+  </div>
+  <input id="purchaseScanFile" type="file" accept="image/*" capture="environment">
+  <div id="purchaseScanStatus" style="margin:.75rem 0;color:var(--erp-muted,#64748b)">No image selected.</div>
+  <div id="purchaseScanPreviewWrap" hidden style="margin:.75rem 0">
+    <img id="purchaseScanPreview" alt="Medicine scan preview" style="max-width:100%;max-height:320px;border-radius:10px">
+  </div>
+  <div class="erp-grid erp-grid-3">
+    <label class="erp-field">Detected Barcode<input id="purchaseScanBarcode" readonly></label>
+    <label class="erp-field">Detected Brand<input id="purchaseScanBrand"></label>
+    <label class="erp-field">Detected Batch<input id="purchaseScanBatch"></label>
+    <label class="erp-field">Detected Expiry<input id="purchaseScanExpiry" type="text" inputmode="numeric" maxlength="10" placeholder="DD-MM-YYYY"></label>
+    <label class="erp-field">Detected MRP<input id="purchaseScanMrp" type="number" step="0.01" min="0"></label>
+    <label class="erp-field">GST %<select id="purchaseScanGst"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select></label>
+  </div>
+  <label class="erp-field">OCR Text<textarea id="purchaseScanText" rows="7" readonly></textarea></label>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <button id="purchaseScanResolve" class="primary" type="button" disabled>Find & Add Medicine</button>
+  </div>
+</div>
+
+
+<div id="purchaseInvoiceScanCard" class="erp-card" hidden style="margin-top:1rem">
+  <div class="purchase-section-heading">
+    <div>
+      <h3>Scan Supplier Invoice</h3>
+      <p style="margin:.25rem 0 0;color:var(--erp-muted,#64748b)">Take a clear, flat photo of the invoice. Medvika will OCR it and build draft purchase rows for review.</p>
+    </div>
+    <button id="purchaseInvoiceScanClose" type="button">Close</button>
+  </div>
+
+  <input id="purchaseInvoiceScanFile" type="file" accept="image/*" capture="environment">
+  <div id="purchaseInvoiceScanStatus" style="margin:.75rem 0;color:var(--erp-muted,#64748b)">No invoice selected.</div>
+
+  <div id="purchaseInvoicePreviewWrap" hidden style="margin:.75rem 0">
+    <img id="purchaseInvoicePreview" alt="Invoice preview" style="max-width:100%;max-height:420px;border-radius:10px">
+  </div>
+
+  <div class="erp-grid erp-grid-3">
+    <label class="erp-field">Detected Invoice No.<input id="purchaseInvoiceScanNumber"></label>
+    <label class="erp-field">Detected Invoice Date<input id="purchaseInvoiceScanDate" type="date"></label>
+    <label class="erp-field">Detected Supplier GSTIN<input id="purchaseInvoiceScanGstin"></label>
+  </div>
+
+  <label class="erp-field">OCR Text<textarea id="purchaseInvoiceScanText" rows="10" readonly></textarea></label>
+
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <button id="purchaseInvoiceBuildDraft" class="primary" type="button" disabled>Build Draft Rows</button>
+  </div>
+
+  <div style="margin-top:.75rem;color:var(--erp-muted,#64748b)">
+    Draft extraction is assistive. Invoice layouts vary, so verify medicine, batch, expiry, quantity, PTR, MRP and GST before saving.
+  </div>
+</div>
+
+<div id="purchaseImportCard" class="erp-card" hidden style="margin-top:1rem"><div class="purchase-section-heading"><div><h3>Purchase Import</h3><p>Upload a CSV file, map its columns, preview the rows and add them to this purchase.</p></div><button id="purchaseImportClose" type="button">Close</button></div><div class="purchase-import-template">
+<button id="purchaseImportTemplate" type="button">Download Purchase Template</button>
+<small>CSV template • Barcode is optional and only needs to be entered once per medicine • Expiry: DD-MM-YYYY.</small>
+</div>
+<input id="purchaseImportFile" type="file" accept=".csv,text/csv"><div id="purchaseImportStatus" style="margin:.75rem 0">No file selected.</div><div id="purchaseImportMapping" class="erp-grid erp-grid-3"></div><div class="table" style="margin-top:1rem"><table><thead id="purchaseImportPreviewHead"></thead><tbody id="purchaseImportPreviewBody"><tr><td class="purchase-empty">Upload a file to preview.</td></tr></tbody></table></div><button id="purchaseImportApply" class="primary" type="button" disabled>Add Valid Rows to Purchase</button></div>
+<div class="table purchase-items-table-wrap">
+<table id="purchaseItemsTable">
+<thead><tr><th>Medicine</th><th>HSN</th><th>Batch *</th><th>Expiry *</th><th>Qty *</th><th>Free</th><th>PTR *</th><th>MRP *</th><th>Sell Rate</th><th>Disc %</th><th>GST %</th><th>Margin</th><th>Total</th><th>Action</th></tr></thead>
+<tbody><tr><td colspan="14" class="purchase-empty">Search and add medicines.</td></tr></tbody>
+</table>
+</div>
+</section>
+<details class="erp-card recent-purchases-panel">
+<summary><strong>Recent Purchases</strong><span>View transactions</span></summary>
+<div class="recent-purchases-content">
+<div class="purchase-section-heading"><span></span><button id="refreshPurchasesButton" type="button">Refresh</button></div>
+<div class="table"><table id="recentPurchasesTable">
+<thead><tr><th>Purchase No.</th><th>Invoice</th><th>Date</th><th>Supplier</th><th>Total</th><th>Paid</th><th>Outstanding</th><th>Payment Status</th><th>Action</th></tr></thead>
+<tbody><tr><td colspan="8" class="purchase-empty">No purchases loaded.</td></tr></tbody>
+</table></div>
+</div>
+</details>
+<section id="purchaseInvoiceViewPanel" class="erp-card purchase-invoice-view" hidden>
+<div class="purchase-section-heading"><h2>Purchase Invoice</h2><div><button id="purchaseInvoiceViewPrint" type="button">Print</button> <button id="purchaseInvoiceViewClose" type="button">Close</button></div></div>
+<div id="purchaseInvoiceViewContent"></div>
+</section>
+</section>
+<aside class="purchase-side">
+<form id="purchaseForm" class="erp-card">
+<h2>Purchase Summary</h2>
+<div class="erp-summary">
+<div class="erp-summary-card"><small>Gross Amount</small><strong id="purchaseGrossText">₹0.00</strong></div>
+<div class="erp-summary-card"><small>Item Discount</small><strong id="purchaseItemDiscountText">₹0.00</strong></div>
+<div class="erp-summary-card"><small>Taxable</small><strong id="purchaseTaxableText">₹0.00</strong></div>
+<div class="erp-summary-card"><small>Total GST</small><strong id="purchaseGstText">₹0.00</strong></div>
+<div id="purchaseCgstCard" class="erp-summary-card"><small>CGST</small><strong id="purchaseCgstText">₹0.00</strong></div>
+<div id="purchaseSgstCard" class="erp-summary-card"><small>SGST</small><strong id="purchaseSgstText">₹0.00</strong></div>
+<div id="purchaseIgstCard" class="erp-summary-card" hidden><small>IGST</small><strong id="purchaseIgstText">₹0.00</strong></div>
+</div>
+<label class="erp-field">Invoice Discount<input id="purchaseInvoiceDiscount" type="number" min="0" step="0.01" value="0"></label>
+<label class="erp-field">Transport Charges<input id="transportCharges" type="number" min="0" step="0.01" value="0"></label>
+<label class="erp-field">Other Charges<input id="otherCharges" type="number" min="0" step="0.01" value="0"></label>
+<label class="erp-field">Round Off<input id="purchaseRoundOff" type="number" step="0.01" value="0"></label>
+<div class="purchase-grand-total"><small>Grand Total</small><strong id="purchaseGrandTotalText">₹0.00</strong></div>
+<h3>Payment</h3>
+<label class="erp-field">Payment Method<select id="purchasePaymentMethod"><option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="bank_transfer">Bank Transfer</option><option value="credit">Credit</option></select></label>
+<label class="erp-field">Amount Paid<input id="purchaseAmountPaid" type="number" min="0" step="0.01" value="0"></label>
+<label class="erp-field">Transaction Reference<input id="purchaseTransactionReference"></label>
+<label class="erp-field">Notes<textarea id="purchaseNotes" rows="3"></textarea></label>
+<div id="purchaseValidationAlert"></div>
+<button id="savePurchaseButton" type="submit">Save Purchase</button>
+</form>
+</aside>
+</div>
+</section>

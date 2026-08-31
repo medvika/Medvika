@@ -1,0 +1,37 @@
+<section class="g3b">
+<section class="erp-card">
+ <div class="g3b-head">
+  <div><h2>GSTR-3B Working Report</h2><p>Return-adjusted outward liability and reviewed purchase-side ITC working.</p></div>
+  <div class="actions"><button id="g3bRefresh">Refresh</button><button id="g3bPrint">Print</button><button id="g3bCsv" class="primary">Export CSV</button></div>
+ </div>
+ <div class="filters"><label>From<input id="g3bFrom" type="date"></label><label>To<input id="g3bTo" type="date"></label></div>
+</section>
+
+<section class="summary-grid">
+ <div><small>Net Taxable Outward</small><strong id="g3bOutTaxable">₹0.00</strong></div>
+ <div><small>Net Output GST</small><strong id="g3bOutput">₹0.00</strong></div>
+ <div><small>2B-Matched Eligible ITC</small><strong id="g3bInput">₹0.00</strong></div>
+ <div><small>ITC Reversals</small><strong id="g3bReversal">₹0.00</strong></div>
+ <div><small>Net ITC Available</small><strong id="g3bNetInput">₹0.00</strong></div>
+ <div><small>Indicative Liability</small><strong id="g3bDifference">₹0.00</strong></div>
+</section>
+
+<section class="erp-card">
+ <h3>3.1 — Details of Outward Supplies and Inward Supplies Liable to Reverse Charge</h3>
+ <div class="table-wrap"><table><thead><tr><th>Description</th><th>Taxable Value</th><th>IGST</th><th>CGST</th><th>SGST/UTGST</th><th>Cess</th></tr></thead><tbody id="g3b31"></tbody></table></div>
+ <div class="working-note" id="g3bOutwardNote"></div>
+</section>
+
+<section class="erp-card">
+ <h3>4 — Eligible ITC Working</h3>
+ <div class="table-wrap"><table><thead><tr><th>Description</th><th>IGST</th><th>CGST</th><th>SGST/UTGST</th><th>Cess</th></tr></thead><tbody id="g3b4"></tbody></table></div>
+ <div class="working-note" id="g3bItcNote"></div><div class="warning"><b>Control:</b> ITC enters this working only when the purchase invoice is marked Eligible and matched with GSTR-2B. Pending, Blocked, unmatched and mismatch invoices are excluded. Eligible purchase-return GST is reversed only for a 2B-matched invoice.</div>
+</section>
+
+<section class="erp-card">
+ <h3>Purchase GST Working — Rate Wise</h3>
+ <div class="table-wrap"><table><thead><tr><th>GST Rate</th><th>Gross Taxable</th><th>Gross GST</th><th>Return Taxable</th><th>Return GST</th><th>Net Taxable</th><th>Net GST</th></tr></thead><tbody id="g3bPurchaseRates"></tbody></table></div>
+</section>
+
+<div class="note"><b>Working report only — not a filed GSTR-3B.</b> Final filing values must be reconciled with the GST Portal and GSTR-2B.</div>
+</section>

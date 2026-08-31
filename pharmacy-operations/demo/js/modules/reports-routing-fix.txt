@@ -1,0 +1,18 @@
+/*
+MEDVIKA REPORTS HUB ROUTING FIX
+
+Replace the report-card click binding in js/modules/reports.js with:
+
+document.querySelectorAll(".report-card").forEach(button=>{
+  button.onclick=()=>{
+    const route=button.dataset.route;
+    if(window.MedvikaRouter && typeof window.MedvikaRouter.navigate==="function"){
+      window.MedvikaRouter.navigate(route);
+    }else{
+      location.hash=route;
+    }
+  };
+});
+
+Do not pass a second `false` argument to navigate().
+*/

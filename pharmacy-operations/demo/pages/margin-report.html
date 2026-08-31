@@ -1,0 +1,58 @@
+<section class="margin-report-module">
+<section class="erp-card">
+  <div class="module-heading">
+    <div><h2>Margin Report</h2><p>Medicine-wise gross margin using actual billed value and batch purchase cost.</p><p class="report-accounting-note">Sales margins exclude expiry, damage and stock-count adjustments. Those operational gains and losses are reported separately in Profit &amp; Loss.</p></div>
+    <button id="marginRefresh" type="button">Refresh</button>
+  </div>
+  <div class="margin-toolbar">
+    <label>From<input id="marginFrom" type="date"></label>
+    <label>To<input id="marginTo" type="date"></label>
+    <label>View<select id="marginView">
+      <option value="medicine">Medicine Wise</option>
+      <option value="invoice">Invoice Wise</option>
+      <option value="category">Category Wise</option>
+      <option value="manufacturer">Manufacturer Wise</option>
+    </select></label>
+    <label>Margin Filter<select id="marginFilter">
+      <option value="">All Margins</option>
+      <option value="loss">Loss Making</option>
+      <option value="low">Below 5%</option>
+      <option value="medium">5%–15%</option>
+      <option value="healthy">Above 15%</option>
+    </select></label>
+    <div class="toolbar-actions"><button id="marginApply" type="button">Apply</button><button id="marginExport" class="primary" type="button">Export CSV</button></div>
+  </div>
+</section>
+
+<section class="summary-grid">
+  <div class="summary-card"><small>Taxable Sales Value</small><strong id="marginSales">₹0.00</strong><span>GST excluded, after returns & discounts</span></div>
+  <div class="summary-card"><small>Cost of Goods</small><strong id="marginCost">₹0.00</strong><span>Batch purchase-rate basis</span></div>
+  <div class="summary-card positive"><small>Gross Profit</small><strong id="marginProfit">₹0.00</strong><span>Sales − COGS</span></div>
+  <div class="summary-card emphasis"><small>Gross Margin</small><strong id="marginPercent">0.00%</strong><span>Gross profit ÷ sales</span></div>
+  <div class="summary-card"><small>Markup</small><strong id="markupPercent">0.00%</strong><span>Gross profit ÷ cost</span></div>
+  <div class="summary-card negative"><small>Loss-Making Groups</small><strong id="marginLossCount">0</strong><span>Negative gross profit</span></div>
+</section>
+
+<section class="erp-card">
+  <div class="section-heading">
+    <div><h3 id="marginDetailTitle">Medicine-wise Margin</h3><p>Invoice-level discounts are allocated proportionately to item billed value.</p></div>
+    <span id="marginCount">0 rows</span>
+  </div>
+  <div class="margin-search"><input id="marginSearch" type="search" placeholder="Search medicine, invoice, category or manufacturer"></div>
+  <div class="table-wrap">
+    <table><thead id="marginHead"></thead><tbody id="marginBody"><tr><td colspan="9" class="empty">Loading margin data...</td></tr></tbody></table>
+  </div>
+</section>
+
+<section class="erp-card">
+  <div class="section-heading"><div><h3>Low Margin / Loss Watch</h3><p>Products requiring price, discount or procurement review.</p></div><span id="marginWatchCount">0 items</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Medicine</th><th>Net Sales</th><th>Cost</th><th>Gross Profit</th><th>Margin %</th><th>Markup %</th></tr></thead>
+      <tbody id="marginWatchBody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<div class="margin-note">Margin first normalises legacy sales rows where GST was incorrectly added above MRP, then removes GST from the corrected billed selling value after discounts so taxable sales are compared with GST-exclusive purchase cost. Cost uses the purchase rate stored against the sold batch. Sales returns reverse both revenue and cost using the original sold item basis.</div>
+</section>

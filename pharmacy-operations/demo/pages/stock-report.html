@@ -1,0 +1,74 @@
+<section class="stock-report">
+<section class="erp-card">
+  <div class="sr-head">
+    <div>
+      <h2>Stock Summary &amp; Valuation</h2>
+      <p>Read-only stock summaries for review, printing and export. Use Inventory &amp; Batches for batch actions and traceability.</p>
+    </div>
+    <div class="actions">
+      <button id="srRefresh">Refresh</button>
+      <button id="srPrint">Print</button>
+      <button id="srCsv" class="primary">Export CSV</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <label>View
+      <select id="srView">
+        <option value="current">Current Stock</option>
+        <option value="batch">Batch-wise Stock</option>
+        <option value="zero">Zero Stock</option>
+        <option value="low">Low Stock</option>
+        <option value="valuation">Stock Valuation</option>
+        <option value="slow">Slow-Moving Stock</option>
+        <option value="nonmoving">Non-Moving Stock</option>
+        <option value="dump">Dump / Non-Saleable Stock</option>
+      </select>
+    </label>
+    <label>Search
+      <input id="srSearch" placeholder="Medicine, generic, batch, barcode...">
+    </label>
+    <label>Low-stock threshold (packs)
+      <input id="srLowThreshold" type="number" min="0" step="0.001" value="5">
+    </label>
+    <label>Slow-moving after (days)
+      <input id="srSlowDays" type="number" min="1" step="1" value="60">
+    </label>
+    <label>Non-moving after (days)
+      <input id="srNonMovingDays" type="number" min="2" step="1" value="180">
+    </label>
+  </div>
+</section>
+
+<section class="summary-grid">
+  <div><small>Active Medicines</small><strong id="srMedicines">0</strong></div>
+  <div><small>Saleable Packs</small><strong id="srSaleableQty">0</strong></div>
+  <div><small>Zero-stock Medicines</small><strong id="srZeroCount">0</strong></div>
+  <div><small>Low-stock Medicines</small><strong id="srLowCount">0</strong></div>
+  <div><small>Cost Value (Ex GST)</small><strong id="srCostValue">₹0.00</strong></div>
+  <div><small>MRP Value</small><strong id="srMrpValue">₹0.00</strong></div>
+  <div><small>Slow-Moving Batches</small><strong id="srSlowCount">0</strong></div>
+  <div><small>Non-Moving Batches</small><strong id="srNonMovingCount">0</strong></div>
+  <div><small>Dump / Non-Saleable</small><strong id="srDumpCount">0</strong></div>
+</section>
+
+<section class="erp-card">
+  <div class="section-head">
+    <div>
+      <h3 id="srTitle">Current Stock</h3>
+      <p id="srNote"></p>
+    </div>
+    <span id="srCount">0 rows</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead id="srHead"></thead>
+      <tbody id="srBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<div class="note">
+  <b>Valuation basis:</b> cost value uses effective batch cost after distributing paid cost across paid and free quantity, excluding GST. MRP value is potential retail value, not profit. Expired or blocked batches are excluded from saleable stock but remain visible in Batch-wise Stock.
+</div>
+</section>

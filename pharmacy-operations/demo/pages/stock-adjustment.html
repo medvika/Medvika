@@ -1,0 +1,84 @@
+<section class="stock-adjustment-module">
+<section class="erp-card">
+  <div class="module-heading">
+    <div><h2>Stock Adjustment Register</h2><p>Review permanent, batch-wise stock corrections and their valuation impact.</p></div>
+    <button id="refreshStockAdjustmentsButton" type="button">Refresh</button>
+  </div>
+  <div class="filter-grid">
+    <label>Search<input id="stockAdjustmentSearch" placeholder="Adjustment no., medicine, batch, supplier"></label>
+    <label>Source<select id="stockAdjustmentSourceFilter"><option value="ALL">All Sources</option><option value="STOCK_AUDIT">Stock Audit</option><option value="MANUAL">Manual</option><option value="BULK_IMPORT">Bulk Import</option><option value="DAMAGE_EXPIRY">Damage & Expiry</option></select></label>
+    <label>From<input id="stockAdjustmentFromDate" type="date"></label>
+    <label>To<input id="stockAdjustmentToDate" type="date"></label>
+  </div>
+</section>
+
+<section class="erp-card">
+  <h2>Summary</h2>
+  <div class="summary-grid">
+    <div><small>Documents</small><strong id="adjustmentDocumentCount">0</strong></div>
+    <div><small>Lines</small><strong id="adjustmentLineCount">0</strong></div>
+    <div><small>Shortage</small><strong id="adjustmentShortageQty">0</strong></div>
+    <div><small>Excess</small><strong id="adjustmentExcessQty">0</strong></div>
+    <div><small>Net Qty</small><strong id="adjustmentNetQty">0</strong></div>
+    <div><small>Net Value</small><strong id="adjustmentNetValue">₹0.00</strong></div>
+  </div>
+</section>
+
+<section class="erp-card adjustment-builder">
+  <div class="module-heading">
+    <div>
+      <h2>Create Multi-line Stock Adjustment</h2>
+      <p>Add several batches manually or import counted quantities from the stock-count template.</p>
+    </div>
+    <div class="builder-actions">
+      <button id="downloadAdjustmentTemplateButton" type="button">Download Stock-count Template</button>
+      <button id="chooseAdjustmentImportButton" type="button">Import Excel / CSV</button>
+      <input id="adjustmentImportFile" type="file" accept=".xlsx,.xls,.csv" hidden>
+    </div>
+  </div>
+
+  <p class="adjustment-control-note">Posting is atomic and permanent. If any batch is invalid or its stock changed after selection/export, the complete document is rejected.</p>
+
+  <div class="manual-grid">
+    <label>Adjustment Date<input id="manualAdjustmentDate" type="datetime-local"></label>
+    <label>Default Reason<select id="manualAdjustmentReason"><option value="">Select reason</option><option value="COUNT_CORRECTION">Count correction</option><option value="DAMAGE_WRITE_OFF">Damage write-off</option><option value="EXPIRY_WRITE_OFF">Expiry write-off</option><option value="BREAKAGE">Breakage</option><option value="THEFT_SHRINKAGE">Theft / shrinkage</option><option value="UNRECORDED_RECEIPT">Unrecorded receipt</option><option value="DATA_CORRECTION">Data correction</option><option value="OTHER">Other</option></select></label>
+    <label class="wide-field">Document Notes<textarea id="manualAdjustmentNotes" rows="2" placeholder="Reason for this count/correction document"></textarea></label>
+  </div>
+
+  <div class="batch-add-row">
+    <label>Find and Add Batch<input id="manualAdjustmentSearch" placeholder="Medicine, batch, supplier or invoice" autocomplete="off"></label>
+  </div>
+  <div id="manualAdjustmentSearchResults" class="search-results"></div>
+  <div id="adjustmentImportStatus" class="import-status" hidden></div>
+
+  <div class="table adjustment-lines-wrap">
+    <table id="adjustmentComposerTable">
+      <thead><tr><th>Medicine</th><th>Batch</th><th>Supplier</th><th>System Qty</th><th>Counted Qty</th><th>Difference</th><th>Effective Cost</th><th>Value Change</th><th>Line Reason</th><th>Line Notes</th><th>Action</th></tr></thead>
+      <tbody><tr><td colspan="11" class="empty">Add batches manually or import a completed stock-count file.</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="composer-summary">
+    <span><small>Changed Lines</small><strong id="composerLineCount">0</strong></span>
+    <span><small>Net Quantity</small><strong id="composerNetQuantity">0</strong></span>
+    <span><small>Estimated Value</small><strong id="composerNetValue">₹0.00</strong></span>
+  </div>
+  <div class="builder-actions bottom-actions">
+    <button id="clearAdjustmentLinesButton" type="button">Clear Lines</button>
+    <button id="postManualAdjustmentButton" type="button" class="green-button" disabled>Post Adjustment Document</button>
+  </div>
+</section>
+
+<section class="erp-card">
+  <div class="table-heading"><h2>Adjustment Documents</h2><small id="stockAdjustmentResultCount">0 records</small></div>
+  <div class="table"><table id="stockAdjustmentsTable"><thead><tr><th>Adjustment No.</th><th>Date</th><th>Source</th><th>Lines</th><th>Qty Change</th><th>Value Change</th><th>Action</th></tr></thead><tbody><tr><td colspan="7" class="empty">Loading...</td></tr></tbody></table></div>
+</section>
+
+<section id="adjustmentDetailPanel" class="erp-card" hidden>
+  <div class="module-heading">
+    <div><h2 id="adjustmentDetailTitle">Adjustment Detail</h2><p id="adjustmentDetailSubTitle"></p></div>
+    <div><button id="printAdjustmentButton" type="button">Print</button><button id="closeAdjustmentDetailButton" type="button">Close</button></div>
+  </div>
+  <div class="table"><table id="adjustmentDetailTable"><thead><tr><th>Medicine</th><th>Batch</th><th>Previous</th><th>Adjusted</th><th>Difference</th><th>Effective Cost</th><th>Value</th><th>Reason</th><th>Notes</th></tr></thead><tbody><tr><td colspan="9" class="empty">No detail.</td></tr></tbody></table></div>
+</section>
+</section>

@@ -1,0 +1,105 @@
+<section class="backup-module">
+  <section class="erp-card">
+    <div class="module-heading">
+      <div>
+        <h2>Backup & Restore</h2>
+        <p>
+          Export pharmacy ERP data, keep backup history and validate restore files before any data is changed.
+        </p>
+      </div>
+      <button id="refreshBackupButton" type="button">Refresh</button>
+    </div>
+  </section>
+
+  <section class="backup-grid">
+    <article class="erp-card">
+      <h2>Create Backup</h2>
+      <p class="muted">
+        Creates a JSON snapshot of available pharmacy data using your current ERP access.
+      </p>
+
+      <div class="backup-options">
+        <label><input id="backupTransactions" type="checkbox" checked> Transactions</label>
+        <label><input id="backupStock" type="checkbox" checked> Stock & audits</label>
+        <label><input id="backupMasters" type="checkbox" checked> Masters</label>
+        <label><input id="backupReportsData" type="checkbox" checked> Expense / ledger support data</label>
+      </div>
+
+      <button id="createBackupButton" class="green-button" type="button">
+        Create & Download Backup
+      </button>
+
+      <div id="backupProgress" class="progress-box" hidden>
+        Preparing backup...
+      </div>
+    </article>
+
+    <article class="erp-card">
+      <h2>Validate Restore File</h2>
+      <p class="muted">
+        Select a Medvika backup JSON file. This version validates and previews it only.
+      </p>
+
+      <input id="restoreFileInput" type="file" accept=".json,application/json">
+
+      <div id="restoreValidationPanel" class="validation-panel" hidden>
+        <div><small>Backup Version</small><strong id="restoreVersion">—</strong></div>
+        <div><small>Created At</small><strong id="restoreCreatedAt">—</strong></div>
+        <div><small>Tables</small><strong id="restoreTableCount">0</strong></div>
+        <div><small>Total Rows</small><strong id="restoreRowCount">0</strong></div>
+        <div><small>Validation</small><strong id="restoreValidationStatus">—</strong></div>
+      </div>
+
+      <p id="restoreSafetyNotice" class="restore-notice" hidden>
+        Preview only: no live ERP data has been changed.
+      </p>
+    </article>
+  </section>
+
+  <section class="erp-card">
+    <div class="table-heading">
+      <h2>Backup History</h2>
+      <small id="backupHistoryCount">0 backups</small>
+    </div>
+
+    <div class="table">
+      <table id="backupHistoryTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Backup ID</th>
+            <th>Tables</th>
+            <th>Rows</th>
+            <th>Status</th>
+            <th>Created By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6" class="empty">Loading backup history...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="erp-card">
+    <div class="table-heading">
+      <h2>Restore Preview</h2>
+      <small>Appears after selecting a valid backup file.</small>
+    </div>
+
+    <div class="table">
+      <table id="restorePreviewTable">
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>Rows</th>
+            <th>Sample Keys</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="3" class="empty">No restore file selected.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
