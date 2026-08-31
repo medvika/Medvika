@@ -1,3 +1,0 @@
-window.initStoreSwitcherModule=async function(){
- const UI=window.MedvikaUI,$=id=>document.getElementById(id);async function load(){const{data,error}=await supabaseClient.rpc("list_my_stores");if(error)throw error;$("ssStore").innerHTML=(data||[]).map(x=>`<option value="${x.pharmacy_id}">${UI.safe(x.store_name)} (${UI.safe(x.store_code||"")})</option>`).join("")}function sw(){const id=$("ssStore").value;if(!id)return;sessionStorage.setItem("medvika_active_store_id",id);UI.toast("Store selected. App-shell integration is the next step.")}$("ssSwitch").onclick=sw;try{await load()}catch(e){UI.toast(e.message,"error")}
-};
