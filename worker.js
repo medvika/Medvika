@@ -19,7 +19,7 @@ async function verifyPayment(request,env){
  const orderId=clean(b.razorpay_order_id,80),paymentId=clean(b.razorpay_payment_id,80),signature=clean(b.razorpay_signature,128);
  if(!orderId||!paymentId||!signature)return json({error:"Missing payment verification details."},400);
  const expected=await hmac(env.RAZORPAY_KEY_SECRET,orderId+"|"+paymentId);
- if(expected.length!==signature.length||!crypto.subtle.timingSafeEqual){if(expected!==signature)return json({error:"Payment signature could not be verified."},400)}else{const a=new TextEncoder().encode(expected),c=new TextEncoder().encode(signature);if(!crypto.subtle.timingSafeEqual(a,c))return json({error:"Payment signature could not be verified."},400)}
+ let mismatch=expected.length!==signature.length;if(!mismatch){let diff=0;for(let i=0;i<expected.length;i++)diff|=expected.charCodeAt(i)^signature.charCodeAt(i);mismatch=diff!==0}if(mismatch)return json({error:"Payment signature could not be verified."},400)
  const auth=btoa(env.RAZORPAY_KEY_ID+":"+env.RAZORPAY_KEY_SECRET);
  const rp=await fetch("https://api.razorpay.com/v1/payments/"+encodeURIComponent(paymentId),{headers:{"authorization":"Basic "+auth}});
  const payment=await rp.json();
