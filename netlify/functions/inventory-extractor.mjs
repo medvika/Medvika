@@ -42,7 +42,7 @@ export default async function handler(request){
   const responseText=await response.text();
   let result={};
   try{result=responseText?JSON.parse(responseText):{}}catch{return json({error:`Gemini returned an unreadable response (HTTP ${response.status}). Please retry.`},502)}
-  if(!response.ok)return json({error:result?.error?.message||`Gemini extraction failed (HTTP ${response.status}).`},502);
+  if(!response.ok){const detail=result?.error?.message||result?.message||result?.error?.details?.[0]?.reason||JSON.stringify(result).slice(0,500);return json({error:detail||`Gemini extraction failed (HTTP ${response.status}).`},502);}
   try{
     const modelStep=[...(result.steps||[])].reverse().find(step=>step.type==="model_output");
     const output=modelStep?.content?.find(part=>part.type==="text")?.text;
