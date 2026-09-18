@@ -35,14 +35,21 @@ export default async function handler(request){
     response=await fetch("https://generativelanguage.googleapis.com/v1beta/interactions",{
       method:"POST",
       headers:{"content-type":"application/json","x-goog-api-key":apiKey},
-      body:JSON.stringify({model:"gemini-3.6-flash",input:[{type:"text",text:prompt},media],response_format:{type:"text",mime_type:"application/json",schema},store:false})
+      body:JSON.stringify({model:"gemini-3.6-flash",input:[{type:"text",text:prompt},media],response_format:{type:"text",mime_type:"application/json",schema},generation_config:{thinking_level:"low"},store:false})
     });
   }catch{return json({error:"Gemini could not be reached. Please retry this file."},502)}
 
   const responseText=await response.text();
   let result={};
   try{result=responseText?JSON.parse(responseText):{}}catch{return json({error:`Gemini returned an unreadable response (HTTP ${response.status}). Please retry.`},502)}
-  if(!response.ok){const detail=result?.error?.message||result?.message||result?.error?.details?.[0]?.reason||JSON.stringify(result).slice(0,500);return json({error:detail||`Gemini extraction failed (HTTP ${response.status}).`},502);}
+  if(!response.ok){
+    const upstreamStatus=response.status;
+    const detail=result?.error?.message||result?.message||result?.error?.details?.[0]?.reason||`Gemini extraction failed (HTTP ${upstreamStatus}).`;
+    // Preserve the origin status so quota, model and region errors remain distinguishable.
+    const status=[400,401,403,404,408,429,500,502,503,504].includes(upstreamStatus)?upstreamStatus:502;
+    console.error("Gemini extraction failed",{upstreamStatus,detail:clean(detail,300)});
+    return json({error:clean(detail,500),upstreamStatus},status);
+  }
   try{
     const modelStep=[...(result.steps||[])].reverse().find(step=>step.type==="model_output");
     const output=modelStep?.content?.find(part=>part.type==="text")?.text;
