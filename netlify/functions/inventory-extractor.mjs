@@ -30,30 +30,43 @@ export default async function handler(request){
   const prompt=`Extract every pharmacy inventory line from this ${settings.outputMode==="purchase_invoice"?"purchase invoice":"stock sheet"}. Source filename: ${clean(file.name,180)}. Preserve written brand spelling. Never invent unclear values: use empty string or null, confidence LOW, and a review_note beginning REVIEW. Use YYYY-MM-DD dates. For tablets/capsules detect strip or box size, keep whole packs and loose units, and calculate effective_pack_quantity as whole_packs + loose_units/units_per_pack. For syrups and liquids count bottles or containers and never apply tablet conversion. ${powder} Use default GST ${Number(settings.defaultGst)||0}% only when GST is absent. Calculate totals and variance only when source values support them.`;
   const media={type:file.mimeType==="application/pdf"?"document":"image",data:file.data,mime_type:file.mimeType};
 
-  let response;
-  try{
-    response=await fetch("https://generativelanguage.googleapis.com/v1beta/interactions",{
-      method:"POST",
-      headers:{"content-type":"application/json","x-goog-api-key":apiKey},
-      body:JSON.stringify({model:"gemini-3.6-flash",input:[{type:"text",text:prompt},media],response_format:{type:"text",mime_type:"application/json",schema},generation_config:{thinking_level:"low"},store:false})
-    });
-  }catch{return json({error:"Gemini could not be reached. Please retry this file."},502)}
-
-  const responseText=await response.text();
-  let result={};
-  try{result=responseText?JSON.parse(responseText):{}}catch{return json({error:`Gemini returned an unreadable response (HTTP ${response.status}). Please retry.`},502)}
-  if(!response.ok){
-    const upstreamStatus=response.status;
-    const detail=result?.error?.message||result?.message||result?.error?.details?.[0]?.reason||`Gemini extraction failed (HTTP ${upstreamStatus}).`;
-    // Preserve the origin status so quota, model and region errors remain distinguishable.
-    const status=[400,401,403,404,408,429,500,502,503,504].includes(upstreamStatus)?upstreamStatus:502;
-    console.error("Gemini extraction failed",{upstreamStatus,detail:clean(detail,300)});
-    return json({error:clean(detail,500),upstreamStatus},status);
+  const models=["gemini-3.6-flash","gemini-3.5-flash-lite"];
+  let lastError={error:"Gemini extraction failed.",upstreamStatus:502,status:502};
+  for(const model of models){
+    let response;
+    try{
+      response=await fetch("https://generativelanguage.googleapis.com/v1beta/interactions",{
+        method:"POST",
+        headers:{"content-type":"application/json","x-goog-api-key":apiKey},
+        body:JSON.stringify({model,input:[{type:"text",text:prompt},media],response_format:{type:"text",mime_type:"application/json",schema},generation_config:{thinking_level:"low"},store:false})
+      });
+    }catch{
+      lastError={error:"Gemini could not be reached. Please retry this file.",upstreamStatus:502,status:502};
+      continue;
+    }
+    const responseText=await response.text();
+    let result={};
+    try{result=responseText?JSON.parse(responseText):{}}catch{
+      lastError={error:`Gemini returned an unreadable response (HTTP ${response.status}). Please retry.`,upstreamStatus:response.status,status:502};
+      continue;
+    }
+    if(!response.ok){
+      const upstreamStatus=response.status;
+      const detail=result?.error?.message||result?.message||result?.error?.details?.[0]?.reason||`Gemini extraction failed (HTTP ${upstreamStatus}).`;
+      const status=[400,401,403,404,408,429,500,502,503,504].includes(upstreamStatus)?upstreamStatus:502;
+      console.error("Gemini extraction failed",{model,upstreamStatus,detail:clean(detail,300)});
+      lastError={error:clean(detail,500),upstreamStatus,status};
+      if([408,429,500,502,503,504].includes(upstreamStatus))continue;
+      return json({error:lastError.error,upstreamStatus},status);
+    }
+    try{
+      const modelStep=[...(result.steps||[])].reverse().find(step=>step.type==="model_output");
+      const output=modelStep?.content?.find(part=>part.type==="text")?.text;
+      const parsed=JSON.parse(output);
+      return json({rows:Array.isArray(parsed.rows)?parsed.rows:[],model});
+    }catch{
+      lastError={error:"Gemini returned an invalid result. Please retry.",upstreamStatus:502,status:502};
+    }
   }
-  try{
-    const modelStep=[...(result.steps||[])].reverse().find(step=>step.type==="model_output");
-    const output=modelStep?.content?.find(part=>part.type==="text")?.text;
-    const parsed=JSON.parse(output);
-    return json({rows:Array.isArray(parsed.rows)?parsed.rows:[]});
-  }catch{return json({error:"Gemini returned an invalid result. Please retry."},502)}
+  return json({error:lastError.error,upstreamStatus:lastError.upstreamStatus},lastError.status);
 }
