@@ -31,13 +31,19 @@ async function submitMedvikaLead(event,type){
  const btn=form.querySelector('button[type="submit"]');
  if(btn)btn.disabled=true;
  let saved=false;
+ let failure="";
  try{
   const response=await fetch("/api/leads",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({type,name,phone,email,service,requirement,preferred_date:date})});
   const data=await response.json();
   saved=response.ok&&data.saved===true;
- }catch(error){console.warn("CRM submission unavailable",error)}
+  if(!saved) failure=(data&&data.error?data.error:"HTTP "+response.status);
+ }catch(error){failure="Network connection failed";console.warn("CRM submission unavailable",error)}
  if(whatsapp&&!whatsapp.closed){whatsapp.location.replace(url)}else{window.location.href=url}
- if(!saved){console.warn("Medvika inquiry opened in WhatsApp, but CRM saving was not confirmed.");}
+ let notice=form.querySelector(".crm-save-status");
+ if(!notice){notice=document.createElement("p");notice.className="crm-save-status";notice.setAttribute("role","status");form.appendChild(notice)}
+ notice.textContent=saved?"Inquiry saved successfully. Continue on WhatsApp.":"WhatsApp opened, but CRM did not save ("+failure+"). Please contact Medvika.";
+ notice.style.cssText="margin-top:10px;font-size:13px;color:"+(saved?"#087545":"#ad352f")+";";
+ if(!saved)console.warn("Medvika CRM save failed:",failure);
  if(btn)btn.disabled=false;
 }
 function sendQuote(event){return submitMedvikaLead(event,"request_a_quote")}
