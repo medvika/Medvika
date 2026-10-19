@@ -42,7 +42,29 @@ $("trialForm").addEventListener("submit", async (e) => {
 
     if (data) sessionStorage.setItem("medvika_trial_request_id", String(data));
 
-    msg.textContent = "";
+    // Trial request is already saved by the Supabase RPC. CRM syncing must not
+    // cause a second trial signup or undo the successful request.
+    let crmSynced = false;
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({
+          type: "audit_trial", name: fullName, phone: mobile, email,
+          business_name: businessName, city, state,
+          service: "Pharmacy Stock Audit Trial",
+          requirement: "Requested 3-day audit trial access",
+          trial_request_id: String(data || "")
+        })
+      });
+      const result = await response.json();
+      crmSynced = response.ok && result.saved === true;
+      if (!crmSynced) console.warn("Trial saved; CRM sync not confirmed", result.error || response.status);
+    } catch (syncError) {
+      console.warn("Trial saved; CRM sync unavailable", syncError);
+    }
+
+    msg.textContent = crmSynced ? "" : "Trial request received. CRM follow-up sync is pending; Medvika can still review your request.";
     $("successBox").hidden = false;
     btn.textContent = "Request Submitted";
     btn.disabled = true;
