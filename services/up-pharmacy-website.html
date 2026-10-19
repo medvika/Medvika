@@ -82,7 +82,7 @@ small{font-size:12px}
 </div></section>
 <section class="block" id="features"><div class="wrap"><span class="kicker">What Medvika can implement</span><h2>More useful than a static one-page website</h2><p class="lead">A straightforward publishing workflow for shop owners — whether they maintain medicines in a billing system or Excel.</p>
 <div class="grid">
-<div class="card"><span class="num">01</span><h3>Branded public website</h3><p>Mobile-friendly address, contact details, drug licence and registered pharmacist information supplied and confirmed by the store.</p></div>
+<div class="card"><span class="num">01</span><h3>Branded public website</h3><p>Mobile-friendly address, contact details, drug licence, licence holder, pharmacist registration and photo (where required) supplied and confirmed by the store.</p></div>
 <div class="card"><span class="num">02</span><h3>Medicine stock directory</h3><p>Searchable list by medicine name, strength and pack, with a clearly labelled last-updated timestamp.</p></div>
 <div class="card"><span class="num">03</span><h3>Weekly stock update support</h3><p>CSV or Excel-based update workflow, with review before public publishing. Actual automation depends on data access and software.</p></div>
 <div class="card"><span class="num">04</span><h3>QR code for the counter</h3><p>Easy-to-scan link customers can use to view the pharmacy's own public information page.</p></div>
@@ -100,6 +100,7 @@ small{font-size:12px}
 <form class="form-box" id="lead-form">
 <h3>Request a website quote</h3>
 <div class="pair"><div class="field"><label for="customer">Your name *</label><input id="customer" name="name" maxlength="100" autocomplete="name" required></div><div class="field"><label for="phone">Mobile number *</label><input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="15" placeholder="10-digit mobile number" autocomplete="tel" required></div></div>
+<div class="field"><label for="pharmacy_name">Pharmacy / business name (optional)</label><input id="pharmacy_name" name="pharmacy_name" maxlength="150" autocomplete="organization"></div>
 <div class="pair"><div class="field"><label for="city">UP city / district *</label><input id="city" name="city" maxlength="100" placeholder="e.g. Lucknow" required></div><div class="field"><label for="kind">Pharmacy type *</label><select id="kind" name="kind" required><option value="">Select type</option><option>Retail medical store</option><option>Hospital pharmacy</option><option>Pharmacy chain</option><option>New pharmacy</option></select></div></div>
 <div class="pair"><div class="field"><label for="stores">Number of outlets</label><select id="stores" name="stores"><option>1 outlet</option><option>2–5 outlets</option><option>6+ outlets</option></select></div><div class="field"><label for="software">Current stock system</label><select id="software" name="software"><option>Excel / Manual</option><option>Marg</option><option>Easysol</option><option>Other software</option><option>Medvika PMS</option></select></div></div>
 <div class="field"><label for="email">Email (optional)</label><input id="email" name="email" type="email" maxlength="150" autocomplete="email"></div>
@@ -128,7 +129,7 @@ small{font-size:12px}
   status.className='';status.textContent='';
   if(!/^[6-9]\d{9}$/.test(mobile)){status.className='error';status.textContent='Enter a valid 10-digit Indian mobile number.';return;}
   button.disabled=true;button.textContent='Sending…';
-  const req=['UP pharmacy website implementation enquiry','City: '+f.get('city'),'Pharmacy type: '+f.get('kind'),'Outlets: '+f.get('stores'),'Current system: '+f.get('software'),'Additional: '+(f.get('requirement')||'None')].join(' | ');
+  const req=['UP pharmacy website implementation enquiry','Pharmacy name: '+(f.get('pharmacy_name')||'Not provided'),'City: '+f.get('city'),'Pharmacy type: '+f.get('kind'),'Outlets: '+f.get('stores'),'Current system: '+f.get('software'),'Additional: '+(f.get('requirement')||'None')].join(' | ');
   try{
    const response=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'request_a_quote',name:f.get('name'),phone:mobile,email:f.get('email')||'',service:'UP Pharmacy Website Implementation',requirement:req,website:f.get('website')||''})});
    const result=await response.json().catch(()=>({}));
