@@ -53,7 +53,10 @@ async function websiteLead(req,env){
  let b;try{const raw=await req.text();if(raw.length>6000)return json({error:"Payload too large"},413);b=JSON.parse(raw)}catch{return json({error:"Invalid JSON"},400)}
  if(b.website)return json({ok:true,saved:false});
  const name=clean(b.name,100),mobile=clean(b.phone,25).replace(/\D/g,""),email=clean(b.email,150),service=clean(b.service,150),detail=clean(b.requirement,1800),type=clean(b.type,40),date=clean(b.preferred_date,12);
- if(!["request_a_quote","book_consultation"].includes(type)||name.length<2||! /^(91)?[6-9]\d{9}$/.test(mobile)||!service)return json({error:"Valid name, phone and service required"},400);
+ if(!["request_a_quote","book_consultation"].includes(type))return json({error:"Invalid form type"},400);
+ if(name.length<2)return json({error:"Please enter a name of at least 2 characters"},400);
+ if(!/^(91)?[6-9]\d{9}$/.test(mobile))return json({error:"Enter a valid 10-digit Indian mobile number"},400);
+ if(!service)return json({error:"Please select a service"},400);
  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json({error:"Invalid email"},400);
  if(date&&!/^\d{4}-\d{2}-\d{2}$/.test(date))return json({error:"Invalid date"},400);
  const base=String(env.SUPABASE_URL).replace(/\/$/,"");
