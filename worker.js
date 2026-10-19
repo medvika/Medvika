@@ -53,7 +53,7 @@ async function websiteLead(req,env){
  let b;try{const raw=await req.text();if(raw.length>6000)return json({error:"Payload too large"},413);b=JSON.parse(raw)}catch{return json({error:"Invalid JSON"},400)}
  if(b.website)return json({ok:true,saved:false});
  const name=clean(b.name,100),mobile=clean(b.phone,25).replace(/\D/g,""),email=clean(b.email,150),service=clean(b.service,150),detail=clean(b.requirement,1800),type=clean(b.type,40),date=clean(b.preferred_date,12);
- if(!["request_a_quote","book_consultation"].includes(type))return json({error:"Invalid form type"},400);
+ if(!["request_a_quote","book_consultation","audit_trial"].includes(type))return json({error:"Invalid form type"},400);
  if(name.length<2)return json({error:"Please enter a name of at least 2 characters"},400);
  if(!/^(91)?[6-9]\d{9}$/.test(mobile))return json({error:"Enter a valid 10-digit Indian mobile number"},400);
  if(!service)return json({error:"Please select a service"},400);
@@ -61,7 +61,20 @@ async function websiteLead(req,env){
  if(date&&!/^\d{4}-\d{2}-\d{2}$/.test(date))return json({error:"Invalid date"},400);
  const base=String(env.SUPABASE_URL).replace(/\/$/,"");
  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(base))return json({error:"CRM configuration invalid"},503);
- const record={contact_name:name,phone:mobile.slice(-10),email:email||null,service_interest:service,requirement:detail||null,source:"website",source_detail:type,notes:date?"Preferred date (not confirmed): "+date:null};
+ const isAudit=type==="audit_trial";
+ const business=clean(b.business_name,160),city=clean(b.city,100),state=clean(b.state,100),trialId=clean(b.trial_request_id,100);
+ if(isAudit && (!business||!email||!trialId))return json({error:"Audit trial details missing"},400);
+ const record={contact_name:name,phone:mobile.slice(-10),email:email||null,business_name:isAudit?business:null,city:isAudit?city:null,state:isAudit?state:null,service_interest:isAudit?"Pharmacy Stock Audit Trial":service,requirement:detail||null,source:"website",source_detail:type,notes:isAudit?"Audit trial request reference: "+trialId:(date?"Preferred date (not confirmed): "+date:null)};
+ if(isAudit){
+  const token=env.SUPABASE_SERVICE_ROLE_KEY;
+  const escapedPhone=encodeURIComponent(record.phone);
+  const lookup=base+"/rest/v1/medvika_leads?select=id&phone=eq."+escapedPhone+"&source_detail=eq.audit_trial&limit=1";
+  try{
+   const found=await fetch(lookup,{headers:{"apikey":token,"authorization":"Bearer "+token}});
+   if(!found.ok)return json({error:"CRM duplicate check failed"},502);
+   const rows=await found.json();if(rows.length)return json({ok:true,saved:true,existing:true});
+  }catch{return json({error:"CRM duplicate check unavailable"},502);}
+ }
  try{
  const response=await fetch(base+"/rest/v1/medvika_leads",{method:"POST",headers:{"apikey":env.SUPABASE_SERVICE_ROLE_KEY,"authorization":"Bearer "+env.SUPABASE_SERVICE_ROLE_KEY,"content-type":"application/json","prefer":"return=minimal"},body:JSON.stringify(record)});
  if(!response.ok)return json({error:"CRM save failed"},502);
