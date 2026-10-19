@@ -44,4 +44,26 @@ async function extractInventory(request,env){
  try{const modelStep=[...(result.steps||[])].reverse().find(step=>step.type==="model_output");const text=modelStep?.content?.find(part=>part.type==="text")?.text;const parsed=JSON.parse(text);return json({rows:Array.isArray(parsed.rows)?parsed.rows:[]})}catch{return json({error:"Gemini returned an invalid result. Please retry."},502)}
 }
 async function proxyInventory(request){try{return await fetch("https://flourishing-caramel-da70f8.netlify.app/.netlify/functions/inventory-extractor",{method:"POST",headers:{"content-type":"application/json"},body:await request.text()})}catch{return json({error:"The extraction service could not be reached. Please retry."},502)}}
-export default{async fetch(request,env){const u=new URL(request.url);if(request.method==="POST"&&u.pathname==="/api/razorpay/order")return createOrder(request,env);if(request.method==="POST"&&u.pathname==="/api/razorpay/verify")return verifyPayment(request,env);if(request.method==="POST"&&u.pathname==="/api/inventory-extractor")return proxyInventory(request);return env.ASSETS.fetch(request);}};
+
+async function websiteLead(req,env){
+ const origin=req.headers.get("origin");
+ if(origin&&!["https://medvika.co.in","https://www.medvika.co.in"].includes(origin))return json({error:"Origin not allowed"},403);
+ if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return json({error:"CRM not configured"},503);
+ if(!/application\/json/i.test(req.headers.get("content-type")||""))return json({error:"JSON required"},415);
+ let b;try{const raw=await req.text();if(raw.length>6000)return json({error:"Payload too large"},413);b=JSON.parse(raw)}catch{return json({error:"Invalid JSON"},400)}
+ if(b.website)return json({ok:true,saved:false});
+ const name=clean(b.name,100),mobile=clean(b.phone,25).replace(/\D/g,""),email=clean(b.email,150),service=clean(b.service,150),detail=clean(b.requirement,1800),type=clean(b.type,40),date=clean(b.preferred_date,12);
+ if(!["request_a_quote","book_consultation"].includes(type)||name.length<2||! /^(91)?[6-9]\d{9}$/.test(mobile)||!service)return json({error:"Valid name, phone and service required"},400);
+ if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json({error:"Invalid email"},400);
+ if(date&&!/^\d{4}-\d{2}-\d{2}$/.test(date))return json({error:"Invalid date"},400);
+ const base=String(env.SUPABASE_URL).replace(/\/$/,"");
+ if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(base))return json({error:"CRM configuration invalid"},503);
+ const record={contact_name:name,phone:mobile.slice(-10),email:email||null,service_interest:service,requirement:detail||null,source:"website",source_detail:type,notes:date?"Preferred date (not confirmed): "+date:null};
+ try{
+ const response=await fetch(base+"/rest/v1/medvika_leads",{method:"POST",headers:{"apikey":env.SUPABASE_SERVICE_ROLE_KEY,"authorization":"Bearer "+env.SUPABASE_SERVICE_ROLE_KEY,"content-type":"application/json","prefer":"return=minimal"},body:JSON.stringify(record)});
+ if(!response.ok)return json({error:"CRM save failed"},502);
+ return json({ok:true,saved:true});
+ }catch{return json({error:"CRM unavailable"},502)}
+}
+
+export default{async fetch(request,env){const u=new URL(request.url);if(request.method==="POST"&&u.pathname==="/api/leads")return websiteLead(request,env);if(request.method==="POST"&&u.pathname==="/api/razorpay/order")return createOrder(request,env);if(request.method==="POST"&&u.pathname==="/api/razorpay/verify")return verifyPayment(request,env);if(request.method==="POST"&&u.pathname==="/api/inventory-extractor")return proxyInventory(request);return env.ASSETS.fetch(request);}};
