@@ -12,44 +12,36 @@ function searchMedicine() {
     }
 
 }
-function sendQuote(event){
-
-    event.preventDefault();
-
-    let message =
-    "New Medvika Quote Request\n\n" +
-    "Name: " + document.querySelectorAll("#quoteForm input")[0].value + "\n" +
-    "Mobile: " + document.querySelectorAll("#quoteForm input")[1].value + "\n" +
-    "Email: " + document.querySelectorAll("#quoteForm input")[2].value + "\n" +
-    "Service: " + document.querySelector("#quoteForm select").value + "\n" +
-    "Requirement: " + document.querySelector("#quoteForm textarea").value;
-
-    let whatsappURL =
-    "https://wa.me/918979841035?text=" +
-    encodeURIComponent(message);
-
-    window.open(whatsappURL, "_blank");
-
+async function submitMedvikaLead(event,type){
+ event.preventDefault();
+ const form=event.currentTarget;
+ const inputs=form.querySelectorAll("input");
+ const name=inputs[0].value.trim(), phone=inputs[1].value.trim();
+ const email=type==="request_a_quote"?inputs[2].value.trim():"";
+ const date=type==="book_consultation"?inputs[2].value:"";
+ const service=form.querySelector("select").value;
+ const requirement=form.querySelector("textarea").value.trim();
+ const message=(type==="request_a_quote"?"New Medvika Quote Request":"New Medvika Consultation Request")+"\n\n"+
+  "Name: "+name+"\nMobile: "+phone+
+  (email?"\nEmail: "+email:"")+(date?"\nPreferred Date: "+date:"")+
+  "\nService: "+service+"\nRequirement: "+requirement;
+ const url="https://wa.me/918979841035?text="+encodeURIComponent(message);
+ // Open in the direct submit gesture to avoid pop-up blocking after network awaits.
+ const whatsapp=window.open("about:blank","_blank");
+ const btn=form.querySelector('button[type="submit"]');
+ if(btn)btn.disabled=true;
+ let saved=false;
+ try{
+  const response=await fetch("/api/leads",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({type,name,phone,email,service,requirement,preferred_date:date})});
+  const data=await response.json();
+  saved=response.ok&&data.saved===true;
+ }catch(error){console.warn("CRM submission unavailable",error)}
+ if(whatsapp&&!whatsapp.closed){whatsapp.location.replace(url)}else{window.location.href=url}
+ if(!saved){console.warn("Medvika inquiry opened in WhatsApp, but CRM saving was not confirmed.");}
+ if(btn)btn.disabled=false;
 }
-function sendConsultation(event){
-
-    event.preventDefault();
-
-    let message =
-    "New Medvika Consultation Request\n\n" +
-    "Name: " + document.querySelectorAll("#consultationForm input")[0].value + "\n" +
-    "Mobile: " + document.querySelectorAll("#consultationForm input")[1].value + "\n" +
-    "Date: " + document.querySelectorAll("#consultationForm input")[2].value + "\n" +
-    "Consultation Type: " + document.querySelector("#consultationForm select").value + "\n" +
-    "Requirement: " + document.querySelector("#consultationForm textarea").value;
-
-    let whatsappURL =
-    "https://wa.me/918979841035?text=" +
-    encodeURIComponent(message);
-
-    window.open(whatsappURL, "_blank");
-
-}
+function sendQuote(event){return submitMedvikaLead(event,"request_a_quote")}
+function sendConsultation(event){return submitMedvikaLead(event,"book_consultation")}
 function toggleMenu() {
     const menuToggle = document.getElementById("menuToggle");
     const mainNavigation = document.getElementById("mainNavigation");
