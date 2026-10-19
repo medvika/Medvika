@@ -18,9 +18,11 @@ function sendQuote(event){
 
     let message =
     "New Medvika Quote Request\n\n" +
-    "Name: " + document.querySelector("#quoteForm input:nth-child(1)").value + "\n" +
-    "Mobile: " + document.querySelector("#quoteForm input:nth-child(2)").value + "\n" +
-    "Email: " + document.querySelector("#quoteForm input:nth-child(3)").value;
+    "Name: " + document.querySelectorAll("#quoteForm input")[0].value + "\n" +
+    "Mobile: " + document.querySelectorAll("#quoteForm input")[1].value + "\n" +
+    "Email: " + document.querySelectorAll("#quoteForm input")[2].value + "\n" +
+    "Service: " + document.querySelector("#quoteForm select").value + "\n" +
+    "Requirement: " + document.querySelector("#quoteForm textarea").value;
 
     let whatsappURL =
     "https://wa.me/918979841035?text=" +
@@ -35,9 +37,11 @@ function sendConsultation(event){
 
     let message =
     "New Medvika Consultation Request\n\n" +
-    "Name: " + document.querySelector("#consultationForm input:nth-child(1)").value + "\n" +
-    "Mobile: " + document.querySelector("#consultationForm input:nth-child(2)").value + "\n" +
-    "Date: " + document.querySelector("#consultationForm input:nth-child(3)").value;
+    "Name: " + document.querySelectorAll("#consultationForm input")[0].value + "\n" +
+    "Mobile: " + document.querySelectorAll("#consultationForm input")[1].value + "\n" +
+    "Date: " + document.querySelectorAll("#consultationForm input")[2].value + "\n" +
+    "Consultation Type: " + document.querySelector("#consultationForm select").value + "\n" +
+    "Requirement: " + document.querySelector("#consultationForm textarea").value;
 
     let whatsappURL =
     "https://wa.me/918979841035?text=" +
