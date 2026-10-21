@@ -424,7 +424,7 @@
             </ul>
             <p><strong>Eligibility:</strong> D.Pharm / B.Pharm with valid State Pharmacy Council registration. <strong>Salary:</strong> As per experience and qualifications.</p>
             <div class="job-actions">
-              <button type="button" class="career-btn career-btn-green apply-btn" data-role="Registered Pharmacist — Bharatpur, Rajasthan">Apply Now</button>
+              <a class="career-btn career-btn-outline" href="pharmacist-bharatpur.html">View Job</a><button type="button" class="career-btn career-btn-green apply-btn" data-role="Registered Pharmacist — Bharatpur, Rajasthan">Apply Now</button>
             </div>
           </article>
 
@@ -444,7 +444,7 @@
             </ul>
             <p><strong>Preferred:</strong> Relevant pharmacy purchase or inventory experience. <strong>Salary:</strong> As per experience and qualifications.</p>
             <div class="job-actions">
-              <button type="button" class="career-btn career-btn-green apply-btn" data-role="Purchase Executive / Manager — Bharatpur, Rajasthan">Apply Now</button>
+              <a class="career-btn career-btn-outline" href="purchase-executive-manager-bharatpur.html">View Job</a><button type="button" class="career-btn career-btn-green apply-btn" data-role="Purchase Executive / Manager — Bharatpur, Rajasthan">Apply Now</button>
             </div>
           </article>
 
@@ -752,6 +752,11 @@
     const submitBtn = document.getElementById("submitApplication");
     const submitStatus = document.getElementById("submitStatus");
     const cvInput = document.getElementById("cvFile");
+
+    const requestedRole = new URLSearchParams(window.location.search).get("role");
+    if (requestedRole && ["Registered Pharmacist — Bharatpur, Rajasthan", "Purchase Executive / Manager — Bharatpur, Rajasthan"].includes(requestedRole)) {
+      window.addEventListener("DOMContentLoaded", () => openApplication(requestedRole));
+    }
 
     function openApplication(role) {
       roleInput.value = role;
