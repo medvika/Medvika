@@ -143,7 +143,7 @@
 </url>
     <url>
     <loc>https://medvika.co.in/careers/</loc>
-    <lastmod>2026-08-08</lastmod>
+    <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
 </url>
@@ -202,4 +202,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
 </url>
+    <url><loc>https://medvika.co.in/careers/pharmacist-bharatpur.html</loc><lastmod>2026-10-21</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+    <url><loc>https://medvika.co.in/careers/purchase-executive-manager-bharatpur.html</loc><lastmod>2026-10-21</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
 </urlset>
