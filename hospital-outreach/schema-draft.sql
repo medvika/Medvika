@@ -15,7 +15,7 @@ create table if not exists public.medvika_outreach_contacts (
  constraint outreach_contact_email_basic check(email ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$')
 );
 create unique index if not exists medvika_outreach_unique_campaign_email
- on public.medvika_outreach_contacts (campaign_name,lower(email));
+ on public.medvika_outreach_contacts (campaign_name,email);
 create table if not exists public.medvika_outreach_events (
  id uuid primary key default gen_random_uuid(),
  contact_id uuid not null references public.medvika_outreach_contacts(id) on delete cascade,
